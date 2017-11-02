@@ -1,0 +1,5 @@
+Django==1.11.7
+djangorestframework==3.7.1
+drf-nested-routers==0.90.0
+pytz==2017.3
+git+git://github.com/etesync/journal-manager@v0.4.1
