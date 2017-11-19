@@ -32,7 +32,7 @@ And you are done! You can now either run the debug server just to see everything
 ./manage.py runserver 0.0.0.0:8000
 ```
 
-Using the debug server is production is not recommended, so you should configure your webserver to serve
+Using the debug server in production is not recommended, so you should configure your webserver to serve
 etesync (with TLS). An example on how to do so with nginx can be found [here](http://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html).
 
 # Usage
