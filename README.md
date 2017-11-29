@@ -49,3 +49,7 @@ and create a non-privileged user that you can use.
 That's it!
 
 Now all that's left is to open the EteSync app, add an account, and set your custom server address under the "advance" section.
+
+# Supporting EteSync
+
+Please consider registering an account even if you self-host in order to support the development of EteSync, or help by spreading the word.
