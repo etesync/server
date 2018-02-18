@@ -19,7 +19,7 @@ pip install -r requirements.txt
 
 Edit the [settings file](etesync_server/settings.py). Please refer to the
 [Django deployment
-checklist](https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/)
+checklist](https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/)
 for full instructions on how to configure a Django app for production. Some
 particular settings that should be edited are:
   * [`ALLOWED_HOSTS`](https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-ALLOWED_HOSTS)
