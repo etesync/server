@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
-from django.core.management import utils
+from .utils import get_secret_from_file
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,15 +21,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY_FILE = os.path.join(BASE_DIR, "secret.txt")
-
-try:
-    with open(SECRET_KEY_FILE, "r") as f:
-        SECRET_KEY = f.read().strip()
-except EnvironmentError:
-    with open(SECRET_KEY_FILE, "w") as f:
-        SECRET_KEY = utils.get_random_secret_key()
-        f.write(SECRET_KEY)
+# See secret.py for how this is generated; uses a file 'secret.txt' in the root
+# directory
+SECRET_KEY = get_secret_from_file(os.path.join(BASE_DIR, "secret.txt"))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
