@@ -4,6 +4,8 @@ Session.vim
 /.venv
 /.coverage
 /htmlcov
+/secret.txt
+/static
 
 __pycache__
 .*.swp
