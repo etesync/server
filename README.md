@@ -46,8 +46,6 @@ And you are done! You can now either run the debug server just to see everything
 
 Using the debug server in production is not recommended, so you should configure your webserver to serve
 etesync (with TLS). An example on how to do so with nginx can be found [here](http://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html).
-If you plan to use the webclient, you also want to enable CORS in your nginx config. You can find a "wide
-open CORS config" example [here](https://enable-cors.org/server_nginx.html) to be adjusted to your needs.
 
 # Usage
 
