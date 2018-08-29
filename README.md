@@ -85,7 +85,3 @@ be API-compatible).
 # Supporting EteSync
 
 Please consider registering an account even if you self-host in order to support the development of EteSync, or help by spreading the word.
-
-Additionally, following user requests, we've opened an account on Librepay and accept donations there:
-
-[![Donate using Librepay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/EteSync/donate)
