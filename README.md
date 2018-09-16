@@ -11,7 +11,7 @@ git clone https://github.com/etesync/server-skeleton.git
 cd server-skeleton
 
 # Set up the environment and deps
-virtualenv .venv
+virtualenv3 .venv
 source .venv/bin/activate
 
 pip install -r requirements.txt
