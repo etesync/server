@@ -23,7 +23,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 # See secret.py for how this is generated; uses a file 'secret.txt' in the root
 # directory
-SECRET_KEY = get_secret_from_file(os.path.join(BASE_DIR, "secret.txt"))
+SECRET_FILE = os.path.join(BASE_DIR, "secret.txt")
+SECRET_KEY = get_secret_from_file(SECRET_FILE)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
