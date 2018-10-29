@@ -24,7 +24,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See secret.py for how this is generated; uses a file 'secret.txt' in the root
 # directory
 SECRET_FILE = os.path.join(BASE_DIR, "secret.txt")
-SECRET_KEY = get_secret_from_file(SECRET_FILE)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -142,3 +141,6 @@ try:
     from etesync_site_settings import *
 except ImportError:
     pass
+
+if 'SECRET_KEY' not in locals():
+    SECRET_KEY = get_secret_from_file(SECRET_FILE)
