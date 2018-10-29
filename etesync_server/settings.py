@@ -136,3 +136,9 @@ JOURNAL_API_PERMISSIONS = (
 
 # Cors
 CORS_ORIGIN_ALLOW_ALL = True
+
+# Make an `etesync_site_settings` module available to override settings.
+try:
+    from etesync_site_settings import *
+except ImportError:
+    pass
