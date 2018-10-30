@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 # See secret.py for how this is generated; uses a file 'secret.txt' in the root
 # directory
-SECRET_KEY = get_secret_from_file(os.path.join(BASE_DIR, "secret.txt"))
+SECRET_FILE = os.path.join(BASE_DIR, "secret.txt")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -135,3 +135,12 @@ JOURNAL_API_PERMISSIONS = (
 
 # Cors
 CORS_ORIGIN_ALLOW_ALL = True
+
+# Make an `etesync_site_settings` module available to override settings.
+try:
+    from etesync_site_settings import *
+except ImportError:
+    pass
+
+if 'SECRET_KEY' not in locals():
+    SECRET_KEY = get_secret_from_file(SECRET_FILE)
