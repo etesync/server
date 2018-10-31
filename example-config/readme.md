@@ -17,5 +17,5 @@ It is also assumed that `nginx` and `uwsgi` have been installed system wide by `
 In this setup, `uwsgi` running as a `systemd` service as `root` creates a unix socket with read-write access 
 to both `EtesyncUser` and `nginx`. It then drops its `root` privilege and runs `etesync` as `EtesyncUser`.
 
-`nginx` listens on the `https` port (or a non standard port `https` port if desired). `nginx` delivers static pages directly 
+`nginx` listens on the `https` port (or a non standard port `https` port if desired), delivers static pages directly 
 and for everything else, communicates with `etesync` over the unix socket.
