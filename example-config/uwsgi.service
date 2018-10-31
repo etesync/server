@@ -1,4 +1,4 @@
-# systemd unit for running uwsgi in emporer mode
+# systemd unit for running uwsgi in emperor mode
 # typical location of this file would be /etc/systemd/system/uwsgi.service
 
 [Unit]
