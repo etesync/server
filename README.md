@@ -1,3 +1,8 @@
+<p align="center">
+  <img width="120" src="icon.svg" />
+  <h1 align="center">EteSync - Secure Data Sync</h1>
+</p>
+
 A skeleton app for running your own [EteSync](https://www.etesync.com) server
 
 # Installation
