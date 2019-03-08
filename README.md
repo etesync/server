@@ -82,10 +82,12 @@ for more information about the `SECRET_KEY` and its uses.
 
 # Updating
 
-Inside the virtualenv, run `pip install -U -r requirements.txt` to update
-dependencies to latest compatible versions of Django and
-djangorestframework (it will only update to latest patch level which should
-be API-compatible).
+First, run `git pull --rebase` to update this repository.
+Then, inside the virtualenv:
+1. Run `pip install -U -r requirements.txt` to update the dependencies.
+2. Run `python manage.py migrate` to perform database migrations.
+
+You can now restart the server.
 
 # Supporting EteSync
 
