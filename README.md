@@ -7,8 +7,12 @@ A skeleton app for running your own [EteSync](https://www.etesync.com) server
 
 # Installation
 
-To setup your own EteSync server based on the git version just clone this
-git repository and set up the django app:
+Before installing the EteSync server make sure you install `virtualenv` (for **Python 3**):
+
+* Arch Linux: `pacman -S python-virtualenv`
+* Debian/Ubuntu: `apt-get install python3-virtualenv`
+
+Then just clone the git repo and set up this app:
 
 ```
 git clone https://github.com/etesync/server-skeleton.git
@@ -16,8 +20,8 @@ git clone https://github.com/etesync/server-skeleton.git
 cd server-skeleton
 
 # Set up the environment and deps
-virtualenv3 .venv
-source .venv/bin/activate
+virtualenv -p python3 venv  # If doesn't work, try: virtualenv3 venv
+source venv/bin/activate
 
 pip install -r requirements.txt
 ```
