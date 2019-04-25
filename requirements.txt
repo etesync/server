@@ -1,6 +1,6 @@
 Django>=2.1.7,<2.1.999
 django-cors-headers==2.3.0
-django-etesync-journal==1.0.0
+django-etesync-journal==1.0.1
 djangorestframework>=3.8.2,<3.8.999
 drf-nested-routers==0.90.2
 pytz
