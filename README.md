@@ -47,15 +47,24 @@ Now you can initialise our django app
 ./manage.py migrate
 ```
 
-And you are done! You can now either run the debug server just to see everything works as expected by running:
+And you are done! You can now run the debug server just to see everything works as expected by running:
 
 ```
 ./manage.py runserver 0.0.0.0:8000
 ```
 
-Using the debug server in production is not recommended, so you should configure your webserver to serve
-etesync (with TLS). An example on how to do so with nginx can be found [here](http://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html).
+Using the debug server in production is not recommended, so please read the following section for a proper deployment.
 
+# Production deployment
+
+EteSync is based on Django so you should :
+  * either follow the instructions of the Django project [here](https://docs.djangoproject.com/en/2.2/howto/deployment/wsgi/).
+  * either/or follow the instructions from uwsgi [here](http://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html).
+
+The webserver should also be configured to serve EteSync using TLS.
+
+There are more details about a proper production setup in the [wiki](https://github.com/etesync/server-skeleton/wiki).
+  
 # Usage
 
 Create yourself an admin user:
