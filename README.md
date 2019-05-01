@@ -26,11 +26,13 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Edit the [settings file](etesync_server/settings.py). Please refer to the
-[Django deployment
-checklist](https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/)
-for full instructions on how to configure a Django app for production. Some
-particular settings that should be edited are:
+If you are familiar with Django you can just edit the [settings file](etesync_server/settings.py)
+according to the [Django deployment checklist](https://docs.djangoproject.com/en/1.11/howto/deployment/checklist)
+if you are not, we also provide a simple [configuration file](etesync-server.ini)
+for easy deployment which you can use. You can either edit the provided file or
+create one in `/etc/etesync-server`.
+
+Some particular settings that should be edited are:
   * [`ALLOWED_HOSTS`](https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-ALLOWED_HOSTS)
     -- this is the list of host/domain names or addresses on which the app
 will be served
