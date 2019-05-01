@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+import configparser
 from .utils import get_secret_from_file
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -29,6 +30,34 @@ SECRET_FILE = os.path.join(BASE_DIR, "secret.txt")
 DEBUG = False
 
 ALLOWED_HOSTS = []
+
+# Database
+# https://docs.djangoproject.com/en/2.0/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.environ.get('ETESYNC_DB_PATH',
+                               os.path.join(BASE_DIR, 'db.sqlite3')),
+    }
+}
+
+
+
+# Define where to find configuration files
+config_locations = ['etesync-server.ini', '/etc/etesync-server/etesync-server.ini']
+# Use config file if present
+if any(os.path.isfile(x) for x in config_locations):
+    config = configparser.ConfigParser()
+    config.read(config_locations)
+
+    SECRET_FILE = config['global']['secret_file']
+
+    DEBUG = config['global'].getboolean('debug')
+
+    ALLOWED_HOSTS = [y for x, y in config.items('allowed_hosts')]
+
+    DATABASES = { 'default': { x.upper(): y for x, y in config.items('database') } }
 
 
 # Application definition
@@ -76,18 +105,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'etesync_server.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/2.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.environ.get('ETESYNC_DB_PATH',
-                               os.path.join(BASE_DIR, 'db.sqlite3')),
-    }
-}
 
 
 # Password validation
