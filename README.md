@@ -7,6 +7,13 @@ A skeleton app for running your own [EteSync](https://www.etesync.com) server
 
 # Installation
 
+## Using pre-built packages
+
+* Arch Linux : [AUR](https://aur.archlinux.org/packages/etesync-server)
+* Fedora     : [COPR](https://copr.fedorainfracloud.org/coprs/daftaupe/etesync)
+
+## Manually from source
+
 Before installing the EteSync server make sure you install `virtualenv` (for **Python 3**):
 
 * Arch Linux: `pacman -S python-virtualenv`
@@ -25,6 +32,8 @@ source venv/bin/activate
 
 pip install -r requirements.txt
 ```
+
+# Configuration
 
 If you are familiar with Django you can just edit the [settings file](etesync_server/settings.py)
 according to the [Django deployment checklist](https://docs.djangoproject.com/en/1.11/howto/deployment/checklist)
