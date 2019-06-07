@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.urls import include, path, re_path
 from django.contrib import admin
+from django.views.generic import TemplateView
 
 from rest_framework_nested import routers
 from rest_framework.authtoken import views as token_views
@@ -37,4 +38,5 @@ urlpatterns = [
     re_path(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     re_path(r'^api-token-auth/', token_views.obtain_auth_token),
     path('admin/', admin.site.urls),
+    path('', TemplateView.as_view(template_name='success.html')),
 ]
