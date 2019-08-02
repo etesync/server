@@ -68,9 +68,10 @@ Using the debug server in production is not recommended, so please read the foll
 
 # Production deployment
 
-EteSync is based on Django so you should :
-  * either follow the instructions of the Django project [here](https://docs.djangoproject.com/en/2.2/howto/deployment/wsgi/).
-  * either/or follow the instructions from uwsgi [here](http://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html).
+EteSync is based on Django so you should refer to one of the following
+  * The instructions of the Django project [here](https://docs.djangoproject.com/en/2.2/howto/deployment/wsgi/).
+  * Tnstructions from uwsgi [here](http://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html).
+  * The [example configurations](example-configs) in this repo.
 
 The webserver should also be configured to serve EteSync using TLS.
 
