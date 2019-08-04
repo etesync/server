@@ -36,10 +36,11 @@ pip install -r requirements.txt
 # Configuration
 
 If you are familiar with Django you can just edit the [settings file](etesync_server/settings.py)
-according to the [Django deployment checklist](https://docs.djangoproject.com/en/1.11/howto/deployment/checklist)
-if you are not, we also provide a simple [configuration file](etesync-server.ini)
-for easy deployment which you can use. You can either edit the provided file or
-create one in `/etc/etesync-server`.
+according to the [Django deployment checklist](https://docs.djangoproject.com/en/dev/howto/deployment/checklist/)
+if you are not, we also provide a simple [configuration file](etesync-server.ini.example)
+for easy deployment which you can use.
+
+To use the easy configuration file rename it to `example-server.ini` and place it either at the root of this repository or in `/etc/etesync-server`.
 
 Some particular settings that should be edited are:
   * [`ALLOWED_HOSTS`](https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-ALLOWED_HOSTS)
