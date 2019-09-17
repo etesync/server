@@ -12,12 +12,13 @@ A skeleton app for running your own [EteSync](https://www.etesync.com) server
 * Arch Linux : [AUR](https://aur.archlinux.org/packages/etesync-server)
 * Fedora     : [COPR](https://copr.fedorainfracloud.org/coprs/daftaupe/etesync)
 
-## Manually from source
+## From source
 
 Before installing the EteSync server make sure you install `virtualenv` (for **Python 3**):
 
 * Arch Linux: `pacman -S python-virtualenv`
 * Debian/Ubuntu: `apt-get install python3-virtualenv`
+* Mac/Windows/Other Linux: install virtualenv or just skip the instructions mentioning virtualenv.
 
 Then just clone the git repo and set up this app:
 
