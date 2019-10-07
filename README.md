@@ -41,7 +41,7 @@ according to the [Django deployment checklist](https://docs.djangoproject.com/en
 if you are not, we also provide a simple [configuration file](etesync-server.ini.example)
 for easy deployment which you can use.
 
-To use the easy configuration file rename it to `example-server.ini` and place it either at the root of this repository or in `/etc/etesync-server`.
+To use the easy configuration file rename it to `etesync-server.ini` and place it either at the root of this repository or in `/etc/etesync-server`.
 
 Some particular settings that should be edited are:
   * [`ALLOWED_HOSTS`](https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-ALLOWED_HOSTS)
