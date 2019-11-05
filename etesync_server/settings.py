@@ -43,23 +43,6 @@ DATABASES = {
 }
 
 
-
-# Define where to find configuration files
-config_locations = ['etesync-server.ini', '/etc/etesync-server/etesync-server.ini']
-# Use config file if present
-if any(os.path.isfile(x) for x in config_locations):
-    config = configparser.ConfigParser()
-    config.read(config_locations)
-
-    SECRET_FILE = config['global']['secret_file']
-
-    DEBUG = config['global'].getboolean('debug')
-
-    ALLOWED_HOSTS = [y for x, y in config.items('allowed_hosts')]
-
-    DATABASES = { 'default': { x.upper(): y for x, y in config.items('database') } }
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -148,6 +131,28 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
+
+# Define where to find configuration files
+config_locations = ['etesync-server.ini', '/etc/etesync-server/etesync-server.ini']
+# Use config file if present
+if any(os.path.isfile(x) for x in config_locations):
+    config = configparser.ConfigParser()
+    config.read(config_locations)
+
+    section = config['global']
+
+    SECRET_FILE   = section.get('secret_file', SECRET_FILE)
+    STATIC_ROOT   = section.get('static_root', STATIC_ROOT)
+    STATIC_URL    = section.get('static_url', STATIC_URL)
+    LANGUAGE_CODE = section.get('language_code', LANGUAGE_CODE)
+    TIME_ZONE     = section.get('time_zone', TIME_ZONE)
+    DEBUG         = section.getboolean('debug', DEBUG)
+
+    if 'allowed_hosts' in config:
+        ALLOWED_HOSTS = [y for x, y in config.items('allowed_hosts')]
+
+    if 'database' in config:
+        DATABASES = { 'default': { x.upper(): y for x, y in config.items('database') } }
 
 JOURNAL_API_PERMISSIONS = (
         'rest_framework.permissions.IsAuthenticated',
