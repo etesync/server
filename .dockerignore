@@ -1,0 +1,5 @@
+secret.txt
+Dockerfile*
+README.md
+.idea
+docker-compose*.y*ml

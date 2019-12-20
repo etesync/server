@@ -1,0 +1,21 @@
+version: "3.7"
+services:
+  etesync-server_uwsgi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: etesync-server_uwsgi
+    container_name: etesync-server_uwsgi
+    volumes:
+      - ./static:/var/etesync_server/static
+      - ./secret.txt:/var/etesync_server/secret.txt
+  etesync-server_nginx:
+    build:
+      context: ./example-configs/docker
+      dockerfile: Dockerfile.nginx
+    image: etesync-server_nginx
+    container_name: etesync-server_nginx
+    volumes:
+      - ./static:/srv/http/etesync_server/static
+    ports:
+    - 80:80
