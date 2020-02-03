@@ -75,10 +75,10 @@ EteSync is based on Django so you should refer to one of the following
   * Instructions from uwsgi [here](http://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html).
   * The [example configurations](example-configs) in this repo.
 
-There are more details about a proper production setup using uWSGI and Nginx in the [wiki](../../wiki/Production-setup-using-uWSGI-and-Nginx).
+There are more details about a proper production setup using uWSGI and Nginx in the [wiki](https://github.com/etesync/server/wiki/Production-setup-using-uWSGI-and-Nginx).
 
 The webserver should also be configured to serve EteSync using TLS.
-A guide for doing so can be found in the [wiki](../../wiki/Setup-HTTPS-for-EteSync) as well.
+A guide for doing so can be found in the [wiki](https://github.com/etesync/server/wiki/Setup-HTTPS-for-EteSync) as well.
   
 # Usage
 
