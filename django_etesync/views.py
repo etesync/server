@@ -153,7 +153,7 @@ class CollectionItemViewSet(BaseViewSet):
         col = get_object_or_404(Collection.objects, uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=uid)
 
-        serializer = CollectionItemSnapshotSerializer(col_it.snapshots, many=True)
+        serializer = CollectionItemSnapshotSerializer(col_it.snapshots.order_by('-id'), many=True)
         return Response(serializer.data)
 
 
