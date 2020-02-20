@@ -25,6 +25,7 @@ from django.views.decorators.http import require_POST
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework import parsers
+from rest_framework.decorators import action as action_decorator
 from rest_framework.response import Response
 
 from . import app_settings, paginators
@@ -170,3 +171,19 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
             return Response({}, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action_decorator(detail=True, methods=['GET'])
+    def download(self, request, collection_uid=None, collection_item_uid=None, uid=None):
+        import os
+        from django.views.static import serve
+
+        col = get_object_or_404(Collection.objects, uid=collection_uid)
+        col_it = get_object_or_404(col.items, uid=collection_item_uid)
+        chunk = get_object_or_404(col_it.chunks, uid=uid)
+
+        filename = chunk.chunkFile.path
+        dirname = os.path.dirname(filename)
+        basename = os.path.basename(filename)
+
+        # FIXME: DO NOT USE! Use django-send file or etc instead.
+        return serve(request, basename, dirname)
