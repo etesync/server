@@ -99,6 +99,12 @@ class CollectionItemViewSet(BaseViewSet):
     pagination_class = paginators.LinkHeaderPagination
     lookup_field = 'uid'
 
+    def get_serializer_class(self):
+        if self.request.method == 'GET' and self.request.query_params.get('prefer_inline'):
+            return CollectionItemInlineSerializer
+
+        return super().get_serializer_class()
+
     def get_queryset(self):
         collection_uid = self.kwargs['collection_uid']
         try:
