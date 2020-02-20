@@ -165,9 +165,11 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
     serializer_class = CollectionItemChunkSerializer
     lookup_field = 'uid'
 
+    def get_collection_queryset(self, queryset=Collection.objects):
+        return queryset.all()
+
     def create(self, request, collection_uid=None, collection_item_uid=None):
-        # FIXME: we are potentially not getting the correct queryset
-        col = get_object_or_404(Collection.objects, uid=collection_uid)
+        col = get_object_or_404(self.get_collection_queryset(), uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=collection_item_uid)
 
         serializer = self.serializer_class(data=request.data)
@@ -187,7 +189,7 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         import os
         from django.views.static import serve
 
-        col = get_object_or_404(Collection.objects, uid=collection_uid)
+        col = get_object_or_404(self.get_collection_queryset(), uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=collection_item_uid)
         chunk = get_object_or_404(col_it.chunks, uid=uid)
 
