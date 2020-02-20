@@ -24,6 +24,7 @@ from django.views.decorators.http import require_POST
 
 from rest_framework import status
 from rest_framework import viewsets
+from rest_framework import parsers
 from rest_framework.response import Response
 
 from . import app_settings, paginators
@@ -118,6 +119,43 @@ class CollectionItemViewSet(BaseViewSet):
 
     def create(self, request, collection_uid=None):
         collection_object = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
+
+        many = isinstance(request.data, list)
+        serializer = self.serializer_class(data=request.data, many=many)
+        if serializer.is_valid():
+            try:
+                serializer.save(collection=collection_object)
+            except IntegrityError:
+                content = {'code': 'integrity_error'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, collection_uid=None, uid=None):
+        # FIXME: implement
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def update(self, request, collection_uid=None, uid=None):
+        # FIXME: implement, or should it be implemented elsewhere?
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def partial_update(self, request, collection_uid=None, uid=None):
+        # FIXME: implement, or should it be implemented elsewhere?
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+class CollectionItemChunkViewSet(viewsets.ViewSet):
+    allowed_methods = ['GET', 'POST']
+    authentication_classes = BaseViewSet.authentication_classes
+    permission_classes = BaseViewSet.permission_classes
+    parser_classes = (parsers.MultiPartParser, )
+    lookup_field = 'uid'
+
+    def create(self, request, collection_uid=None):
+        # FIXME: we are potentially not getting the correct queryset
+        collection_object = Collection.objects.get(uid=collection_uid)
 
         many = isinstance(request.data, list)
         serializer = self.serializer_class(data=request.data, many=many)
