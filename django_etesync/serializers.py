@@ -64,7 +64,7 @@ class CollectionItemChunkSerializer(serializers.ModelSerializer):
         fields = ('uid', 'chunkFile')
 
 
-class CollectionItemSnapshotBaseSerializer(serializers.ModelSerializer):
+class CollectionItemRevisionBaseSerializer(serializers.ModelSerializer):
     encryptionKey = BinaryBase64Field()
     chunks = serializers.SlugRelatedField(
         slug_field='uid',
@@ -73,15 +73,15 @@ class CollectionItemSnapshotBaseSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        model = models.CollectionItemSnapshot
+        model = models.CollectionItemRevision
         fields = ('version', 'encryptionKey', 'chunks', 'hmac')
 
 
-class CollectionItemSnapshotSerializer(CollectionItemSnapshotBaseSerializer):
+class CollectionItemRevisionSerializer(CollectionItemRevisionBaseSerializer):
     chunksUrls = serializers.SerializerMethodField('get_chunks_urls')
 
-    class Meta(CollectionItemSnapshotBaseSerializer.Meta):
-        fields = CollectionItemSnapshotBaseSerializer.Meta.fields + ('chunksUrls', )
+    class Meta(CollectionItemRevisionBaseSerializer.Meta):
+        fields = CollectionItemRevisionBaseSerializer.Meta.fields + ('chunksUrls', )
 
     # FIXME: currently the user is exposed in the url. We don't want that, and we can probably avoid that but still save it under the user.
     # We would probably be better off just let the user calculate the urls from the uid and a base url for the snapshot.
@@ -94,11 +94,11 @@ class CollectionItemSnapshotSerializer(CollectionItemSnapshotBaseSerializer):
         return ret
 
 
-class CollectionItemSnapshotInlineSerializer(CollectionItemSnapshotBaseSerializer):
+class CollectionItemRevisionInlineSerializer(CollectionItemRevisionBaseSerializer):
     chunksData = serializers.SerializerMethodField('get_chunks_data')
 
-    class Meta(CollectionItemSnapshotBaseSerializer.Meta):
-        fields = CollectionItemSnapshotBaseSerializer.Meta.fields + ('chunksData', )
+    class Meta(CollectionItemRevisionBaseSerializer.Meta):
+        fields = CollectionItemRevisionBaseSerializer.Meta.fields + ('chunksData', )
 
     def get_chunks_data(self, obj):
         ret = []
@@ -109,7 +109,7 @@ class CollectionItemSnapshotInlineSerializer(CollectionItemSnapshotBaseSerialize
         return ret
 
 class CollectionItemSerializer(serializers.ModelSerializer):
-    content = CollectionItemSnapshotSerializer(read_only=True, many=False)
+    content = CollectionItemRevisionSerializer(read_only=True, many=False)
 
     class Meta:
         model = models.CollectionItem
@@ -117,4 +117,4 @@ class CollectionItemSerializer(serializers.ModelSerializer):
 
 
 class CollectionItemInlineSerializer(CollectionItemSerializer):
-    content = CollectionItemSnapshotInlineSerializer(read_only=True, many=False)
+    content = CollectionItemRevisionInlineSerializer(read_only=True, many=False)

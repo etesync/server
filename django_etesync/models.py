@@ -50,7 +50,7 @@ class CollectionItem(models.Model):
 
     @cached_property
     def content(self):
-        return self.snapshots.get(current=True)
+        return self.revisions.get(current=True)
 
 
 def chunk_directory_path(instance, filename):
@@ -75,10 +75,10 @@ class CollectionItemChunk(models.Model):
         return self.uid
 
 
-class CollectionItemSnapshot(models.Model):
+class CollectionItemRevision(models.Model):
     version = models.PositiveSmallIntegerField()
     encryptionKey = models.BinaryField(editable=True, blank=False, null=False)
-    item = models.ForeignKey(CollectionItem, related_name='snapshots', on_delete=models.CASCADE)
+    item = models.ForeignKey(CollectionItem, related_name='revisions', on_delete=models.CASCADE)
     chunks = models.ManyToManyField(CollectionItemChunk, related_name='items')
     hmac = models.CharField(max_length=50, blank=False, null=False)
     current = models.BooleanField(db_index=True, default=True)

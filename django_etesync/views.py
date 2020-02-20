@@ -34,8 +34,8 @@ from .serializers import (
         CollectionSerializer,
         CollectionItemSerializer,
         CollectionItemInlineSerializer,
-        CollectionItemSnapshotSerializer,
-        CollectionItemSnapshotInlineSerializer,
+        CollectionItemRevisionSerializer,
+        CollectionItemRevisionInlineSerializer,
         CollectionItemChunkSerializer
     )
 
@@ -115,7 +115,7 @@ class CollectionItemViewSet(BaseViewSet):
             collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
         except Collection.DoesNotExist:
             raise Http404("Collection does not exist")
-        # XXX Potentially add this for performance: .prefetch_related('snapshots__chunks')
+        # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
         queryset = type(self).queryset.filter(collection__pk=collection.pk)
 
         return queryset
@@ -149,11 +149,11 @@ class CollectionItemViewSet(BaseViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @action_decorator(detail=True, methods=['GET'])
-    def snapshots(self, request, collection_uid=None, uid=None):
+    def revision(self, request, collection_uid=None, uid=None):
         col = get_object_or_404(Collection.objects, uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=uid)
 
-        serializer = CollectionItemSnapshotSerializer(col_it.snapshots.order_by('-id'), many=True)
+        serializer = CollectionItemRevisionSerializer(col_it.revisions.order_by('-id'), many=True)
         return Response(serializer.data)
 
 
