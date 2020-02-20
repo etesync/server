@@ -148,20 +148,21 @@ class CollectionItemViewSet(BaseViewSet):
 
 class CollectionItemChunkViewSet(viewsets.ViewSet):
     allowed_methods = ['GET', 'POST']
+    parser_classes = (parsers.MultiPartParser, )
     authentication_classes = BaseViewSet.authentication_classes
     permission_classes = BaseViewSet.permission_classes
-    parser_classes = (parsers.MultiPartParser, )
+    serializer_class = CollectionItemChunkSerializer
     lookup_field = 'uid'
 
-    def create(self, request, collection_uid=None):
+    def create(self, request, collection_uid=None, collection_item_uid=None):
         # FIXME: we are potentially not getting the correct queryset
-        collection_object = Collection.objects.get(uid=collection_uid)
+        col = get_object_or_404(Collection.objects, uid=collection_uid)
+        col_it = get_object_or_404(col.items, uid=collection_item_uid)
 
-        many = isinstance(request.data, list)
-        serializer = self.serializer_class(data=request.data, many=many)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             try:
-                serializer.save(collection=collection_object)
+                serializer.save(item=col_it, order='abc')
             except IntegrityError:
                 content = {'code': 'integrity_error'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
@@ -169,15 +170,3 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
             return Response({}, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def destroy(self, request, collection_uid=None, uid=None):
-        # FIXME: implement
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def update(self, request, collection_uid=None, uid=None):
-        # FIXME: implement, or should it be implemented elsewhere?
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def partial_update(self, request, collection_uid=None, uid=None):
-        # FIXME: implement, or should it be implemented elsewhere?
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)

@@ -36,12 +36,6 @@ class Collection(models.Model):
         return self.uid
 
 
-def chunk_directory_path(instance, filename):
-    col = instance.itemSnapshot.item.collection
-    user_id = col.owner.id
-    return Path('user_{}'.format(user_id), col.uid, instance.uid)
-
-
 
 class CollectionItem(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
@@ -59,12 +53,19 @@ class CollectionItem(models.Model):
         return self.snapshots.get(current=True)
 
 
+def chunk_directory_path(instance, filename):
+    item = instance.item
+    col = item.collection
+    user_id = col.owner.id
+    return Path('user_{}'.format(user_id), col.uid, item.uid, instance.uid)
+
+
 class CollectionItemChunk(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
                            max_length=44, validators=[UidValidator])
     item = models.ForeignKey(CollectionItem, related_name='chunks', on_delete=models.CASCADE)
     order = models.CharField(max_length=100, blank=False, null=False)
-    # We probably just want to implement this manually because we can have more than one pointing to a file. chunkFile = models.FileField(upload_to=chunk_directory_path)
+    chunkFile = models.FileField(upload_to=chunk_directory_path, max_length=150)
 
     class Meta:
         unique_together = ('item', 'order')
@@ -87,4 +88,3 @@ class CollectionItemSnapshot(models.Model):
 
     def __str__(self):
         return '{} {} current={}'.format(self.item.uid, self.id, self.current)
-
