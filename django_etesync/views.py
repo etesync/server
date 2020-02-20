@@ -34,6 +34,8 @@ from .serializers import (
         CollectionSerializer,
         CollectionItemSerializer,
         CollectionItemInlineSerializer,
+        CollectionItemSnapshotSerializer,
+        CollectionItemSnapshotInlineSerializer,
         CollectionItemChunkSerializer
     )
 
@@ -145,6 +147,14 @@ class CollectionItemViewSet(BaseViewSet):
     def partial_update(self, request, collection_uid=None, uid=None):
         # FIXME: implement, or should it be implemented elsewhere?
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action_decorator(detail=True, methods=['GET'])
+    def snapshots(self, request, collection_uid=None, uid=None):
+        col = get_object_or_404(Collection.objects, uid=collection_uid)
+        col_it = get_object_or_404(col.items, uid=uid)
+
+        serializer = CollectionItemSnapshotSerializer(col_it.snapshots, many=True)
+        return Response(serializer.data)
 
 
 class CollectionItemChunkViewSet(viewsets.ViewSet):
