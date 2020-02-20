@@ -64,25 +64,27 @@ class CollectionItemChunkSerializer(serializers.ModelSerializer):
         fields = ('uid', )
 
 
-class CollectionItemSnapshotSerializer(serializers.ModelSerializer):
+class CollectionItemSerializer(serializers.ModelSerializer):
+    encryptionKey = BinaryBase64Field()
     chunks = serializers.SlugRelatedField(
         slug_field='uid',
-        queryset=models.CollectionItemChunk,
+        queryset=models.CollectionItemChunk.objects.all(),
         many=True
     )
 
     class Meta:
-        model = models.CollectionItemSnapshot
-        fields = ('chunks', 'chunkHmac')
-
-
-class CollectionItemSerializer(serializers.ModelSerializer):
-    encryptionKey = BinaryBase64Field()
-    content = CollectionItemSnapshotSerializer(
-        read_only=True,
-        many=False
-    )
-
-    class Meta:
         model = models.CollectionItem
-        fields = ('uid', 'version', 'encryptionKey', 'content')
+        fields = ('uid', 'version', 'encryptionKey', 'chunks', 'hmac')
+
+
+class CollectionItemInlineSerializer(CollectionItemSerializer):
+    chunksData = serializers.SerializerMethodField('get_inline_chunks_from_context')
+
+    class Meta(CollectionItemSerializer.Meta):
+        fields = CollectionItemSerializer.Meta.fields + ('chunksData', )
+
+    def get_inline_chunks_from_context(self, obj):
+        request = self.context.get('request', None)
+        if request is not None:
+            return ['SomeInlineData', 'Somemoredata']
+        return 'readOnly'

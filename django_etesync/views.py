@@ -27,11 +27,11 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 from . import app_settings, paginators
-from .models import Collection, CollectionItem, CollectionItemSnapshot, CollectionItemChunk
+from .models import Collection, CollectionItem, CollectionItemChunk
 from .serializers import (
         CollectionSerializer,
         CollectionItemSerializer,
-        CollectionItemSnapshotSerializer,
+        CollectionItemInlineSerializer,
         CollectionItemChunkSerializer
     )
 
