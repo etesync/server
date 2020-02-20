@@ -65,7 +65,7 @@ class CollectionItemChunk(models.Model):
                            max_length=44, validators=[UidValidator])
     item = models.ForeignKey(CollectionItem, related_name='chunks', on_delete=models.CASCADE)
     order = models.CharField(max_length=100, blank=False, null=False)
-    chunkFile = models.FileField(upload_to=chunk_directory_path, max_length=150)
+    chunkFile = models.FileField(upload_to=chunk_directory_path, max_length=150, unique=True)
 
     class Meta:
         unique_together = ('item', 'order')
