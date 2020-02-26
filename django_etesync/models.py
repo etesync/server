@@ -80,7 +80,7 @@ class CollectionItemRevision(models.Model):
     item = models.ForeignKey(CollectionItem, related_name='revisions', on_delete=models.CASCADE)
     chunks = models.ManyToManyField(CollectionItemChunk, related_name='items')
     hmac = models.CharField(max_length=50, blank=False, null=False)
-    current = models.BooleanField(db_index=True, default=True, blank=True, null=True)
+    current = models.BooleanField(db_index=True, default=True, null=True)
     deleted = models.BooleanField(default=False)
 
     class Meta:
