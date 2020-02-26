@@ -24,7 +24,7 @@ from rest_framework.decorators import action as action_decorator
 from rest_framework.response import Response
 
 from . import app_settings, paginators
-from .models import Collection, CollectionItem
+from .models import Collection, CollectionItem, CollectionMember
 from .serializers import (
         CollectionSerializer,
         CollectionItemSerializer,
@@ -73,7 +73,12 @@ class CollectionViewSet(BaseViewSet):
         if serializer.is_valid():
             try:
                 with transaction.atomic():
-                    serializer.save(owner=self.request.user)
+                    col = serializer.save(owner=self.request.user)
+                    CollectionMember(collection=col,
+                                     user=self.request.user,
+                                     accessLevel=CollectionMember.AccessLevels.ADMIN,
+                                     encryptionKey=serializer.validated_data['encryptionKey']
+                                     ).save()
             except IntegrityError:
                 content = {'code': 'integrity_error'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
