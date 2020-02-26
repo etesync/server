@@ -50,7 +50,8 @@ class BaseViewSet(viewsets.ModelViewSet):
         return serializer_class
 
     def get_collection_queryset(self, queryset=Collection.objects):
-        return queryset.all()
+        user = self.request.user
+        return queryset.filter(members__user=user)
 
 
 class CollectionViewSet(BaseViewSet):
@@ -143,7 +144,7 @@ class CollectionItemViewSet(BaseViewSet):
 
     @action_decorator(detail=True, methods=['GET'])
     def revision(self, request, collection_uid=None, uid=None):
-        col = get_object_or_404(Collection.objects, uid=collection_uid)
+        col = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=uid)
 
         serializer = CollectionItemRevisionSerializer(col_it.revisions.order_by('-id'), many=True)
@@ -169,7 +170,8 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
     lookup_field = 'uid'
 
     def get_collection_queryset(self, queryset=Collection.objects):
-        return queryset.all()
+        user = self.request.user
+        return queryset.filter(members__user=user)
 
     def create(self, request, collection_uid=None, collection_item_uid=None):
         col = get_object_or_404(self.get_collection_queryset(), uid=collection_uid)
