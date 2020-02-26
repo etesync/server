@@ -15,6 +15,7 @@
 import base64
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from rest_framework import serializers
 from . import models
 
@@ -74,7 +75,7 @@ class CollectionItemRevisionBaseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.CollectionItemRevision
-        fields = ('version', 'encryptionKey', 'chunks', 'hmac')
+        fields = ('version', 'encryptionKey', 'chunks', 'hmac', 'isDeletion')
 
 
 class CollectionItemRevisionSerializer(CollectionItemRevisionBaseSerializer):
@@ -111,11 +112,28 @@ class CollectionItemRevisionInlineSerializer(CollectionItemRevisionBaseSerialize
 
 
 class CollectionItemSerializer(serializers.ModelSerializer):
-    content = CollectionItemRevisionSerializer(read_only=True, many=False)
+    content = CollectionItemRevisionSerializer(many=False)
 
     class Meta:
         model = models.CollectionItem
         fields = ('uid', 'content')
+
+    def update(self, instance, validated_data):
+        """Function that's called when this serializer is meant to update an item"""
+        revision_data = validated_data.pop('content')
+
+        with transaction.atomic():
+            # We don't have to use select_for_update here because the unique constraint on current guards against
+            # the race condition. But it's a good idea because it'll lock and wait rather than fail.
+            current_revision = instance.revisions.filter(current=True).select_for_update().first()
+            current_revision.current = None
+            current_revision.save()
+
+            chunks = revision_data.pop('chunks')
+            revision = models.CollectionItemRevision.objects.create(**revision_data, item=instance)
+            revision.chunks.set(chunks)
+
+        return instance
 
 
 class CollectionItemInlineSerializer(CollectionItemSerializer):

@@ -90,7 +90,7 @@ class CollectionViewSet(BaseViewSet):
 
 
 class CollectionItemViewSet(BaseViewSet):
-    allowed_methods = ['GET', 'POST']
+    allowed_methods = ['GET', 'POST', 'PUT']
     permission_classes = BaseViewSet.permission_classes
     queryset = CollectionItem.objects.all()
     serializer_class = CollectionItemSerializer
@@ -133,11 +133,7 @@ class CollectionItemViewSet(BaseViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, collection_uid=None, uid=None):
-        # FIXME: implement
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
-    def update(self, request, collection_uid=None, uid=None):
-        # FIXME: implement, or should it be implemented elsewhere?
+        # We can't have destroy because we need to get data from the user (in the body) such as hmac.
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def partial_update(self, request, collection_uid=None, uid=None):
