@@ -118,6 +118,20 @@ class CollectionItemSerializer(serializers.ModelSerializer):
         model = models.CollectionItem
         fields = ('uid', 'content')
 
+    def create(self, validated_data):
+        """Function that's called when this serializer creates an item"""
+        revision_data = validated_data.pop('content')
+        instance = self.__class__.Meta.model(**validated_data)
+
+        with transaction.atomic():
+            instance.save()
+
+            chunks = revision_data.pop('chunks')
+            revision = models.CollectionItemRevision.objects.create(**revision_data, item=instance)
+            revision.chunks.set(chunks)
+
+        return instance
+
     def update(self, instance, validated_data):
         """Function that's called when this serializer is meant to update an item"""
         revision_data = validated_data.pop('content')
