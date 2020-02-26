@@ -31,29 +31,25 @@ class BinaryBase64Field(serializers.Field):
 
 
 class CollectionSerializer(serializers.ModelSerializer):
-    owner = serializers.SlugRelatedField(
-        slug_field=User.USERNAME_FIELD,
-        read_only=True
-    )
     encryptionKey = serializers.SerializerMethodField('get_key_from_context')
-    permissions = serializers.SerializerMethodField('get_permission_from_context')
+    accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
     ctag = serializers.SerializerMethodField('get_ctag')
 
     class Meta:
         model = models.Collection
-        fields = ('uid', 'version', 'owner', 'encryptionKey', 'permissions', 'ctag')
+        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'ctag')
 
     def get_key_from_context(self, obj):
         request = self.context.get('request', None)
         if request is not None:
-            return 'FIXME'
+            return obj.members.get(user=request.user).encryptionKey
         return None
 
-    def get_permission_from_context(self, obj):
+    def get_access_level_from_context(self, obj):
         request = self.context.get('request', None)
         if request is not None:
-            return 'FIXME'
-        return 'readOnly'
+            return obj.members.get(user=request.user).accessLevel
+        return None
 
     def get_ctag(self, obj):
         return 'FIXME'

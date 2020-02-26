@@ -88,3 +88,25 @@ class CollectionItemRevision(models.Model):
 
     def __str__(self):
         return '{} {} current={}'.format(self.item.uid, self.id, self.current)
+
+
+class CollectionMember(models.Model):
+    class AccessLevels(models.TextChoices):
+        ADMIN = 'adm'
+        READ_WRITE = 'rw'
+        READ_ONLY = 'ro'
+
+    collection = models.ForeignKey(Collection, related_name='members', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    encryptionKey = models.BinaryField(editable=True, blank=False, null=False)
+    accessLevel = models.CharField(
+        max_length=3,
+        choices=AccessLevels.choices,
+        default=AccessLevels.READ_ONLY,
+    )
+
+    class Meta:
+        unique_together = ('user', 'collection')
+
+    def __str__(self):
+        return '{} {}'.format(self.collection.uid, self.user)
