@@ -75,7 +75,7 @@ class CollectionItemRevisionBaseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.CollectionItemRevision
-        fields = ('version', 'encryptionKey', 'chunks', 'hmac', 'isDeletion')
+        fields = ('version', 'encryptionKey', 'chunks', 'hmac', 'deleted')
 
 
 class CollectionItemRevisionSerializer(CollectionItemRevisionBaseSerializer):

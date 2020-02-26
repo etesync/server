@@ -112,7 +112,7 @@ class CollectionItemViewSet(BaseViewSet):
         # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
         queryset = type(self).queryset.filter(collection__pk=collection.pk,
                                               revisions__current=True,
-                                              revisions__isDeletion=False)
+                                              revisions__deleted=False)
 
         return queryset
 
