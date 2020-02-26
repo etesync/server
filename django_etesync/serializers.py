@@ -56,6 +56,22 @@ class CollectionSerializer(serializers.ModelSerializer):
     def get_ctag(self, obj):
         return 'FIXME'
 
+    def create(self, validated_data):
+        """Function that's called when this serializer creates an item"""
+        encryption_key = validated_data.pop('encryptionKey')
+        instance = self.__class__.Meta.model(**validated_data)
+
+        print(validated_data)
+        with transaction.atomic():
+            instance.save()
+            models.CollectionMember(collection=instance,
+                                    user=validated_data.get('owner'),
+                                    accessLevel=models.CollectionMember.AccessLevels.ADMIN,
+                                    encryptionKey=encryption_key,
+                                    ).save()
+
+        return instance
+
 
 class CollectionItemChunkSerializer(serializers.ModelSerializer):
     class Meta:

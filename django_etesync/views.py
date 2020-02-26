@@ -13,7 +13,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 
@@ -24,7 +24,7 @@ from rest_framework.decorators import action as action_decorator
 from rest_framework.response import Response
 
 from . import app_settings, paginators
-from .models import Collection, CollectionItem, CollectionMember
+from .models import Collection, CollectionItem
 from .serializers import (
         CollectionSerializer,
         CollectionItemSerializer,
@@ -72,13 +72,7 @@ class CollectionViewSet(BaseViewSet):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             try:
-                with transaction.atomic():
-                    col = serializer.save(owner=self.request.user)
-                    CollectionMember(collection=col,
-                                     user=self.request.user,
-                                     accessLevel=CollectionMember.AccessLevels.ADMIN,
-                                     encryptionKey=serializer.validated_data['encryptionKey']
-                                     ).save()
+                serializer.save(owner=self.request.user)
             except IntegrityError:
                 content = {'code': 'integrity_error'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
