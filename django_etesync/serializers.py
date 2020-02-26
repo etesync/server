@@ -54,7 +54,13 @@ class CollectionSerializer(serializers.ModelSerializer):
         return None
 
     def get_ctag(self, obj):
-        return 'FIXME'
+        # FIXME: we need to have something that's more privacy friendly
+        last_revision = models.CollectionItemRevision.objects.filter(item__collection=obj).last()
+        if last_revision is None:
+            # FIXME: what is the etag for None? Though if we use the revision for collection it should be shared anyway.
+            return None
+
+        return str(last_revision.id)
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
