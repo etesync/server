@@ -121,7 +121,7 @@ class CollectionItemViewSet(BaseViewSet):
         return queryset
 
     def create(self, request, collection_uid=None):
-        collection_object = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
+        collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
 
         many = isinstance(request.data, list)
         serializer = self.serializer_class(data=request.data, many=many)
