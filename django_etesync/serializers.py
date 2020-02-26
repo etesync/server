@@ -30,20 +30,22 @@ class BinaryBase64Field(serializers.Field):
         return base64.b64decode(data)
 
 
+class CollectionEncryptionKeyField(BinaryBase64Field):
+    def get_attribute(self, instance):
+        request = self.context.get('request', None)
+        if request is not None:
+            return instance.members.get(user=request.user).encryptionKey
+        return None
+
+
 class CollectionSerializer(serializers.ModelSerializer):
-    encryptionKey = serializers.SerializerMethodField('get_key_from_context')
+    encryptionKey = CollectionEncryptionKeyField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
     ctag = serializers.SerializerMethodField('get_ctag')
 
     class Meta:
         model = models.Collection
         fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'ctag')
-
-    def get_key_from_context(self, obj):
-        request = self.context.get('request', None)
-        if request is not None:
-            return obj.members.get(user=request.user).encryptionKey
-        return None
 
     def get_access_level_from_context(self, obj):
         request = self.context.get('request', None)
