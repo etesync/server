@@ -83,7 +83,8 @@ class CollectionItemRevisionSerializer(CollectionItemRevisionBaseSerializer):
     class Meta(CollectionItemRevisionBaseSerializer.Meta):
         fields = CollectionItemRevisionBaseSerializer.Meta.fields + ('chunksUrls', )
 
-    # FIXME: currently the user is exposed in the url. We don't want that, and we can probably avoid that but still save it under the user.
+    # FIXME: currently the user is exposed in the url. We don't want that, and we can probably avoid that but still
+    # save it under the user.
     # We would probably be better off just let the user calculate the urls from the uid and a base url for the snapshot.
     # E.g. chunkBaseUrl: "/media/bla/bla/" or chunkBaseUrl: "https://media.etesync.com/bla/bla"
     def get_chunks_urls(self, obj):
@@ -107,6 +108,7 @@ class CollectionItemRevisionInlineSerializer(CollectionItemRevisionBaseSerialize
                 ret.append(base64.b64encode(f.read()).decode('ascii'))
 
         return ret
+
 
 class CollectionItemSerializer(serializers.ModelSerializer):
     content = CollectionItemRevisionSerializer(read_only=True, many=False)

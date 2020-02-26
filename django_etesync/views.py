@@ -12,15 +12,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from django.conf import settings
-from django.contrib.auth import login, get_user_model
+from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
-from django.db.models import Q
-from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseBadRequest, HttpResponse, Http404
+from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 
 from rest_framework import status
 from rest_framework import viewsets
@@ -29,13 +24,12 @@ from rest_framework.decorators import action as action_decorator
 from rest_framework.response import Response
 
 from . import app_settings, paginators
-from .models import Collection, CollectionItem, CollectionItemChunk
+from .models import Collection, CollectionItem
 from .serializers import (
         CollectionSerializer,
         CollectionItemSerializer,
         CollectionItemInlineSerializer,
         CollectionItemRevisionSerializer,
-        CollectionItemRevisionInlineSerializer,
         CollectionItemChunkSerializer
     )
 
@@ -187,7 +181,8 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             try:
-                # FIXME: actually generate the correct order value. Or alternatively have it null at first and only set it when ommitting to a snapshot
+                # FIXME: actually generate the correct order value. Or alternatively have it null at first and only
+                # set it when ommitting to a snapshot
                 serializer.save(item=col_it, order='abc')
             except IntegrityError:
                 content = {'code': 'integrity_error'}
