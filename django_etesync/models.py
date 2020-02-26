@@ -36,7 +36,6 @@ class Collection(models.Model):
         return self.uid
 
 
-
 class CollectionItem(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
                            max_length=44, validators=[UidValidator])

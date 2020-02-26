@@ -12,8 +12,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import sys  # noqa
-
 
 class AppSettings:
     def __init__(self, prefix):
@@ -22,17 +20,17 @@ class AppSettings:
     def import_from_str(self, name):
         from importlib import import_module
 
-        p, m = name.rsplit('.', 1)
+        path, prop = name.rsplit('.', 1)
 
-        mod = import_module(p)
-        return getattr(mod, m)
+        mod = import_module(path)
+        return getattr(mod, prop)
 
     def _setting(self, name, dflt):
         from django.conf import settings
         return getattr(settings, self.prefix + name, dflt)
 
     @property
-    def API_PERMISSIONS(self):
+    def API_PERMISSIONS(self):  # pylint: disable=invalid-name
         perms = self._setting("API_PERMISSIONS", ('rest_framework.permissions.IsAuthenticated', ))
         ret = []
         for perm in perms:
@@ -40,7 +38,7 @@ class AppSettings:
         return ret
 
     @property
-    def API_AUTHENTICATORS(self):
+    def API_AUTHENTICATORS(self):  # pylint: disable=invalid-name
         perms = self._setting("API_AUTHENTICATORS", ('rest_framework.authentication.TokenAuthentication',
                                                      'rest_framework.authentication.SessionAuthentication'))
         ret = []
