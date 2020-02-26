@@ -123,6 +123,8 @@ class CollectionItemViewSet(BaseViewSet):
     def create(self, request, collection_uid=None):
         collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
 
+        # FIXME: change this to also support bulk update, or have another endpoint for that.
+        # See https://www.django-rest-framework.org/api-guide/serializers/#customizing-multiple-update
         many = isinstance(request.data, list)
         serializer = self.serializer_class(data=request.data, many=many)
         if serializer.is_valid():
@@ -155,6 +157,16 @@ class CollectionItemViewSet(BaseViewSet):
 
         serializer = CollectionItemRevisionSerializer(col_it.revisions.order_by('-id'), many=True)
         return Response(serializer.data)
+
+    @action_decorator(detail=False, methods=['POST'])
+    def bulk_get(self, request, collection_uid=None):
+        queryset = self.get_queryset()
+
+        if isinstance(request.data, list):
+            queryset = queryset.filter(uid__in=request.data)
+
+        serializer = self.get_serializer_class()(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CollectionItemChunkViewSet(viewsets.ViewSet):
