@@ -71,7 +71,7 @@ class CollectionItemChunk(models.Model):
 
     class Meta:
         unique_together = ('item', 'order')
-        ordering = ['order']
+        ordering = ('item', 'order')
 
     def __str__(self):
         return self.uid
