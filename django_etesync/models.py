@@ -20,7 +20,8 @@ from django.core.validators import RegexValidator
 from django.utils.functional import cached_property
 
 
-UidValidator = RegexValidator(regex=r'[a-zA-Z0-9\-_=]{43}', message='Not a valid UID. Expected a 256bit base64url.')
+Base64Url256BitValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{43}=?$', message='Expected a 256bit base64url.')
+UidValidator = RegexValidator(regex=r'[a-zA-Z0-9]', message='Not a valid UID')
 
 
 class Collection(models.Model):
@@ -61,7 +62,7 @@ def chunk_directory_path(instance, filename):
 
 class CollectionItemChunk(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
-                           max_length=44, validators=[UidValidator])
+                           max_length=44, validators=[Base64Url256BitValidator])
     item = models.ForeignKey(CollectionItem, related_name='chunks', on_delete=models.CASCADE)
     order = models.CharField(max_length=100, blank=False, null=False)
     chunkFile = models.FileField(upload_to=chunk_directory_path, max_length=150, unique=True)
