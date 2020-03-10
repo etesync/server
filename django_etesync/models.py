@@ -41,6 +41,8 @@ class CollectionItem(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
                            max_length=44, validators=[UidValidator])
     collection = models.ForeignKey(Collection, related_name='items', on_delete=models.CASCADE)
+    version = models.PositiveSmallIntegerField()
+    encryptionKey = models.BinaryField(editable=True, blank=False, null=False)
 
     class Meta:
         unique_together = ('uid', 'collection')
@@ -76,8 +78,6 @@ class CollectionItemChunk(models.Model):
 
 
 class CollectionItemRevision(models.Model):
-    version = models.PositiveSmallIntegerField()
-    encryptionKey = models.BinaryField(editable=True, blank=False, null=False)
     item = models.ForeignKey(CollectionItem, related_name='revisions', on_delete=models.CASCADE)
     chunks = models.ManyToManyField(CollectionItemChunk, related_name='items')
     hmac = models.CharField(max_length=50, blank=False, null=False)

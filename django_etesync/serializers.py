@@ -54,7 +54,8 @@ class CollectionSerializer(serializers.ModelSerializer):
         return None
 
     def get_ctag(self, obj):
-        # FIXME: we need to have something that's more privacy friendly
+        # FIXME: we need to have something that's more privacy friendly. Can probably just generate a uid per revision
+        # on revision creation (on the server) and just use that.
         last_revision = models.CollectionItemRevision.objects.filter(item__collection=obj).last()
         if last_revision is None:
             # FIXME: what is the etag for None? Though if we use the revision for collection it should be shared anyway.
@@ -86,7 +87,6 @@ class CollectionItemChunkSerializer(serializers.ModelSerializer):
 
 
 class CollectionItemRevisionBaseSerializer(serializers.ModelSerializer):
-    encryptionKey = BinaryBase64Field()
     chunks = serializers.SlugRelatedField(
         slug_field='uid',
         queryset=models.CollectionItemChunk.objects.all(),
@@ -95,7 +95,7 @@ class CollectionItemRevisionBaseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.CollectionItemRevision
-        fields = ('version', 'encryptionKey', 'chunks', 'hmac', 'deleted')
+        fields = ('chunks', 'hmac', 'deleted')
 
 
 class CollectionItemRevisionSerializer(CollectionItemRevisionBaseSerializer):
@@ -132,11 +132,12 @@ class CollectionItemRevisionInlineSerializer(CollectionItemRevisionBaseSerialize
 
 
 class CollectionItemSerializer(serializers.ModelSerializer):
+    encryptionKey = BinaryBase64Field()
     content = CollectionItemRevisionSerializer(many=False)
 
     class Meta:
         model = models.CollectionItem
-        fields = ('uid', 'content')
+        fields = ('uid', 'version', 'encryptionKey', 'content')
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
