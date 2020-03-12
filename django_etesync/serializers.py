@@ -71,7 +71,6 @@ class CollectionSerializer(serializers.ModelSerializer):
         encryption_key = validated_data.pop('encryptionKey')
         instance = self.__class__.Meta.model(**validated_data)
 
-        print(validated_data)
         with transaction.atomic():
             instance.save()
             models.CollectionMember(collection=instance,
