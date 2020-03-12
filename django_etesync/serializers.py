@@ -43,43 +43,12 @@ class CollectionEncryptionKeyField(BinaryBase64Field):
         return None
 
 
-class CollectionSerializer(serializers.ModelSerializer):
-    encryptionKey = CollectionEncryptionKeyField()
-    accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
-    ctag = serializers.SerializerMethodField('get_ctag')
-
-    class Meta:
-        model = models.Collection
-        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'ctag')
-
-    def get_access_level_from_context(self, obj):
+class CollectionContentField(BinaryBase64Field):
+    def get_attribute(self, instance):
         request = self.context.get('request', None)
         if request is not None:
-            return obj.members.get(user=request.user).accessLevel
+            return instance.members.get(user=request.user).encryptionKey
         return None
-
-    def get_ctag(self, obj):
-        last_revision = models.CollectionItemRevision.objects.filter(item__collection=obj).last()
-        if last_revision is None:
-            # FIXME: what is the etag for None? Though if we use the revision for collection it should be shared anyway.
-            return None
-
-        return last_revision.uid
-
-    def create(self, validated_data):
-        """Function that's called when this serializer creates an item"""
-        encryption_key = validated_data.pop('encryptionKey')
-        instance = self.__class__.Meta.model(**validated_data)
-
-        with transaction.atomic():
-            instance.save()
-            models.CollectionMember(collection=instance,
-                                    user=validated_data.get('owner'),
-                                    accessLevel=models.CollectionMember.AccessLevels.ADMIN,
-                                    encryptionKey=encryption_key,
-                                    ).save()
-
-        return instance
 
 
 class CollectionItemChunkSerializer(serializers.ModelSerializer):
@@ -177,3 +146,53 @@ class CollectionItemSerializer(serializers.ModelSerializer):
 
 class CollectionItemInlineSerializer(CollectionItemSerializer):
     content = CollectionItemRevisionInlineSerializer(read_only=True, many=False)
+
+
+class CollectionSerializer(serializers.ModelSerializer):
+    encryptionKey = CollectionEncryptionKeyField()
+    accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
+    ctag = serializers.SerializerMethodField('get_ctag')
+    content = CollectionItemRevisionSerializer(many=False)
+
+    class Meta:
+        model = models.Collection
+        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'content', 'ctag')
+
+    def get_access_level_from_context(self, obj):
+        request = self.context.get('request', None)
+        if request is not None:
+            return obj.members.get(user=request.user).accessLevel
+        return None
+
+    def get_ctag(self, obj):
+        last_revision = models.CollectionItemRevision.objects.filter(item__collection=obj).last()
+        if last_revision is None:
+            # FIXME: what is the etag for None? Though if we use the revision for collection it should be shared anyway.
+            return None
+
+        return last_revision.uid
+
+    def create(self, validated_data):
+        """Function that's called when this serializer creates an item"""
+        revision_data = validated_data.pop('content')
+        encryption_key = validated_data.pop('encryptionKey')
+        instance = self.__class__.Meta.model(**validated_data)
+
+        with transaction.atomic():
+            main_item = models.CollectionItem.objects.create(
+                uid=None, encryptionKey=None, version=instance.version, collection=instance)
+            instance.mainItem = main_item
+
+            chunks = revision_data.pop('chunks')
+            revision = models.CollectionItemRevision.objects.create(**revision_data, uid=generate_rev_uid(),
+                                                                    item=main_item)
+            revision.chunks.set(chunks)
+
+            instance.save()
+            models.CollectionMember(collection=instance,
+                                    user=validated_data.get('owner'),
+                                    accessLevel=models.CollectionMember.AccessLevels.ADMIN,
+                                    encryptionKey=encryption_key,
+                                    ).save()
+
+        return instance

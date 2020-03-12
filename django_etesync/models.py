@@ -29,6 +29,7 @@ class Collection(models.Model):
                            max_length=44, validators=[UidValidator])
     version = models.PositiveSmallIntegerField()
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    mainItem = models.OneToOneField('CollectionItem', related_name='of_collection', on_delete=models.PROTECT)
 
     class Meta:
         unique_together = ('uid', 'owner')
@@ -36,19 +37,23 @@ class Collection(models.Model):
     def __str__(self):
         return self.uid
 
+    @cached_property
+    def content(self):
+        return self.mainItem.content
+
 
 class CollectionItem(models.Model):
-    uid = models.CharField(db_index=True, blank=False, null=False,
+    uid = models.CharField(db_index=True, blank=False, null=True,
                            max_length=44, validators=[UidValidator])
     collection = models.ForeignKey(Collection, related_name='items', on_delete=models.CASCADE)
     version = models.PositiveSmallIntegerField()
-    encryptionKey = models.BinaryField(editable=True, blank=False, null=False)
+    encryptionKey = models.BinaryField(editable=True, blank=False, null=True)
 
     class Meta:
         unique_together = ('uid', 'collection')
 
     def __str__(self):
-        return self.uid
+        return '{} {}'.format(self.uid, self.collection.uid)
 
     @cached_property
     def content(self):
