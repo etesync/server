@@ -16,10 +16,15 @@ import base64
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.utils.crypto import get_random_string
 from rest_framework import serializers
 from . import models
 
 User = get_user_model()
+
+
+def generate_rev_uid(length=32):
+    return get_random_string(length)
 
 
 class BinaryBase64Field(serializers.Field):
@@ -54,14 +59,12 @@ class CollectionSerializer(serializers.ModelSerializer):
         return None
 
     def get_ctag(self, obj):
-        # FIXME: we need to have something that's more privacy friendly. Can probably just generate a uid per revision
-        # on revision creation (on the server) and just use that.
         last_revision = models.CollectionItemRevision.objects.filter(item__collection=obj).last()
         if last_revision is None:
             # FIXME: what is the etag for None? Though if we use the revision for collection it should be shared anyway.
             return None
 
-        return str(last_revision.id)
+        return last_revision.uid
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
@@ -148,7 +151,8 @@ class CollectionItemSerializer(serializers.ModelSerializer):
             instance.save()
 
             chunks = revision_data.pop('chunks')
-            revision = models.CollectionItemRevision.objects.create(**revision_data, item=instance)
+            revision = models.CollectionItemRevision.objects.create(**revision_data, uid=generate_rev_uid(),
+                                                                    item=instance)
             revision.chunks.set(chunks)
 
         return instance
@@ -165,7 +169,8 @@ class CollectionItemSerializer(serializers.ModelSerializer):
             current_revision.save()
 
             chunks = revision_data.pop('chunks')
-            revision = models.CollectionItemRevision.objects.create(**revision_data, item=instance)
+            revision = models.CollectionItemRevision.objects.create(**revision_data, uid=generate_rev_uid(),
+                                                                    item=instance)
             revision.chunks.set(chunks)
 
         return instance
