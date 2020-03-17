@@ -66,7 +66,7 @@ class CollectionItemRevisionBaseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.CollectionItemRevision
-        fields = ('chunks', 'uid', 'deleted')
+        fields = ('chunks', 'meta', 'uid', 'deleted')
 
 
 class CollectionItemRevisionSerializer(CollectionItemRevisionBaseSerializer):
