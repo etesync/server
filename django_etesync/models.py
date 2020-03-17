@@ -84,11 +84,10 @@ class CollectionItemChunk(models.Model):
 
 class CollectionItemRevision(models.Model):
     uid = models.CharField(db_index=True, unique=True, blank=False, null=False,
-                           max_length=44, validators=[UidValidator])
+                           max_length=44, validators=[Base64Url256BitValidator])
     item = models.ForeignKey(CollectionItem, related_name='revisions', on_delete=models.CASCADE)
     meta = models.BinaryField(editable=True, blank=True, null=True)
     chunks = models.ManyToManyField(CollectionItemChunk, related_name='items')
-    hmac = models.CharField(max_length=50, blank=False, null=False)
     current = models.BooleanField(db_index=True, default=True, null=True)
     deleted = models.BooleanField(default=False)
 
