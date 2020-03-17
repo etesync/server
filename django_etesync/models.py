@@ -20,7 +20,7 @@ from django.core.validators import RegexValidator
 from django.utils.functional import cached_property
 
 
-Base64Url256BitValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{43}=?$', message='Expected a 256bit base64url.')
+Base64Url256BitValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{43}$', message='Expected a 256bit base64url.')
 UidValidator = RegexValidator(regex=r'[a-zA-Z0-9]', message='Not a valid UID')
 
 
