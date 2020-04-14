@@ -64,6 +64,7 @@ class CollectionItemRevisionBaseSerializer(serializers.ModelSerializer):
         queryset=models.CollectionItemChunk.objects.all(),
         many=True
     )
+    meta = BinaryBase64Field()
 
     class Meta:
         model = models.CollectionItemRevision
