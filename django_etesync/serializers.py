@@ -29,10 +29,11 @@ def generate_rev_uid(length=32):
 
 class BinaryBase64Field(serializers.Field):
     def to_representation(self, value):
-        return base64.b64encode(value).decode('ascii')
+        return base64.urlsafe_b64encode(value).decode('ascii')
 
     def to_internal_value(self, data):
-        return base64.b64decode(data)
+        data += "=" * ((4 - len(data) % 4) % 4)
+        return base64.urlsafe_b64decode(data)
 
 
 class CollectionEncryptionKeyField(BinaryBase64Field):
