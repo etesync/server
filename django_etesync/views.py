@@ -12,9 +12,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
-from django.http import Http404
+from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
@@ -206,3 +207,26 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
 
         # FIXME: DO NOT USE! Use django-send file or etc instead.
         return serve(request, basename, dirname)
+
+
+class ResetViewSet(BaseViewSet):
+    allowed_methods = ['POST']
+
+    def post(self, request, *args, **kwargs):
+        # Only run when in DEBUG mode! It's only used for tests
+        if not settings.DEBUG:
+            return HttpResponseBadRequest("Only allowed in debug mode.")
+
+        # Only allow local users, for extra safety
+        if not getattr(request.user, User.USERNAME_FIELD).endswith('@localhost'):
+            return HttpResponseBadRequest("Endpoint not allowed for user.")
+
+        # Delete all of the journal data for this user for a clear test env
+        request.user.collection_set.all().delete()
+
+        # FIXME: also delete chunk files!!!
+
+        return HttpResponse()
+
+
+reset = ResetViewSet.as_view({'post': 'post'})
