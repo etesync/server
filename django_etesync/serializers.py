@@ -14,6 +14,7 @@
 
 import base64
 
+from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.crypto import get_random_string
@@ -164,14 +165,28 @@ class CollectionSerializer(serializers.ModelSerializer):
         instance = self.__class__.Meta.model(**validated_data)
 
         with transaction.atomic():
+            instance.save()
             main_item = models.CollectionItem.objects.create(
                 uid=None, encryptionKey=None, version=instance.version, collection=instance)
             instance.mainItem = main_item
 
+            chunks_ids = []
             chunks = revision_data.pop('chunks')
-            revision = models.CollectionItemRevision.objects.create(**revision_data, uid=generate_rev_uid(),
-                                                                    item=main_item)
-            revision.chunks.set(chunks)
+            for chunk in chunks:
+                uid = chunk[0]
+                if len(chunk) > 1:
+                    content = chunk[1]
+                    # FIXME: fix order!
+                    chunk = models.CollectionItemChunk(uid=uid, item=main_item, order='abc')
+                    chunk.chunkFile.save('IGNORED', ContentFile(content))
+                    chunk.save()
+                    chunks_ids.append(chunk.id)
+                else:
+                    chunk = models.CollectionItemChunk.objects.get(uid=uid)
+                    chunks_ids.append(chunk.id)
+
+            revision = models.CollectionItemRevision.objects.create(**revision_data, item=main_item)
+            revision.chunks.set(chunks_ids)
 
             instance.save()
             models.CollectionMember(collection=instance,
