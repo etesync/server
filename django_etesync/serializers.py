@@ -66,48 +66,54 @@ class CollectionItemChunkSerializer(serializers.ModelSerializer):
         fields = ('uid', 'chunkFile')
 
 
-class CollectionItemRevisionBaseSerializer(serializers.ModelSerializer):
+class CollectionItemRevisionSerializer(serializers.ModelSerializer):
     chunks = serializers.SlugRelatedField(
         slug_field='uid',
         queryset=models.CollectionItemChunk.objects.all(),
         many=True
     )
+    chunksUrls = serializers.SerializerMethodField('get_chunks_urls')
+    chunksData = serializers.SerializerMethodField('get_chunks_data')
     meta = BinaryBase64Field()
 
     class Meta:
         model = models.CollectionItemRevision
-        fields = ('chunks', 'meta', 'uid', 'deleted')
-
-
-class CollectionItemRevisionSerializer(CollectionItemRevisionBaseSerializer):
-    chunksUrls = serializers.SerializerMethodField('get_chunks_urls')
-
-    class Meta(CollectionItemRevisionBaseSerializer.Meta):
-        fields = CollectionItemRevisionBaseSerializer.Meta.fields + ('chunksUrls', )
+        fields = ('chunks', 'meta', 'uid', 'deleted', 'chunksUrls', 'chunksData')
 
     # FIXME: currently the user is exposed in the url. We don't want that, and we can probably avoid that but still
     # save it under the user.
     # We would probably be better off just let the user calculate the urls from the uid and a base url for the snapshot.
     # E.g. chunkBaseUrl: "/media/bla/bla/" or chunkBaseUrl: "https://media.etesync.com/bla/bla"
     def get_chunks_urls(self, obj):
+        prefer_inline = self.context.get('prefer_inline', False)
+        if prefer_inline:
+            return None
+
         ret = []
         for chunk in obj.chunks.all():
             ret.append(chunk.chunkFile.url)
 
         return ret
 
-
-class CollectionItemRevisionInlineSerializer(CollectionItemRevisionBaseSerializer):
-    chunksData = serializers.SerializerMethodField('get_chunks_data')
-
-    class Meta(CollectionItemRevisionBaseSerializer.Meta):
-        fields = CollectionItemRevisionBaseSerializer.Meta.fields + ('chunksData', )
-
     def get_chunks_data(self, obj):
+        prefer_inline = self.context.get('prefer_inline', False)
+        if not prefer_inline:
+            return None
+
         ret = []
         for chunk in obj.chunks.all():
             with open(chunk.chunkFile.path, 'rb') as f:
                 ret.append(b64encode(f.read()))
+
+        return ret
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        prefer_inline = self.context.get('prefer_inline', False)
+        if prefer_inline:
+            ret.pop('chunksUrls')
+        else:
+            ret.pop('chunksData')
 
         return ret
 
@@ -152,10 +158,6 @@ class CollectionItemSerializer(serializers.ModelSerializer):
             revision.chunks.set(chunks)
 
         return instance
-
-
-class CollectionItemInlineSerializer(CollectionItemSerializer):
-    content = CollectionItemRevisionInlineSerializer(read_only=True, many=False)
 
 
 class CollectionSerializer(serializers.ModelSerializer):

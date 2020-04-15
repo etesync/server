@@ -29,7 +29,6 @@ from .models import Collection, CollectionItem
 from .serializers import (
         CollectionSerializer,
         CollectionItemSerializer,
-        CollectionItemInlineSerializer,
         CollectionItemRevisionSerializer,
         CollectionItemChunkSerializer
     )
@@ -66,12 +65,18 @@ class CollectionViewSet(BaseViewSet):
         queryset = type(self).queryset
         return self.get_collection_queryset(queryset)
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        prefer_inline = self.request.method == 'GET' and 'prefer_inline' in self.request.query_params
+        context.update({'request': self.request, 'prefer_inline': prefer_inline})
+        return context
+
     def destroy(self, request, uid=None):
         # FIXME: implement
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
         if serializer.is_valid():
             try:
                 serializer.save(owner=self.request.user)
@@ -86,7 +91,7 @@ class CollectionViewSet(BaseViewSet):
     def list(self, request):
         queryset = self.get_queryset()
 
-        serializer = self.serializer_class(queryset, context={'request': request}, many=True)
+        serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
         return Response(serializer.data)
 
 
@@ -97,12 +102,6 @@ class CollectionItemViewSet(BaseViewSet):
     serializer_class = CollectionItemSerializer
     pagination_class = paginators.LinkHeaderPagination
     lookup_field = 'uid'
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET' and self.request.query_params.get('prefer_inline'):
-            return CollectionItemInlineSerializer
-
-        return super().get_serializer_class()
 
     def get_queryset(self):
         collection_uid = self.kwargs['collection_uid']
@@ -116,6 +115,12 @@ class CollectionItemViewSet(BaseViewSet):
                                               revisions__deleted=False)
 
         return queryset
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        prefer_inline = self.request.method == 'GET' and 'prefer_inline' in self.request.query_params
+        context.update({'request': self.request, 'prefer_inline': prefer_inline})
+        return context
 
     def create(self, request, collection_uid=None):
         collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
