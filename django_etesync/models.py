@@ -64,7 +64,8 @@ def chunk_directory_path(instance, filename):
     item = instance.item
     col = item.collection
     user_id = col.owner.id
-    return Path('user_{}'.format(user_id), col.uid, item.uid, instance.uid)
+    item_uid = item.uid or 'main'
+    return Path('user_{}'.format(user_id), col.uid, item_uid, instance.uid)
 
 
 class CollectionItemChunk(models.Model):
