@@ -28,7 +28,7 @@ def generate_rev_uid(length=32):
 
 
 def b64encode(value):
-    return base64.urlsafe_b64encode(value).decode('ascii')
+    return base64.urlsafe_b64encode(value).decode('ascii').strip('=')
 
 
 def b64decode(data):
