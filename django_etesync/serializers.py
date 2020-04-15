@@ -27,13 +27,21 @@ def generate_rev_uid(length=32):
     return get_random_string(length)
 
 
+def b64encode(value):
+    return base64.urlsafe_b64encode(value).decode('ascii')
+
+
+def b64decode(data):
+    data += "=" * ((4 - len(data) % 4) % 4)
+    return base64.urlsafe_b64decode(data)
+
+
 class BinaryBase64Field(serializers.Field):
     def to_representation(self, value):
-        return base64.urlsafe_b64encode(value).decode('ascii')
+        return b64encode(value)
 
     def to_internal_value(self, data):
-        data += "=" * ((4 - len(data) % 4) % 4)
-        return base64.urlsafe_b64decode(data)
+        return b64decode(data)
 
 
 class CollectionEncryptionKeyField(BinaryBase64Field):
@@ -99,7 +107,7 @@ class CollectionItemRevisionInlineSerializer(CollectionItemRevisionBaseSerialize
         ret = []
         for chunk in obj.chunks.all():
             with open(chunk.chunkFile.path, 'rb') as f:
-                ret.append(base64.b64encode(f.read()).decode('ascii'))
+                ret.append(b64encode(f.read()))
 
         return ret
 
