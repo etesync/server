@@ -29,23 +29,23 @@ def generate_rev_uid(length=32):
 
 
 def process_revisions_for_item(item, revision_data):
-    chunks_ids = []
-    chunks = revision_data.pop('chunks')
+    chunks_objs = []
+    chunks = revision_data.pop('chunks_relation')
     for chunk in chunks:
         uid = chunk[0]
         if len(chunk) > 1:
             content = chunk[1]
-            # FIXME: fix order!
-            chunk = models.CollectionItemChunk(uid=uid, item=item, order='abc')
+            chunk = models.CollectionItemChunk(uid=uid, item=item)
             chunk.chunkFile.save('IGNORED', ContentFile(content))
             chunk.save()
-            chunks_ids.append(chunk.id)
+            chunks_objs.append(chunk)
         else:
             chunk = models.CollectionItemChunk.objects.get(uid=uid)
-            chunks_ids.append(chunk.id)
+            chunks_objs.append(chunk)
 
     revision = models.CollectionItemRevision.objects.create(**revision_data, item=item)
-    revision.chunks.set(chunks_ids)
+    for chunk in chunks_objs:
+        models.RevisionChunkRelation.objects.create(chunk=chunk, revision=revision)
     return revision
 
 
@@ -84,6 +84,7 @@ class CollectionContentField(BinaryBase64Field):
 
 class ChunksField(serializers.RelatedField):
     def to_representation(self, obj):
+        obj = obj.chunk
         inline = self.context.get('inline', False)
         if inline:
             with open(obj.chunkFile.path, 'rb') as f:
@@ -103,7 +104,8 @@ class CollectionItemChunkSerializer(serializers.ModelSerializer):
 
 class CollectionItemRevisionSerializer(serializers.ModelSerializer):
     chunks = ChunksField(
-        queryset=models.CollectionItemChunk.objects.all(),
+        source='chunks_relation',
+        queryset=models.RevisionChunkRelation.objects.all(),
         many=True
     )
     meta = BinaryBase64Field()

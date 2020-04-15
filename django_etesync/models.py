@@ -72,12 +72,7 @@ class CollectionItemChunk(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
                            max_length=44, validators=[Base64Url256BitValidator])
     item = models.ForeignKey(CollectionItem, related_name='chunks', on_delete=models.CASCADE)
-    order = models.CharField(max_length=100, blank=False, null=False)
     chunkFile = models.FileField(upload_to=chunk_directory_path, max_length=150, unique=True)
-
-    class Meta:
-        unique_together = ('item', 'order')
-        ordering = ('item', 'order')
 
     def __str__(self):
         return self.uid
@@ -88,7 +83,6 @@ class CollectionItemRevision(models.Model):
                            max_length=44, validators=[Base64Url256BitValidator])
     item = models.ForeignKey(CollectionItem, related_name='revisions', on_delete=models.CASCADE)
     meta = models.BinaryField(editable=True, blank=False, null=False)
-    chunks = models.ManyToManyField(CollectionItemChunk, related_name='items')
     current = models.BooleanField(db_index=True, default=True, null=True)
     deleted = models.BooleanField(default=False)
 
@@ -97,6 +91,14 @@ class CollectionItemRevision(models.Model):
 
     def __str__(self):
         return '{} {} current={}'.format(self.uid, self.item.uid, self.current)
+
+
+class RevisionChunkRelation(models.Model):
+    chunk = models.ForeignKey(CollectionItemChunk, related_name='revisions_relation', on_delete=models.CASCADE)
+    revision = models.ForeignKey(CollectionItemRevision, related_name='chunks_relation', on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ('id', )
 
 
 class CollectionMember(models.Model):

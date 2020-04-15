@@ -186,9 +186,7 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             try:
-                # FIXME: actually generate the correct order value. Or alternatively have it null at first and only
-                # set it when ommitting to a snapshot
-                serializer.save(item=col_it, order='abc')
+                serializer.save(item=col_it)
             except IntegrityError:
                 content = {'code': 'integrity_error'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
