@@ -62,8 +62,8 @@ class CollectionContentField(BinaryBase64Field):
 
 class ChunksField(serializers.RelatedField):
     def to_representation(self, obj):
-        prefer_inline = self.context.get('prefer_inline', False)
-        if prefer_inline:
+        inline = self.context.get('inline', False)
+        if inline:
             with open(obj.chunkFile.path, 'rb') as f:
                 return (obj.uid, b64encode(f.read()))
         else:

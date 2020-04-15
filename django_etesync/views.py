@@ -67,8 +67,8 @@ class CollectionViewSet(BaseViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        prefer_inline = self.request.method == 'GET' and 'prefer_inline' in self.request.query_params
-        context.update({'request': self.request, 'prefer_inline': prefer_inline})
+        inline = self.request.method == 'GET' and 'inline' in self.request.query_params
+        context.update({'request': self.request, 'inline': inline})
         return context
 
     def destroy(self, request, uid=None):
@@ -118,8 +118,8 @@ class CollectionItemViewSet(BaseViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        prefer_inline = self.request.method == 'GET' and 'prefer_inline' in self.request.query_params
-        context.update({'request': self.request, 'prefer_inline': prefer_inline})
+        inline = self.request.method == 'GET' and 'inline' in self.request.query_params
+        context.update({'request': self.request, 'inline': inline})
         return context
 
     def create(self, request, collection_uid=None):
