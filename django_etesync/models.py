@@ -29,7 +29,7 @@ class Collection(models.Model):
                            max_length=44, validators=[UidValidator])
     version = models.PositiveSmallIntegerField()
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    mainItem = models.OneToOneField('CollectionItem', related_name='of_collection', on_delete=models.PROTECT)
+    mainItem = models.OneToOneField('CollectionItem', related_name='of_collection', null=True, on_delete=models.SET_NULL)
 
     class Meta:
         unique_together = ('uid', 'owner')
