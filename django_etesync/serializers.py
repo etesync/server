@@ -28,6 +28,27 @@ def generate_rev_uid(length=32):
     return get_random_string(length)
 
 
+def process_revisions_for_item(item, revision_data):
+    chunks_ids = []
+    chunks = revision_data.pop('chunks')
+    for chunk in chunks:
+        uid = chunk[0]
+        if len(chunk) > 1:
+            content = chunk[1]
+            # FIXME: fix order!
+            chunk = models.CollectionItemChunk(uid=uid, item=item, order='abc')
+            chunk.chunkFile.save('IGNORED', ContentFile(content))
+            chunk.save()
+            chunks_ids.append(chunk.id)
+        else:
+            chunk = models.CollectionItemChunk.objects.get(uid=uid)
+            chunks_ids.append(chunk.id)
+
+    revision = models.CollectionItemRevision.objects.create(**revision_data, item=item)
+    revision.chunks.set(chunks_ids)
+    return revision
+
+
 def b64encode(value):
     return base64.urlsafe_b64encode(value).decode('ascii').strip('=')
 
@@ -108,10 +129,7 @@ class CollectionItemSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             instance.save()
 
-            chunks = revision_data.pop('chunks')
-            revision = models.CollectionItemRevision.objects.create(**revision_data, uid=generate_rev_uid(),
-                                                                    item=instance)
-            revision.chunks.set(chunks)
+            process_revisions_for_item(instance, revision_data)
 
         return instance
 
@@ -126,10 +144,7 @@ class CollectionItemSerializer(serializers.ModelSerializer):
             current_revision.current = None
             current_revision.save()
 
-            chunks = revision_data.pop('chunks')
-            revision = models.CollectionItemRevision.objects.create(**revision_data, uid=generate_rev_uid(),
-                                                                    item=instance)
-            revision.chunks.set(chunks)
+            process_revisions_for_item(instance, revision_data)
 
         return instance
 
@@ -170,23 +185,7 @@ class CollectionSerializer(serializers.ModelSerializer):
                 uid=None, encryptionKey=None, version=instance.version, collection=instance)
             instance.mainItem = main_item
 
-            chunks_ids = []
-            chunks = revision_data.pop('chunks')
-            for chunk in chunks:
-                uid = chunk[0]
-                if len(chunk) > 1:
-                    content = chunk[1]
-                    # FIXME: fix order!
-                    chunk = models.CollectionItemChunk(uid=uid, item=main_item, order='abc')
-                    chunk.chunkFile.save('IGNORED', ContentFile(content))
-                    chunk.save()
-                    chunks_ids.append(chunk.id)
-                else:
-                    chunk = models.CollectionItemChunk.objects.get(uid=uid)
-                    chunks_ids.append(chunk.id)
-
-            revision = models.CollectionItemRevision.objects.create(**revision_data, item=main_item)
-            revision.chunks.set(chunks_ids)
+            process_revisions_for_item(main_item, revision_data)
 
             instance.save()
             models.CollectionMember(collection=instance,
