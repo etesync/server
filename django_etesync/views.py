@@ -184,6 +184,7 @@ class CollectionItemViewSet(BaseViewSet):
 
     @action_decorator(detail=True, methods=['GET'])
     def revision(self, request, collection_uid=None, uid=None):
+        # FIXME: need pagination support
         col = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=uid)
 
