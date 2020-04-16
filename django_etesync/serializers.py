@@ -149,12 +149,12 @@ class CollectionItemSerializer(serializers.ModelSerializer):
 class CollectionSerializer(serializers.ModelSerializer):
     encryptionKey = CollectionEncryptionKeyField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
-    ctag = serializers.SerializerMethodField('get_ctag')
+    stoken = serializers.SerializerMethodField('get_stoken')
     content = CollectionItemRevisionSerializer(many=False)
 
     class Meta:
         model = models.Collection
-        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'content', 'ctag')
+        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'content', 'stoken')
 
     def get_access_level_from_context(self, obj):
         request = self.context.get('request', None)
@@ -162,7 +162,7 @@ class CollectionSerializer(serializers.ModelSerializer):
             return obj.members.get(user=request.user).accessLevel
         return None
 
-    def get_ctag(self, obj):
+    def get_stoken(self, obj):
         last_revision = models.CollectionItemRevision.objects.filter(item__collection=obj).last()
         if last_revision is None:
             # FIXME: what is the etag for None? Though if we use the revision for collection it should be shared anyway.
