@@ -41,6 +41,7 @@ User = get_user_model()
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = tuple(app_settings.API_AUTHENTICATORS)
     permission_classes = tuple(app_settings.API_PERMISSIONS)
+    stoken_id_field = None
 
     def get_serializer_class(self):
         serializer_class = self.serializer_class
@@ -54,6 +55,22 @@ class BaseViewSet(viewsets.ModelViewSet):
         user = self.request.user
         return queryset.filter(members__user=user)
 
+    def filter_by_stoken_and_limit(self, request, queryset):
+        stoken = request.GET.get('stoken', None)
+        limit = int(request.GET.get('limit', 50))
+
+        stoken_id_field = self.stoken_id_field + '__id'
+
+        if stoken is not None:
+            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken)
+            filter_by = {stoken_id_field + '__gt': last_rev.id}
+            queryset = queryset.filter(**filter_by)
+
+        new_stoken_id = queryset.aggregate(stoken_id=Max(stoken_id_field))['stoken_id']
+        new_stoken = CollectionItemRevision.objects.get(id=new_stoken_id).uid if new_stoken_id is not None else stoken
+
+        return queryset[:limit], new_stoken
+
 
 class CollectionViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST', 'DELETE']
@@ -61,6 +78,7 @@ class CollectionViewSet(BaseViewSet):
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
     lookup_field = 'uid'
+    stoken_id_field = 'items__revisions'
 
     def get_queryset(self, queryset=None):
         if queryset is None:
@@ -91,21 +109,10 @@ class CollectionViewSet(BaseViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def list(self, request):
-        stoken = request.GET.get('stoken', None)
-        limit = int(request.GET.get('limit', 50))
-
         queryset = self.get_queryset()
-
-        if stoken is not None:
-            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken)
-            queryset = queryset.filter(items__revisions__id__gt=last_rev.id)
-
-        queryset = queryset[:limit]
+        queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
 
         serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
-
-        new_stoken_id = queryset.aggregate(stoken_id=Max('items__revisions__id'))['stoken_id']
-        new_stoken = CollectionItemRevision.objects.get(id=new_stoken_id).uid if new_stoken_id is not None else stoken
 
         ret = {
             'data': serializer.data,
@@ -119,6 +126,7 @@ class CollectionItemViewSet(BaseViewSet):
     queryset = CollectionItem.objects.all()
     serializer_class = CollectionItemSerializer
     lookup_field = 'uid'
+    stoken_id_field = 'revisions'
 
     def get_queryset(self):
         collection_uid = self.kwargs['collection_uid']
@@ -200,19 +208,6 @@ class CollectionItemViewSet(BaseViewSet):
             'data': serializer.data,
         }
         return Response(ret, headers={'X-EteSync-SToken': new_stoken})
-
-    def filter_by_stoken_and_limit(self, request, queryset):
-        stoken = request.GET.get('stoken', None)
-        limit = int(request.GET.get('limit', 50))
-
-        if stoken is not None:
-            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken)
-            queryset = queryset.filter(revisions__id__gt=last_rev.id)
-
-        new_stoken_id = queryset.aggregate(stoken_id=Max('revisions__id'))['stoken_id']
-        new_stoken = CollectionItemRevision.objects.get(id=new_stoken_id).uid if new_stoken_id is not None else stoken
-
-        return queryset[:limit], new_stoken
 
 
 class CollectionItemChunkViewSet(viewsets.ViewSet):
