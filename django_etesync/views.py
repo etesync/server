@@ -15,6 +15,7 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
+from django.db.models import Max
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 
@@ -103,7 +104,9 @@ class CollectionViewSet(BaseViewSet):
 
         serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
 
-        new_stoken = serializer.data[-1]['stoken'] if len(serializer.data) > 0 else stoken
+        new_stoken_id = queryset.aggregate(stoken_id=Max('items__revisions__id'))['stoken_id']
+        new_stoken = CollectionItemRevision.objects.get(id=new_stoken_id).uid if new_stoken_id is not None else stoken
+
         ret = {
             'data': serializer.data,
         }
@@ -163,16 +166,11 @@ class CollectionItemViewSet(BaseViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def list(self, request, collection_uid=None):
-        stoken = request.GET.get('stoken', None)
-
         queryset = self.get_queryset()
-        queryset = self.filter_by_stoken_and_limit(request, queryset)
+        queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
 
         serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
 
-        queryset = self.filter_by_stoken_and_limit(request, queryset)
-
-        new_stoken = serializer.data[-1]['content']['uid'] if len(serializer.data) > 0 else stoken
         ret = {
             'data': serializer.data,
         }
@@ -189,17 +187,15 @@ class CollectionItemViewSet(BaseViewSet):
 
     @action_decorator(detail=False, methods=['POST'])
     def bulk_get(self, request, collection_uid=None):
-        stoken = request.GET.get('stoken', None)
         queryset = self.get_queryset()
 
         if isinstance(request.data, list):
             queryset = queryset.filter(uid__in=request.data)
 
-        queryset = self.filter_by_stoken_and_limit(request, queryset)
+        queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
 
         serializer = self.get_serializer_class()(queryset, context=self.get_serializer_context(), many=True)
 
-        new_stoken = serializer.data[-1]['content']['uid'] if len(serializer.data) > 0 else stoken
         ret = {
             'data': serializer.data,
         }
@@ -213,7 +209,10 @@ class CollectionItemViewSet(BaseViewSet):
             last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken)
             queryset = queryset.filter(revisions__id__gt=last_rev.id)
 
-        return queryset[:limit]
+        new_stoken_id = queryset.aggregate(stoken_id=Max('revisions__id'))['stoken_id']
+        new_stoken = CollectionItemRevision.objects.get(id=new_stoken_id).uid if new_stoken_id is not None else stoken
+
+        return queryset[:limit], new_stoken
 
 
 class CollectionItemChunkViewSet(viewsets.ViewSet):
