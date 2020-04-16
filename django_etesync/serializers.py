@@ -17,15 +17,10 @@ import base64
 from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.utils.crypto import get_random_string
 from rest_framework import serializers
 from . import models
 
 User = get_user_model()
-
-
-def generate_rev_uid(length=32):
-    return get_random_string(length)
 
 
 def process_revisions_for_item(item, revision_data):
