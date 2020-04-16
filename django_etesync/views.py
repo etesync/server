@@ -191,7 +191,10 @@ class CollectionItemViewSet(BaseViewSet):
         col_it = get_object_or_404(col.items, uid=uid)
 
         serializer = CollectionItemRevisionSerializer(col_it.revisions.order_by('-id'), many=True)
-        return Response(serializer.data)
+        ret = {
+            'data': serializer.data,
+        }
+        return Response(ret)
 
     @action_decorator(detail=False, methods=['POST'])
     def bulk_get(self, request, collection_uid=None):
