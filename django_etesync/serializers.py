@@ -185,11 +185,9 @@ class CollectionSerializer(serializers.ModelSerializer):
             instance.save()
             main_item = models.CollectionItem.objects.create(
                 uid=None, encryptionKey=None, version=instance.version, collection=instance)
-            instance.mainItem = main_item
 
             process_revisions_for_item(main_item, revision_data)
 
-            instance.save()
             models.CollectionMember(collection=instance,
                                     user=validated_data.get('owner'),
                                     accessLevel=models.CollectionMember.AccessLevels.ADMIN,
@@ -203,7 +201,7 @@ class CollectionSerializer(serializers.ModelSerializer):
         revision_data = validated_data.pop('content')
 
         with transaction.atomic():
-            main_item = instance.mainItem
+            main_item = instance.main_item
             # We don't have to use select_for_update here because the unique constraint on current guards against
             # the race condition. But it's a good idea because it'll lock and wait rather than fail.
             current_revision = main_item.revisions.filter(current=True).select_for_update().first()

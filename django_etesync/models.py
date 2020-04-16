@@ -29,7 +29,6 @@ class Collection(models.Model):
                            max_length=44, validators=[UidValidator])
     version = models.PositiveSmallIntegerField()
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    mainItem = models.OneToOneField('CollectionItem', related_name='of_collection', null=True, on_delete=models.SET_NULL)
 
     class Meta:
         unique_together = ('uid', 'owner')
@@ -38,8 +37,12 @@ class Collection(models.Model):
         return self.uid
 
     @cached_property
+    def main_item(self):
+        return self.items.get(uid=None)
+
+    @cached_property
     def content(self):
-        return self.mainItem.content
+        return self.main_item.content
 
 
 class CollectionItem(models.Model):
