@@ -164,17 +164,13 @@ class CollectionItemViewSet(BaseViewSet):
 
     def list(self, request, collection_uid=None):
         stoken = request.GET.get('stoken', None)
-        limit = int(request.GET.get('limit', 50))
 
         queryset = self.get_queryset()
-
-        if stoken is not None:
-            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken)
-            queryset = queryset.filter(revisions__id__gt=last_rev.id)
-
-        queryset = queryset[:limit]
+        queryset = self.filter_by_stoken_and_limit(request, queryset)
 
         serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
+
+        queryset = self.filter_by_stoken_and_limit(request, queryset)
 
         new_stoken = serializer.data[-1]['content']['uid'] if len(serializer.data) > 0 else stoken
         ret = {
@@ -193,13 +189,31 @@ class CollectionItemViewSet(BaseViewSet):
 
     @action_decorator(detail=False, methods=['POST'])
     def bulk_get(self, request, collection_uid=None):
+        stoken = request.GET.get('stoken', None)
         queryset = self.get_queryset()
 
         if isinstance(request.data, list):
             queryset = queryset.filter(uid__in=request.data)
 
-        serializer = self.get_serializer_class()(queryset, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        queryset = self.filter_by_stoken_and_limit(request, queryset)
+
+        serializer = self.get_serializer_class()(queryset, context=self.get_serializer_context(), many=True)
+
+        new_stoken = serializer.data[-1]['content']['uid'] if len(serializer.data) > 0 else stoken
+        ret = {
+            'data': serializer.data,
+        }
+        return Response(ret, headers={'X-EteSync-SToken': new_stoken})
+
+    def filter_by_stoken_and_limit(self, request, queryset):
+        stoken = request.GET.get('stoken', None)
+        limit = int(request.GET.get('limit', 50))
+
+        if stoken is not None:
+            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken)
+            queryset = queryset.filter(revisions__id__gt=last_rev.id)
+
+        return queryset[:limit]
 
 
 class CollectionItemChunkViewSet(viewsets.ViewSet):
