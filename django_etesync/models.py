@@ -44,6 +44,15 @@ class Collection(models.Model):
     def content(self):
         return self.main_item.content
 
+    @cached_property
+    def stoken(self):
+        last_revision = CollectionItemRevision.objects.filter(item__collection=self).last()
+        if last_revision is None:
+            # FIXME: what is the etag for None? Though if we use the revision for collection it should be shared anyway.
+            return None
+
+        return last_revision.uid
+
 
 class CollectionItem(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=True,

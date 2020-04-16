@@ -149,7 +149,7 @@ class CollectionItemSerializer(serializers.ModelSerializer):
 class CollectionSerializer(serializers.ModelSerializer):
     encryptionKey = CollectionEncryptionKeyField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
-    stoken = serializers.SerializerMethodField('get_stoken')
+    stoken = serializers.CharField(read_only=True)
     content = CollectionItemRevisionSerializer(many=False)
 
     class Meta:
@@ -161,14 +161,6 @@ class CollectionSerializer(serializers.ModelSerializer):
         if request is not None:
             return obj.members.get(user=request.user).accessLevel
         return None
-
-    def get_stoken(self, obj):
-        last_revision = models.CollectionItemRevision.objects.filter(item__collection=obj).last()
-        if last_revision is None:
-            # FIXME: what is the etag for None? Though if we use the revision for collection it should be shared anyway.
-            return None
-
-        return last_revision.uid
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
