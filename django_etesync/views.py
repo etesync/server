@@ -67,7 +67,7 @@ class CollectionViewSet(BaseViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        inline = self.request.method == 'GET' and 'inline' in self.request.query_params
+        inline = 'inline' in self.request.query_params
         context.update({'request': self.request, 'inline': inline})
         return context
 
@@ -118,7 +118,7 @@ class CollectionItemViewSet(BaseViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        inline = self.request.method == 'GET' and 'inline' in self.request.query_params
+        inline = 'inline' in self.request.query_params
         context.update({'request': self.request, 'inline': inline})
         return context
 
