@@ -24,8 +24,8 @@ from rest_framework import parsers
 from rest_framework.decorators import action as action_decorator
 from rest_framework.response import Response
 
-from . import app_settings, paginators
-from .models import Collection, CollectionItem
+from . import app_settings
+from .models import Collection, CollectionItem, CollectionItemRevision
 from .serializers import (
         CollectionSerializer,
         CollectionItemSerializer,
@@ -61,8 +61,9 @@ class CollectionViewSet(BaseViewSet):
     serializer_class = CollectionSerializer
     lookup_field = 'uid'
 
-    def get_queryset(self):
-        queryset = type(self).queryset
+    def get_queryset(self, queryset=None):
+        if queryset is None:
+            queryset = type(self).queryset
         return self.get_collection_queryset(queryset)
 
     def get_serializer_context(self):
@@ -89,10 +90,24 @@ class CollectionViewSet(BaseViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def list(self, request):
+        stoken = request.GET.get('stoken', None)
+        limit = int(request.GET.get('limit', 50))
+
         queryset = self.get_queryset()
 
+        if stoken is not None:
+            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken)
+            queryset = queryset.filter(items__revisions__id__gt=last_rev.id)
+
+        queryset = queryset[:limit]
+
         serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
-        return Response(serializer.data)
+
+        new_stoken = serializer.data[-1]['stoken'] if len(serializer.data) > 0 else stoken
+        ret = {
+            'data': serializer.data,
+        }
+        return Response(ret, headers={'X-EteSync-SToken': new_stoken})
 
 
 class CollectionItemViewSet(BaseViewSet):
@@ -100,7 +115,6 @@ class CollectionItemViewSet(BaseViewSet):
     permission_classes = BaseViewSet.permission_classes
     queryset = CollectionItem.objects.all()
     serializer_class = CollectionItemSerializer
-    pagination_class = paginators.LinkHeaderPagination
     lookup_field = 'uid'
 
     def get_queryset(self):
@@ -147,6 +161,26 @@ class CollectionItemViewSet(BaseViewSet):
     def partial_update(self, request, collection_uid=None, uid=None):
         # FIXME: implement, or should it be implemented elsewhere?
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def list(self, request, collection_uid=None):
+        stoken = request.GET.get('stoken', None)
+        limit = int(request.GET.get('limit', 50))
+
+        queryset = self.get_queryset()
+
+        if stoken is not None:
+            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken)
+            queryset = queryset.filter(revisions__id__gt=last_rev.id)
+
+        queryset = queryset[:limit]
+
+        serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
+
+        new_stoken = serializer.data[-1]['content']['uid'] if len(serializer.data) > 0 else stoken
+        ret = {
+            'data': serializer.data,
+        }
+        return Response(ret, headers={'X-EteSync-SToken': new_stoken})
 
     @action_decorator(detail=True, methods=['GET'])
     def revision(self, request, collection_uid=None, uid=None):
