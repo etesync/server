@@ -14,7 +14,7 @@
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError
+from django.db import transaction, IntegrityError
 from django.db.models import Max
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
@@ -214,6 +214,35 @@ class CollectionItemViewSet(BaseViewSet):
             'data': serializer.data,
         }
         return Response(ret, headers={'X-EteSync-SToken': new_stoken})
+
+    @action_decorator(detail=False, methods=['POST'])
+    def transaction(self, request, collection_uid=None):
+        collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
+
+        items = request.data.get('items')
+        # FIXME: deps should actually be just pairs of uid and stoken
+        deps = request.data.get('deps', None)
+        serializer = self.get_serializer_class()(data=items, context=self.get_serializer_context(), many=True)
+        deps_serializer = self.get_serializer_class()(data=deps, context=self.get_serializer_context(), many=True)
+        if serializer.is_valid() and (deps is None or deps_serializer.is_valid()):
+            try:
+                with transaction.atomic():
+                    collections = serializer.save(collection=collection_object)
+            except IntegrityError:
+                content = {'code': 'integrity_error'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+            ret = {
+                "data": [collection.stoken for collection in collections],
+            }
+            return Response(ret, status=status.HTTP_201_CREATED)
+
+        return Response(
+            {
+                "items": serializer.errors,
+                "deps": deps_serializer.errors if deps is not None else [],
+            },
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 class CollectionItemChunkViewSet(viewsets.ViewSet):

@@ -71,6 +71,10 @@ class CollectionItem(models.Model):
     def content(self):
         return self.revisions.get(current=True)
 
+    @cached_property
+    def stoken(self):
+        return self.content.uid
+
 
 def chunk_directory_path(instance, filename):
     item = instance.item
