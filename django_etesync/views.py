@@ -95,6 +95,9 @@ class CollectionViewSet(BaseViewSet):
         # FIXME: implement
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+    def partial_update(self, request, uid=None):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
         if serializer.is_valid():
