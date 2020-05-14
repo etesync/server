@@ -44,7 +44,8 @@ from .serializers import (
         CollectionSerializer,
         CollectionItemSerializer,
         CollectionItemRevisionSerializer,
-        CollectionItemChunkSerializer
+        CollectionItemChunkSerializer,
+        UserSerializer,
     )
 
 
@@ -313,6 +314,12 @@ class AuthenticationViewSet(viewsets.ViewSet):
     def get_queryset(self):
         return User.objects.all()
 
+    def login_response_data(self, user):
+        return {
+            'token': Token.objects.get_or_create(user=user)[0].key,
+            'user': UserSerializer(user).data,
+        }
+
     def list(self, request):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -320,9 +327,10 @@ class AuthenticationViewSet(viewsets.ViewSet):
     def signup(self, request):
         serializer = AuthenticationSignupSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            user = serializer.save()
 
-            return Response({}, status=status.HTTP_201_CREATED)
+            data = self.login_response_data(user)
+            return Response(data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -360,6 +368,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
             ret = {
                 "salt": b64encode(salt),
                 "challenge": b64encode(challenge),
+                "version": user.userinfo.version,
             }
             return Response(ret, status=status.HTTP_200_OK)
 
@@ -401,9 +410,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
                 verify_key = nacl.signing.VerifyKey(user.userinfo.pubkey, encoder=nacl.encoding.RawEncoder)
                 verify_key.verify(response_raw, signature)
 
-                data = {
-                    'token': Token.objects.get_or_create(user=user)[0].key,
-                }
+                data = self.login_response_data(user)
                 return Response(data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

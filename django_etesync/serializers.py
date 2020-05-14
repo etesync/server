@@ -206,8 +206,14 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (User.USERNAME_FIELD, User.EMAIL_FIELD)
 
 
+class UserQuerySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (User.USERNAME_FIELD, User.EMAIL_FIELD)
+
+
 class AuthenticationSignupSerializer(serializers.Serializer):
-    user = UserSerializer(many=False)
+    user = UserQuerySerializer(many=False)
     salt = BinaryBase64Field()
     pubkey = BinaryBase64Field()
 
@@ -217,7 +223,7 @@ class AuthenticationSignupSerializer(serializers.Serializer):
         pubkey = validated_data.pop('pubkey')
 
         with transaction.atomic():
-            instance = UserSerializer.Meta.model.objects.create(**validated_data)
+            instance = User.objects.create(**validated_data)
             instance.set_unusable_password()
 
             models.UserInfo.objects.create(salt=salt, pubkey=pubkey, owner=instance)
