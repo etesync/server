@@ -244,18 +244,20 @@ class AuthenticationLoginChallengeSerializer(serializers.Serializer):
         raise NotImplementedError()
 
 
-class AuthenticationLoginSerializer(AuthenticationLoginChallengeSerializer):
-    challenge = BinaryBase64Field()
-    host = serializers.CharField()
+class AuthenticationLoginSerializer(serializers.Serializer):
+    response = BinaryBase64Field()
     signature = BinaryBase64Field()
 
-    def validate(self, data):
-        host = self.context.get('host', None)
-        if data['host'] != host:
-            raise serializers.ValidationError(
-                'Found wrong host name. Got: "{}" expected: "{}"'.format(data['host'], host))
+    def create(self, validated_data):
+        raise NotImplementedError()
 
-        return super().validate(data)
+    def update(self, instance, validated_data):
+        raise NotImplementedError()
+
+
+class AuthenticationLoginInnerSerializer(AuthenticationLoginChallengeSerializer):
+    challenge = BinaryBase64Field()
+    host = serializers.CharField()
 
     def create(self, validated_data):
         raise NotImplementedError()

@@ -40,6 +40,7 @@ from .serializers import (
         AuthenticationSignupSerializer,
         AuthenticationLoginChallengeSerializer,
         AuthenticationLoginSerializer,
+        AuthenticationLoginInnerSerializer,
         CollectionSerializer,
         CollectionItemSerializer,
         CollectionItemRevisionSerializer,
@@ -368,35 +369,42 @@ class AuthenticationViewSet(viewsets.ViewSet):
     def login(self, request):
         from datetime import datetime
 
-        serializer = AuthenticationLoginSerializer(
-            data=request.data, context={'host': request.get_host()})
-        if serializer.is_valid():
-            user = self.get_login_user(serializer)
-            challenge = serializer.validated_data['challenge']
-            signature = serializer.validated_data['signature']
+        outer_serializer = AuthenticationLoginSerializer(data=request.data)
+        if outer_serializer.is_valid():
+            response_raw = outer_serializer.validated_data['response']
+            response = json.loads(response_raw.decode())
+            signature = outer_serializer.validated_data['signature']
 
-            salt = user.userinfo.salt
-            enc_key = self.get_encryption_key(salt)
-            box = nacl.secret.SecretBox(enc_key)
+            serializer = AuthenticationLoginInnerSerializer(data=response, context={'host': request.get_host()})
+            if serializer.is_valid():
+                user = self.get_login_user(serializer)
+                host = serializer.validated_data['host']
+                challenge = serializer.validated_data['challenge']
 
-            challenge_data = json.loads(box.decrypt(challenge).decode())
-            now = int(datetime.now().timestamp())
-            if now - challenge_data['timestamp'] > app_settings.CHALLENGE_VALID_SECONDS:
-                content = {'code': 'challenge_expired', 'detail': 'Login challange has expired'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
-            elif challenge_data['userId'] != user.id:
-                content = {'code': 'wrong_user', 'detail': 'This challenge is for the wrong user'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                salt = user.userinfo.salt
+                enc_key = self.get_encryption_key(salt)
+                box = nacl.secret.SecretBox(enc_key)
 
-            host_hash = nacl.hash.blake2b(
-                serializer.validated_data['host'].encode(), encoder=nacl.encoding.RawEncoder)
-            verify_key = nacl.signing.VerifyKey(user.userinfo.pubkey, encoder=nacl.encoding.RawEncoder)
-            verify_key.verify(challenge + host_hash, signature)
+                challenge_data = json.loads(box.decrypt(challenge).decode())
+                now = int(datetime.now().timestamp())
+                if now - challenge_data['timestamp'] > app_settings.CHALLENGE_VALID_SECONDS:
+                    content = {'code': 'challenge_expired', 'detail': 'Login challange has expired'}
+                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                elif challenge_data['userId'] != user.id:
+                    content = {'code': 'wrong_user', 'detail': 'This challenge is for the wrong user'}
+                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                elif host != request.get_host():
+                    detail = 'Found wrong host name. Got: "{}" expected: "{}"'.format(host, request.get_host())
+                    content = {'code': 'wrong_host', 'detail': detail}
+                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-            data = {
-                'token': Token.objects.get_or_create(user=user)[0].key,
-            }
-            return Response(data, status=status.HTTP_200_OK)
+                verify_key = nacl.signing.VerifyKey(user.userinfo.pubkey, encoder=nacl.encoding.RawEncoder)
+                verify_key.verify(response_raw, signature)
+
+                data = {
+                    'token': Token.objects.get_or_create(user=user)[0].key,
+                }
+                return Response(data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
