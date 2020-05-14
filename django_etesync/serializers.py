@@ -198,3 +198,67 @@ class CollectionSerializer(serializers.ModelSerializer):
             process_revisions_for_item(main_item, revision_data)
 
         return instance
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (User.USERNAME_FIELD, User.EMAIL_FIELD)
+
+
+class AuthenticationSignupSerializer(serializers.Serializer):
+    user = UserSerializer(many=False)
+    salt = BinaryBase64Field()
+    pubkey = BinaryBase64Field()
+
+    def create(self, validated_data):
+        """Function that's called when this serializer creates an item"""
+        salt = validated_data.pop('salt')
+        pubkey = validated_data.pop('pubkey')
+
+        with transaction.atomic():
+            instance = UserSerializer.Meta.model.objects.create(**validated_data)
+            instance.set_unusable_password()
+
+            models.UserInfo.objects.create(salt=salt, pubkey=pubkey, owner=instance)
+
+        return instance
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError()
+
+
+class AuthenticationLoginChallengeSerializer(serializers.Serializer):
+    username = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
+
+    def validate(self, data):
+        if not data.get('email') and not data.get('username'):
+            raise serializers.ValidationError('Either email or username must be set')
+        return data
+
+    def create(self, validated_data):
+        raise NotImplementedError()
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError()
+
+
+class AuthenticationLoginSerializer(AuthenticationLoginChallengeSerializer):
+    challenge = BinaryBase64Field()
+    host = serializers.CharField()
+    signature = BinaryBase64Field()
+
+    def validate(self, data):
+        host = self.context.get('host', None)
+        if data['host'] != host:
+            raise serializers.ValidationError(
+                'Found wrong host name. Got: "{}" expected: "{}"'.format(data['host'], host))
+
+        return super().validate(data)
+
+    def create(self, validated_data):
+        raise NotImplementedError()
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError()

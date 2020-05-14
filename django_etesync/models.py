@@ -137,3 +137,13 @@ class CollectionMember(models.Model):
 
     def __str__(self):
         return '{} {}'.format(self.collection.uid, self.user)
+
+
+class UserInfo(models.Model):
+    owner = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
+    version = models.PositiveSmallIntegerField(default=1)
+    pubkey = models.BinaryField(editable=True, blank=False, null=False)
+    salt = models.BinaryField(editable=True, blank=False, null=False)
+
+    def __str__(self):
+        return "UserInfo<{}>".format(self.owner)

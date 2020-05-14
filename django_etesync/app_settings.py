@@ -46,5 +46,9 @@ class AppSettings:
             ret.append(self.import_from_str(perm))
         return ret
 
+    @property
+    def CHALLENGE_VALID_SECONDS(self):  # pylint: disable=invalid-name
+        return self._setting("CHALLENGE_VALID_SECONDS", 60)
+
 
 app_settings = AppSettings('ETESYNC_')

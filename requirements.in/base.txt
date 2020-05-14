@@ -9,3 +9,4 @@ django-ipware
 djangorestframework
 drf-nested-routers
 psycopg2-binary
+pynacl

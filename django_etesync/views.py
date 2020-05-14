@@ -12,6 +12,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import json
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction, IntegrityError
@@ -24,10 +26,20 @@ from rest_framework import viewsets
 from rest_framework import parsers
 from rest_framework.decorators import action as action_decorator
 from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+
+import nacl.encoding
+import nacl.signing
+import nacl.secret
+import nacl.hash
 
 from . import app_settings
 from .models import Collection, CollectionItem, CollectionItemRevision
 from .serializers import (
+        b64encode,
+        AuthenticationSignupSerializer,
+        AuthenticationLoginChallengeSerializer,
+        AuthenticationLoginSerializer,
         CollectionSerializer,
         CollectionItemSerializer,
         CollectionItemRevisionSerializer,
@@ -288,6 +300,110 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
 
         # FIXME: DO NOT USE! Use django-send file or etc instead.
         return serve(request, basename, dirname)
+
+
+class AuthenticationViewSet(viewsets.ViewSet):
+    allowed_methods = ['POST']
+
+    def get_encryption_key(self, salt):
+        key = nacl.hash.blake2b(settings.SECRET_KEY.encode(), encoder=nacl.encoding.RawEncoder)
+        return nacl.hash.blake2b(b'', key=key, salt=salt, person=b'etesync-auth', encoder=nacl.encoding.RawEncoder)
+
+    def get_queryset(self):
+        return User.objects.all()
+
+    def list(self, request):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action_decorator(detail=False, methods=['POST'])
+    def signup(self, request):
+        serializer = AuthenticationSignupSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+
+            return Response({}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_login_user(self, serializer):
+        username = serializer.validated_data.get('username')
+        email = serializer.validated_data.get('email')
+        if username:
+            kwargs = {User.USERNAME_FIELD: username}
+            user = get_object_or_404(self.get_queryset(), **kwargs)
+        elif email:
+            kwargs = {User.EMAIL_FIELD: email}
+            user = get_object_or_404(self.get_queryset(), **kwargs)
+
+        return user
+
+    @action_decorator(detail=False, methods=['POST'])
+    def login_challenge(self, request):
+        from datetime import datetime
+
+        serializer = AuthenticationLoginChallengeSerializer(data=request.data)
+        if serializer.is_valid():
+            user = self.get_login_user(serializer)
+
+            salt = user.userinfo.salt
+            enc_key = self.get_encryption_key(salt)
+            box = nacl.secret.SecretBox(enc_key)
+
+            challenge_data = {
+                "timestamp": int(datetime.now().timestamp()),
+                "userId": user.id,
+            }
+            challenge = box.encrypt(json.dumps(
+                challenge_data, separators=(',', ':')).encode(), encoder=nacl.encoding.RawEncoder)
+
+            ret = {
+                "salt": b64encode(salt),
+                "challenge": b64encode(challenge),
+            }
+            return Response(ret, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action_decorator(detail=False, methods=['POST'])
+    def login(self, request):
+        from datetime import datetime
+
+        serializer = AuthenticationLoginSerializer(
+            data=request.data, context={'host': request.get_host()})
+        if serializer.is_valid():
+            user = self.get_login_user(serializer)
+            challenge = serializer.validated_data['challenge']
+            signature = serializer.validated_data['signature']
+
+            salt = user.userinfo.salt
+            enc_key = self.get_encryption_key(salt)
+            box = nacl.secret.SecretBox(enc_key)
+
+            challenge_data = json.loads(box.decrypt(challenge).decode())
+            now = int(datetime.now().timestamp())
+            if now - challenge_data['timestamp'] > app_settings.CHALLENGE_VALID_SECONDS:
+                content = {'code': 'challenge_expired', 'detail': 'Login challange has expired'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+            elif challenge_data['userId'] != user.id:
+                content = {'code': 'wrong_user', 'detail': 'This challenge is for the wrong user'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+            host_hash = nacl.hash.blake2b(
+                serializer.validated_data['host'].encode(), encoder=nacl.encoding.RawEncoder)
+            verify_key = nacl.signing.VerifyKey(user.userinfo.pubkey, encoder=nacl.encoding.RawEncoder)
+            verify_key.verify(challenge + host_hash, signature)
+
+            data = {
+                'token': Token.objects.get_or_create(user=user)[0].key,
+            }
+            return Response(data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action_decorator(detail=False, methods=['POST'])
+    def logout(self, request):
+        # FIXME: expire the token - we need better token handling - using knox? Something else?
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ResetViewSet(BaseViewSet):
