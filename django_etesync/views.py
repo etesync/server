@@ -309,7 +309,8 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
     def get_encryption_key(self, salt):
         key = nacl.hash.blake2b(settings.SECRET_KEY.encode(), encoder=nacl.encoding.RawEncoder)
-        return nacl.hash.blake2b(b'', key=key, salt=salt, person=b'etesync-auth', encoder=nacl.encoding.RawEncoder)
+        return nacl.hash.blake2b(b'', key=key, salt=salt[:nacl.hash.BLAKE2B_SALTBYTES], person=b'etesync-auth',
+                                 encoder=nacl.encoding.RawEncoder)
 
     def get_queryset(self):
         return User.objects.all()
