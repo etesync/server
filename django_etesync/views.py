@@ -419,7 +419,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
     @action_decorator(detail=False, methods=['POST'])
     def logout(self, request):
         # FIXME: expire the token - we need better token handling - using knox? Something else?
-        return Response({}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({}, status=status.HTTP_200_OK)
 
 
 class TestAuthenticationViewSet(viewsets.ViewSet):
