@@ -422,16 +422,22 @@ class AuthenticationViewSet(viewsets.ViewSet):
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class ResetViewSet(BaseViewSet):
+class TestAuthenticationViewSet(viewsets.ViewSet):
+    authentication_classes = BaseViewSet.authentication_classes
+    permission_classes = BaseViewSet.permission_classes
     allowed_methods = ['POST']
 
-    def post(self, request, *args, **kwargs):
+    def list(self, request):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action_decorator(detail=False, methods=['POST'])
+    def reset(self, request, *args, **kwargs):
         # Only run when in DEBUG mode! It's only used for tests
         if not settings.DEBUG:
             return HttpResponseBadRequest("Only allowed in debug mode.")
 
         # Only allow local users, for extra safety
-        if not getattr(request.user, User.USERNAME_FIELD).endswith('@localhost'):
+        if not getattr(request.user, User.EMAIL_FIELD).endswith('@localhost'):
             return HttpResponseBadRequest("Endpoint not allowed for user.")
 
         # Delete all of the journal data for this user for a clear test env
@@ -440,6 +446,3 @@ class ResetViewSet(BaseViewSet):
         # FIXME: also delete chunk files!!!
 
         return HttpResponse()
-
-
-reset = ResetViewSet.as_view({'post': 'post'})
