@@ -219,12 +219,17 @@ class AuthenticationSignupSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
+        user_data = validated_data.pop('user')
         salt = validated_data.pop('salt')
         pubkey = validated_data.pop('pubkey')
 
         with transaction.atomic():
-            instance = User.objects.create(**validated_data)
+            instance = User.objects.get_or_create(**user_data)
+            if hasattr(instance, 'userinfo'):
+                raise serializers.ValidationError('User already exists')
+
             instance.set_unusable_password()
+            # FIXME: send email verification
 
             models.UserInfo.objects.create(salt=salt, pubkey=pubkey, owner=instance)
 
