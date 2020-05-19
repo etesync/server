@@ -233,6 +233,11 @@ class CollectionItemViewSet(BaseViewSet):
         return Response(ret, headers={'X-EteSync-SToken': new_stoken})
 
     @action_decorator(detail=False, methods=['POST'])
+    def batch(self, request, collection_uid=None):
+        # FIXME: different to transaction slightly
+        return self.transaction(request, collection_uid)
+
+    @action_decorator(detail=False, methods=['POST'])
     def transaction(self, request, collection_uid=None):
         collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
 
