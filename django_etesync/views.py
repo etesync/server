@@ -268,14 +268,14 @@ class CollectionItemViewSet(BaseViewSet):
         if ser_valid and deps_ser_valid:
             try:
                 with transaction.atomic():
-                    collections = serializer.save(collection=collection_object)
+                    items = serializer.save(collection=collection_object)
             except IntegrityError:
                 # FIXME: should return the items with a bad token (including deps) so we don't have to fetch them after
                 content = {'code': 'integrity_error'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
             ret = {
-                "data": [collection.stoken for collection in collections],
+                "data": [item.stoken for item in items],
             }
             return Response(ret, status=status.HTTP_200_OK)
 
