@@ -121,6 +121,7 @@ class CollectionItemSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
+        validate_stoken = self.context.get('validate_stoken', False)
         stoken = validated_data.pop('stoken')
         revision_data = validated_data.pop('content')
         uid = validated_data.pop('uid')
@@ -131,7 +132,7 @@ class CollectionItemSerializer(serializers.ModelSerializer):
             instance, created = Model.objects.get_or_create(uid=uid, defaults=validated_data)
             cur_stoken = instance.stoken if not created else None
 
-            if cur_stoken != stoken:
+            if validate_stoken and cur_stoken != stoken:
                 raise serializers.ValidationError('Wrong stoken. Expected {} got {}'.format(cur_stoken, stoken))
 
             if not created:

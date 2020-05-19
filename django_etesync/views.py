@@ -245,8 +245,36 @@ class CollectionItemViewSet(BaseViewSet):
 
     @action_decorator(detail=False, methods=['POST'])
     def batch(self, request, collection_uid=None):
-        # FIXME: different to transaction slightly
-        return self.transaction(request, collection_uid)
+        cstoken = request.GET.get('cstoken', None)
+        collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
+
+        if cstoken is not None and cstoken != collection_object.cstoken:
+            content = {'code': 'stale_cstoken', 'detail': 'CSToken is too old'}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        items = request.data.get('items')
+        context = self.get_serializer_context()
+        serializer = self.get_serializer_class()(data=items, context=context, many=True)
+
+        if serializer.is_valid():
+            try:
+                with transaction.atomic():
+                    items = serializer.save(collection=collection_object)
+            except IntegrityError:
+                # FIXME: should return the items with a bad token (including deps) so we don't have to fetch them after
+                content = {'code': 'integrity_error'}
+                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+            ret = {
+                "data": [item.stoken for item in items],
+            }
+            return Response(ret, status=status.HTTP_200_OK)
+
+        return Response(
+            {
+                "items": serializer.errors,
+            },
+            status=status.HTTP_400_BAD_REQUEST)
 
     @action_decorator(detail=False, methods=['POST'])
     def transaction(self, request, collection_uid=None):
@@ -260,8 +288,10 @@ class CollectionItemViewSet(BaseViewSet):
         items = request.data.get('items')
         deps = request.data.get('deps', None)
         # FIXME: It should just be one serializer
-        serializer = self.get_serializer_class()(data=items, context=self.get_serializer_context(), many=True)
-        deps_serializer = CollectionItemDepSerializer(data=deps, context=self.get_serializer_context(), many=True)
+        context = self.get_serializer_context()
+        context.update({'validate_stoken': True})
+        serializer = self.get_serializer_class()(data=items, context=context, many=True)
+        deps_serializer = CollectionItemDepSerializer(data=deps, context=context, many=True)
 
         ser_valid = serializer.is_valid()
         deps_ser_valid = (deps is None or deps_serializer.is_valid())
