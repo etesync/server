@@ -123,36 +123,31 @@ class CollectionItemSerializer(serializers.ModelSerializer):
         """Function that's called when this serializer creates an item"""
         stoken = validated_data.pop('stoken')
         revision_data = validated_data.pop('content')
-        instance = self.__class__.Meta.model(**validated_data)
+        uid = validated_data.pop('uid')
+
+        Model = self.__class__.Meta.model
 
         with transaction.atomic():
-            if stoken is not None:
-                raise serializers.ValidationError('Stoken is not None')
+            instance, created = Model.objects.get_or_create(uid=uid, defaults=validated_data)
+            cur_stoken = instance.stoken if not created else None
 
-            instance.save()
+            if cur_stoken != stoken:
+                raise serializers.ValidationError('Wrong stoken. Expected {} got {}'.format(cur_stoken, stoken))
+
+            if not created:
+                # We don't have to use select_for_update here because the unique constraint on current guards against
+                # the race condition. But it's a good idea because it'll lock and wait rather than fail.
+                current_revision = instance.revisions.filter(current=True).select_for_update().first()
+                current_revision.current = None
+                current_revision.save()
 
             process_revisions_for_item(instance, revision_data)
 
         return instance
 
     def update(self, instance, validated_data):
-        """Function that's called when this serializer is meant to update an item"""
-        stoken = validated_data.pop('stoken')
-        revision_data = validated_data.pop('content')
-
-        with transaction.atomic():
-            if stoken != instance.stoken:
-                raise serializers.ValidationError('Wrong stoken. Expected {} got {}'.format(instance.stoken, stoken))
-
-            # We don't have to use select_for_update here because the unique constraint on current guards against
-            # the race condition. But it's a good idea because it'll lock and wait rather than fail.
-            current_revision = instance.revisions.filter(current=True).select_for_update().first()
-            current_revision.current = None
-            current_revision.save()
-
-            process_revisions_for_item(instance, revision_data)
-
-        return instance
+        # We never update, we always update in the create method
+        raise NotImplementedError()
 
 
 class CollectionItemDepSerializer(serializers.ModelSerializer):

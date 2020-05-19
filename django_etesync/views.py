@@ -187,8 +187,10 @@ class CollectionItemViewSet(BaseViewSet):
         # We can't have destroy because we need to get data from the user (in the body) such as hmac.
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+    def update(self, request, collection_uid=None, uid=None):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def partial_update(self, request, collection_uid=None, uid=None):
-        # FIXME: implement, or should it be implemented elsewhere?
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def list(self, request, collection_uid=None):
