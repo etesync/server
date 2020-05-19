@@ -163,11 +163,10 @@ class CollectionItemDepSerializer(serializers.ModelSerializer):
         fields = ('uid', 'stoken')
 
     def validate(self, data):
-        for item_data in data:
-            item = self.__class__.Meta.model.objects.get(uid=item_data['uid'])
-            stoken = item_data['stoken']
-            if item.stoken != stoken:
-                raise serializers.ValidationError('Wrong stoken. Expected {} got {}'.format(item.stoken, stoken))
+        item = self.__class__.Meta.model.objects.get(uid=data['uid'])
+        stoken = data['stoken']
+        if item.stoken != stoken:
+            raise serializers.ValidationError('Wrong stoken. Expected {} got {}'.format(item.stoken, stoken))
 
         return data
 
