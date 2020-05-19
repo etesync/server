@@ -91,10 +91,11 @@ class BaseViewSet(viewsets.ModelViewSet):
         else:
             cstoken = None
 
+        queryset = queryset[:limit]
         new_cstoken_id = queryset.aggregate(cstoken_id=Max(cstoken_id_field))['cstoken_id']
         new_cstoken = CollectionItemRevision.objects.get(id=new_cstoken_id).uid if new_cstoken_id is not None else cstoken
 
-        return queryset[:limit], new_cstoken
+        return queryset, new_cstoken
 
 
 class CollectionViewSet(BaseViewSet):
