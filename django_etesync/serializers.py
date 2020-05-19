@@ -155,6 +155,23 @@ class CollectionItemSerializer(serializers.ModelSerializer):
         return instance
 
 
+class CollectionItemDepSerializer(serializers.ModelSerializer):
+    stoken = serializers.CharField()
+
+    class Meta:
+        model = models.CollectionItem
+        fields = ('uid', 'stoken')
+
+    def validate(self, data):
+        for item_data in data:
+            item = self.__class__.Meta.model.objects.get(uid=item_data['uid'])
+            stoken = item_data['stoken']
+            if item.stoken != stoken:
+                raise serializers.ValidationError('Wrong stoken. Expected {} got {}'.format(item.stoken, stoken))
+
+        return data
+
+
 class CollectionSerializer(serializers.ModelSerializer):
     encryptionKey = CollectionEncryptionKeyField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')

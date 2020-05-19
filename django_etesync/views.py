@@ -43,6 +43,7 @@ from .serializers import (
         AuthenticationLoginInnerSerializer,
         CollectionSerializer,
         CollectionItemSerializer,
+        CollectionItemDepSerializer,
         CollectionItemRevisionSerializer,
         CollectionItemChunkSerializer,
         UserSerializer,
@@ -234,15 +235,15 @@ class CollectionItemViewSet(BaseViewSet):
         collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
 
         items = request.data.get('items')
-        # FIXME: deps should actually be just pairs of uid and stoken
         deps = request.data.get('deps', None)
         serializer = self.get_serializer_class()(data=items, context=self.get_serializer_context(), many=True)
-        deps_serializer = self.get_serializer_class()(data=deps, context=self.get_serializer_context(), many=True)
+        deps_serializer = CollectionItemDepSerializer(data=deps, context=self.get_serializer_context(), many=True)
         if serializer.is_valid() and (deps is None or deps_serializer.is_valid()):
             try:
                 with transaction.atomic():
                     collections = serializer.save(collection=collection_object)
             except IntegrityError:
+                # FIXME: should return the items with a bad token (including deps) so we don't have to fetch them after
                 content = {'code': 'integrity_error'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
