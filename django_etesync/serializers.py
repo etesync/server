@@ -112,18 +112,23 @@ class CollectionItemRevisionSerializer(serializers.ModelSerializer):
 
 class CollectionItemSerializer(serializers.ModelSerializer):
     encryptionKey = BinaryBase64Field()
+    stoken = serializers.CharField(allow_null=True)
     content = CollectionItemRevisionSerializer(many=False)
 
     class Meta:
         model = models.CollectionItem
-        fields = ('uid', 'version', 'encryptionKey', 'content')
+        fields = ('uid', 'version', 'encryptionKey', 'content', 'stoken')
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
+        stoken = validated_data.pop('stoken')
         revision_data = validated_data.pop('content')
         instance = self.__class__.Meta.model(**validated_data)
 
         with transaction.atomic():
+            if stoken is not None:
+                raise serializers.ValidationError('Stoken is not None')
+
             instance.save()
 
             process_revisions_for_item(instance, revision_data)
@@ -132,9 +137,13 @@ class CollectionItemSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Function that's called when this serializer is meant to update an item"""
+        stoken = validated_data.pop('stoken')
         revision_data = validated_data.pop('content')
 
         with transaction.atomic():
+            if stoken != instance.stoken:
+                raise serializers.ValidationError('Wrong stoken. Expected {} got {}'.format(instance.stoken, stoken))
+
             # We don't have to use select_for_update here because the unique constraint on current guards against
             # the race condition. But it's a good idea because it'll lock and wait rather than fail.
             current_revision = instance.revisions.filter(current=True).select_for_update().first()
@@ -149,7 +158,7 @@ class CollectionItemSerializer(serializers.ModelSerializer):
 class CollectionSerializer(serializers.ModelSerializer):
     encryptionKey = CollectionEncryptionKeyField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
-    stoken = serializers.CharField(read_only=True)
+    stoken = serializers.CharField(allow_null=True)
     content = CollectionItemRevisionSerializer(many=False)
 
     class Meta:
@@ -164,11 +173,15 @@ class CollectionSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
+        stoken = validated_data.pop('stoken')
         revision_data = validated_data.pop('content')
         encryption_key = validated_data.pop('encryptionKey')
         instance = self.__class__.Meta.model(**validated_data)
 
         with transaction.atomic():
+            if stoken is not None:
+                raise serializers.ValidationError('Stoken is not None')
+
             instance.save()
             main_item = models.CollectionItem.objects.create(
                 uid=None, encryptionKey=None, version=instance.version, collection=instance)
@@ -185,9 +198,13 @@ class CollectionSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Function that's called when this serializer is meant to update an item"""
+        stoken = validated_data.pop('stoken')
         revision_data = validated_data.pop('content')
 
         with transaction.atomic():
+            if stoken != instance.stoken:
+                raise serializers.ValidationError('Wrong stoken. Expected {} got {}'.format(instance.stoken, stoken))
+
             main_item = instance.main_item
             # We don't have to use select_for_update here because the unique constraint on current guards against
             # the race condition. But it's a good idea because it'll lock and wait rather than fail.
