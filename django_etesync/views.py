@@ -56,7 +56,7 @@ User = get_user_model()
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = tuple(app_settings.API_AUTHENTICATORS)
     permission_classes = tuple(app_settings.API_PERMISSIONS)
-    stoken_id_field = None
+    cstoken_id_field = None
 
     def get_serializer_class(self):
         serializer_class = self.serializer_class
@@ -70,32 +70,32 @@ class BaseViewSet(viewsets.ModelViewSet):
         user = self.request.user
         return queryset.filter(members__user=user)
 
-    def get_stoken_rev(self, request):
-        stoken = request.GET.get('stoken', None)
+    def get_cstoken_rev(self, request):
+        cstoken = request.GET.get('cstoken', None)
 
-        if stoken is not None:
-            return get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken)
+        if cstoken is not None:
+            return get_object_or_404(CollectionItemRevision.objects.all(), uid=cstoken)
 
         return None
 
-    def filter_by_stoken_and_limit(self, request, queryset):
+    def filter_by_cstoken_and_limit(self, request, queryset):
         limit = int(request.GET.get('limit', 50))
 
-        stoken_id_field = self.stoken_id_field + '__id'
+        cstoken_id_field = self.cstoken_id_field + '__id'
 
-        stoken_rev = self.get_stoken_rev(request)
-        if stoken_rev is not None:
-            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken_rev.uid)
-            filter_by = {stoken_id_field + '__gt': last_rev.id}
+        cstoken_rev = self.get_cstoken_rev(request)
+        if cstoken_rev is not None:
+            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=cstoken_rev.uid)
+            filter_by = {cstoken_id_field + '__gt': last_rev.id}
             queryset = queryset.filter(**filter_by)
-            stoken = stoken_rev.uid
+            cstoken = cstoken_rev.uid
         else:
-            stoken = None
+            cstoken = None
 
-        new_stoken_id = queryset.aggregate(stoken_id=Max(stoken_id_field))['stoken_id']
-        new_stoken = CollectionItemRevision.objects.get(id=new_stoken_id).uid if new_stoken_id is not None else stoken
+        new_cstoken_id = queryset.aggregate(cstoken_id=Max(cstoken_id_field))['cstoken_id']
+        new_cstoken = CollectionItemRevision.objects.get(id=new_cstoken_id).uid if new_cstoken_id is not None else cstoken
 
-        return queryset[:limit], new_stoken
+        return queryset[:limit], new_cstoken
 
 
 class CollectionViewSet(BaseViewSet):
@@ -104,7 +104,7 @@ class CollectionViewSet(BaseViewSet):
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
     lookup_field = 'uid'
-    stoken_id_field = 'items__revisions'
+    cstoken_id_field = 'items__revisions'
 
     def get_queryset(self, queryset=None):
         if queryset is None:
@@ -139,14 +139,14 @@ class CollectionViewSet(BaseViewSet):
 
     def list(self, request):
         queryset = self.get_queryset()
-        queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
+        queryset, new_cstoken = self.filter_by_cstoken_and_limit(request, queryset)
 
         serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
 
         ret = {
             'data': serializer.data,
         }
-        return Response(ret, headers={'X-EteSync-SToken': new_stoken})
+        return Response(ret, headers={'X-EteSync-SToken': new_cstoken})
 
 
 class CollectionItemViewSet(BaseViewSet):
@@ -155,7 +155,7 @@ class CollectionItemViewSet(BaseViewSet):
     queryset = CollectionItem.objects.all()
     serializer_class = CollectionItemSerializer
     lookup_field = 'uid'
-    stoken_id_field = 'revisions'
+    cstoken_id_field = 'revisions'
 
     def get_queryset(self):
         collection_uid = self.kwargs['collection_uid']
@@ -206,14 +206,14 @@ class CollectionItemViewSet(BaseViewSet):
 
     def list(self, request, collection_uid=None):
         queryset = self.get_queryset()
-        queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
+        queryset, new_cstoken = self.filter_by_cstoken_and_limit(request, queryset)
 
         serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
 
         ret = {
             'data': serializer.data,
         }
-        return Response(ret, headers={'X-EteSync-SToken': new_stoken})
+        return Response(ret, headers={'X-EteSync-SToken': new_cstoken})
 
     @action_decorator(detail=True, methods=['GET'])
     def revision(self, request, collection_uid=None, uid=None):
@@ -234,14 +234,14 @@ class CollectionItemViewSet(BaseViewSet):
         if isinstance(request.data, list):
             queryset = queryset.filter(uid__in=request.data)
 
-        queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
+        queryset, new_cstoken = self.filter_by_cstoken_and_limit(request, queryset)
 
         serializer = self.get_serializer_class()(queryset, context=self.get_serializer_context(), many=True)
 
         ret = {
             'data': serializer.data,
         }
-        return Response(ret, headers={'X-EteSync-SToken': new_stoken})
+        return Response(ret, headers={'X-EteSync-SToken': new_cstoken})
 
     @action_decorator(detail=False, methods=['POST'])
     def batch(self, request, collection_uid=None):
@@ -250,11 +250,11 @@ class CollectionItemViewSet(BaseViewSet):
 
     @action_decorator(detail=False, methods=['POST'])
     def transaction(self, request, collection_uid=None):
-        stoken = request.GET.get('stoken', None)
+        cstoken = request.GET.get('cstoken', None)
         collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
 
-        if stoken is not None and stoken != collection_object.stoken:
-            content = {'code': 'stale_stoken', 'detail': 'Stoken is too old'}
+        if cstoken is not None and cstoken != collection_object.cstoken:
+            content = {'code': 'stale_cstoken', 'detail': 'CSToken is too old'}
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         items = request.data.get('items')

@@ -169,12 +169,13 @@ class CollectionItemDepSerializer(serializers.ModelSerializer):
 class CollectionSerializer(serializers.ModelSerializer):
     encryptionKey = CollectionEncryptionKeyField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
+    cstoken = serializers.CharField(read_only=True)
     stoken = serializers.CharField(allow_null=True)
     content = CollectionItemRevisionSerializer(many=False)
 
     class Meta:
         model = models.Collection
-        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'content', 'stoken')
+        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'content', 'cstoken', 'stoken')
 
     def get_access_level_from_context(self, obj):
         request = self.context.get('request', None)
