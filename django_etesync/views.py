@@ -85,8 +85,7 @@ class BaseViewSet(viewsets.ModelViewSet):
 
         cstoken_rev = self.get_cstoken_rev(request)
         if cstoken_rev is not None:
-            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=cstoken_rev.uid)
-            filter_by = {cstoken_id_field + '__gt': last_rev.id}
+            filter_by = {cstoken_id_field + '__gt': cstoken_rev.id}
             queryset = queryset.filter(**filter_by)
             cstoken = cstoken_rev.uid
         else:
