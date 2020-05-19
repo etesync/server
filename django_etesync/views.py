@@ -236,9 +236,13 @@ class CollectionItemViewSet(BaseViewSet):
 
         items = request.data.get('items')
         deps = request.data.get('deps', None)
+        # FIXME: It should just be one serializer
         serializer = self.get_serializer_class()(data=items, context=self.get_serializer_context(), many=True)
         deps_serializer = CollectionItemDepSerializer(data=deps, context=self.get_serializer_context(), many=True)
-        if serializer.is_valid() and (deps is None or deps_serializer.is_valid()):
+
+        ser_valid = serializer.is_valid()
+        deps_ser_valid = (deps is None or deps_serializer.is_valid())
+        if ser_valid and deps_ser_valid:
             try:
                 with transaction.atomic():
                     collections = serializer.save(collection=collection_object)
