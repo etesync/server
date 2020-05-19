@@ -167,6 +167,14 @@ class CollectionItemDepSerializer(serializers.ModelSerializer):
         return data
 
 
+class CollectionItemBulkGetSerializer(serializers.ModelSerializer):
+    stoken = serializers.CharField(required=False)
+
+    class Meta:
+        model = models.CollectionItem
+        fields = ('uid', 'stoken')
+
+
 class CollectionSerializer(serializers.ModelSerializer):
     encryptionKey = CollectionEncryptionKeyField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
