@@ -261,7 +261,7 @@ class CollectionItemViewSet(BaseViewSet):
             ret = {
                 "data": [collection.stoken for collection in collections],
             }
-            return Response(ret, status=status.HTTP_201_CREATED)
+            return Response(ret, status=status.HTTP_200_OK)
 
         return Response(
             {
