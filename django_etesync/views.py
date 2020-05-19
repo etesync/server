@@ -70,16 +70,27 @@ class BaseViewSet(viewsets.ModelViewSet):
         user = self.request.user
         return queryset.filter(members__user=user)
 
-    def filter_by_stoken_and_limit(self, request, queryset):
+    def get_stoken_rev(self, request):
         stoken = request.GET.get('stoken', None)
+
+        if stoken is not None:
+            return get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken)
+
+        return None
+
+    def filter_by_stoken_and_limit(self, request, queryset):
         limit = int(request.GET.get('limit', 50))
 
         stoken_id_field = self.stoken_id_field + '__id'
 
-        if stoken is not None:
-            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken)
+        stoken_rev = self.get_stoken_rev(request)
+        if stoken_rev is not None:
+            last_rev = get_object_or_404(CollectionItemRevision.objects.all(), uid=stoken_rev.uid)
             filter_by = {stoken_id_field + '__gt': last_rev.id}
             queryset = queryset.filter(**filter_by)
+            stoken = stoken_rev.uid
+        else:
+            stoken = None
 
         new_stoken_id = queryset.aggregate(stoken_id=Max(stoken_id_field))['stoken_id']
         new_stoken = CollectionItemRevision.objects.get(id=new_stoken_id).uid if new_stoken_id is not None else stoken
@@ -239,7 +250,12 @@ class CollectionItemViewSet(BaseViewSet):
 
     @action_decorator(detail=False, methods=['POST'])
     def transaction(self, request, collection_uid=None):
+        stoken = request.GET.get('stoken', None)
         collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
+
+        if stoken is not None and stoken != collection_object.stoken:
+            content = {'code': 'stale_stoken', 'detail': 'Stoken is too old'}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         items = request.data.get('items')
         deps = request.data.get('deps', None)
