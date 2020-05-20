@@ -268,17 +268,19 @@ class CollectionInvitationSerializer(serializers.ModelSerializer):
         slug_field=User.USERNAME_FIELD,
         queryset=User.objects
     )
-    collection = serializers.SlugRelatedField(
-        source='fromMember__collection',
-        slug_field='uid',
-        read_only=True,
-    )
-    fromPubkey = BinaryBase64Field(source='fromMember__user__userinfo__pubkey', read_only=True)
+    collection = serializers.SerializerMethodField('get_collection')
+    fromPubkey = serializers.SerializerMethodField('get_from_pubkey')
     signedEncryptionKey = BinaryBase64Field()
 
     class Meta:
         model = models.CollectionInvitation
         fields = ('username', 'uid', 'collection', 'signedEncryptionKey', 'accessLevel', 'fromPubkey', 'version')
+
+    def get_collection(self, obj):
+        return obj.collection.uid
+
+    def get_from_pubkey(self, obj):
+        return b64encode(obj.fromMember.user.userinfo.pubkey)
 
     def create(self, validated_data):
         collection = self.context['collection']
@@ -299,6 +301,30 @@ class CollectionInvitationSerializer(serializers.ModelSerializer):
             instance.save()
 
         return instance
+
+
+class InvitationAcceptSerializer(serializers.Serializer):
+    encryptionKey = BinaryBase64Field()
+
+    def create(self, validated_data):
+
+        with transaction.atomic():
+            invitation = self.context['invitation']
+            encryption_key = validated_data.get('encryptionKey')
+
+            member = models.CollectionMember.objects.create(
+                    collection=invitation.collection,
+                    user=invitation.user,
+                    accessLevel=invitation.accessLevel,
+                    encryptionKey=encryption_key,
+                    )
+
+            invitation.delete()
+
+            return member
+
+    def update(self, instance, validated_data):
+        raise NotImplementedError()
 
 
 class UserSerializer(serializers.ModelSerializer):

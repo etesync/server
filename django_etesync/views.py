@@ -49,6 +49,7 @@ from .serializers import (
         CollectionItemChunkSerializer,
         CollectionMemberSerializer,
         CollectionInvitationSerializer,
+        InvitationAcceptSerializer,
         UserSerializer,
     )
 
@@ -454,6 +455,31 @@ class CollectionInvitationViewSet(BaseViewSet):
             queryset = type(self).queryset
 
         return queryset.filter(fromMember__collection=collection)
+
+
+class InvitationIncomingViewSet(BaseViewSet):
+    allowed_methods = ['GET', 'DELETE']
+    queryset = CollectionInvitation.objects.all()
+    serializer_class = CollectionInvitationSerializer
+    lookup_field = 'uid'
+    lookup_url_kwarg = 'invitation_uid'
+
+    def get_queryset(self, queryset=None):
+        if queryset is None:
+            queryset = type(self).queryset
+
+        return queryset.filter(user=self.request.user)
+
+    @action_decorator(detail=True, allowed_methods=['POST'], methods=['POST'])
+    def accept(self, request, invitation_uid=None):
+        invitation = get_object_or_404(self.get_queryset(), uid=invitation_uid)
+        context = self.get_serializer_context()
+        context.update({'invitation': invitation})
+
+        serializer = InvitationAcceptSerializer(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class AuthenticationViewSet(viewsets.ViewSet):

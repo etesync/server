@@ -150,6 +150,7 @@ class CollectionInvitation(models.Model):
     version = models.PositiveSmallIntegerField(default=1)
     fromMember = models.ForeignKey(CollectionMember, on_delete=models.CASCADE)
     # FIXME: make sure to delete all invitations for the same collection once one is accepted
+    # Make sure to not allow invitations if already a member
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='incoming_invitations', on_delete=models.CASCADE)
     signedEncryptionKey = models.BinaryField(editable=False, blank=False, null=False)
@@ -164,6 +165,10 @@ class CollectionInvitation(models.Model):
 
     def __str__(self):
         return '{} {}'.format(self.fromMember.collection.uid, self.user)
+
+    @cached_property
+    def collection(self):
+        return self.fromMember.collection
 
 
 class UserInfo(models.Model):
