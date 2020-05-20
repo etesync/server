@@ -262,6 +262,45 @@ class CollectionMemberSerializer(serializers.ModelSerializer):
         return instance
 
 
+class CollectionInvitationSerializer(serializers.ModelSerializer):
+    username = serializers.SlugRelatedField(
+        source='user',
+        slug_field=User.USERNAME_FIELD,
+        queryset=User.objects
+    )
+    collection = serializers.SlugRelatedField(
+        source='fromMember__collection',
+        slug_field='uid',
+        read_only=True,
+    )
+    fromPubkey = BinaryBase64Field(source='fromMember__user__userinfo__pubkey', read_only=True)
+    signedEncryptionKey = BinaryBase64Field()
+
+    class Meta:
+        model = models.CollectionInvitation
+        fields = ('username', 'uid', 'collection', 'signedEncryptionKey', 'accessLevel', 'fromPubkey', 'version')
+
+    def create(self, validated_data):
+        collection = self.context['collection']
+        request = self.context['request']
+
+        if request.user == validated_data.get('user'):
+            raise serializers.ValidationError('Inviting yourself is not allowed')
+
+        member = collection.members.get(user=request.user)
+
+        with transaction.atomic():
+            return type(self).Meta.model.objects.create(**validated_data, fromMember=member)
+
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            instance.accessLevel = validated_data.pop('accessLevel')
+            instance.signedEncryptionKey = validated_data.pop('signedEncryptionKey')
+            instance.save()
+
+        return instance
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

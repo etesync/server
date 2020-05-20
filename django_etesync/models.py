@@ -144,6 +144,28 @@ class CollectionMember(models.Model):
         return '{} {}'.format(self.collection.uid, self.user)
 
 
+class CollectionInvitation(models.Model):
+    uid = models.CharField(db_index=True, blank=False, null=False,
+                           max_length=44, validators=[Base64Url256BitValidator])
+    version = models.PositiveSmallIntegerField(default=1)
+    fromMember = models.ForeignKey(CollectionMember, on_delete=models.CASCADE)
+    # FIXME: make sure to delete all invitations for the same collection once one is accepted
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='incoming_invitations', on_delete=models.CASCADE)
+    signedEncryptionKey = models.BinaryField(editable=False, blank=False, null=False)
+    accessLevel = models.CharField(
+        max_length=3,
+        choices=AccessLevels.choices,
+        default=AccessLevels.READ_ONLY,
+    )
+
+    class Meta:
+        unique_together = ('user', 'fromMember')
+
+    def __str__(self):
+        return '{} {}'.format(self.fromMember.collection.uid, self.user)
+
+
 class UserInfo(models.Model):
     owner = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
     version = models.PositiveSmallIntegerField(default=1)

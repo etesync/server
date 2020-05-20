@@ -34,7 +34,7 @@ import nacl.secret
 import nacl.hash
 
 from . import app_settings, permissions
-from .models import Collection, CollectionItem, CollectionItemRevision, CollectionMember
+from .models import Collection, CollectionItem, CollectionItemRevision, CollectionMember, CollectionInvitation
 from .serializers import (
         b64encode,
         AuthenticationSignupSerializer,
@@ -48,6 +48,7 @@ from .serializers import (
         CollectionItemRevisionSerializer,
         CollectionItemChunkSerializer,
         CollectionMemberSerializer,
+        CollectionInvitationSerializer,
         UserSerializer,
     )
 
@@ -423,6 +424,38 @@ class CollectionMemberViewSet(BaseViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
+class CollectionInvitationViewSet(BaseViewSet):
+    allowed_methods = ['GET', 'POST', 'PUT', 'DELETE']
+    permission_classes = BaseViewSet.permission_classes + (permissions.IsCollectionAdmin, )
+    queryset = CollectionInvitation.objects.all()
+    serializer_class = CollectionInvitationSerializer
+    lookup_field = 'uid'
+    lookup_url_kwarg = 'invitation_uid'
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        collection_uid = self.kwargs['collection_uid']
+        try:
+            collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
+        except Collection.DoesNotExist:
+            raise Http404('Collection does not exist')
+
+        context.update({'request': self.request, 'collection': collection})
+        return context
+
+    def get_queryset(self, queryset=None):
+        collection_uid = self.kwargs['collection_uid']
+        try:
+            collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
+        except Collection.DoesNotExist:
+            raise Http404('Collection does not exist')
+
+        if queryset is None:
+            queryset = type(self).queryset
+
+        return queryset.filter(fromMember__collection=collection)
+
+
 class AuthenticationViewSet(viewsets.ViewSet):
     allowed_methods = ['POST']
 
@@ -561,6 +594,7 @@ class TestAuthenticationViewSet(viewsets.ViewSet):
 
         # Delete all of the journal data for this user for a clear test env
         request.user.collection_set.all().delete()
+        request.user.incoming_invitations.all().delete()
 
         # FIXME: also delete chunk files!!!
 
