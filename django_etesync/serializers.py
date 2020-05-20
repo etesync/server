@@ -211,7 +211,7 @@ class CollectionSerializer(serializers.ModelSerializer):
 
             models.CollectionMember(collection=instance,
                                     user=validated_data.get('owner'),
-                                    accessLevel=models.CollectionMember.AccessLevels.ADMIN,
+                                    accessLevel=models.AccessLevels.ADMIN,
                                     encryptionKey=encryption_key,
                                     ).save()
 
@@ -234,6 +234,30 @@ class CollectionSerializer(serializers.ModelSerializer):
             current_revision.save()
 
             process_revisions_for_item(main_item, revision_data)
+
+        return instance
+
+
+class CollectionMemberSerializer(serializers.ModelSerializer):
+    username = serializers.SlugRelatedField(
+        source='user',
+        slug_field=User.USERNAME_FIELD,
+        queryset=User.objects
+    )
+    encryptionKey = BinaryBase64Field()
+
+    class Meta:
+        model = models.CollectionMember
+        fields = ('username', 'encryptionKey', 'accessLevel')
+
+    def create(self, validated_data):
+        raise NotImplementedError()
+
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            # We only allow updating accessLevel
+            instance.accessLevel = validated_data.pop('accessLevel')
+            instance.save()
 
         return instance
 

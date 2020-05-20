@@ -33,8 +33,8 @@ import nacl.signing
 import nacl.secret
 import nacl.hash
 
-from . import app_settings
-from .models import Collection, CollectionItem, CollectionItemRevision
+from . import app_settings, permissions
+from .models import Collection, CollectionItem, CollectionItemRevision, CollectionMember
 from .serializers import (
         b64encode,
         AuthenticationSignupSerializer,
@@ -47,6 +47,7 @@ from .serializers import (
         CollectionItemDepSerializer,
         CollectionItemRevisionSerializer,
         CollectionItemChunkSerializer,
+        CollectionMemberSerializer,
         UserSerializer,
     )
 
@@ -393,6 +394,33 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
 
         # FIXME: DO NOT USE! Use django-send file or etc instead.
         return serve(request, basename, dirname)
+
+
+class CollectionMemberViewSet(BaseViewSet):
+    allowed_methods = ['GET', 'PUT', 'DELETE']
+    permission_classes = BaseViewSet.permission_classes + (permissions.IsCollectionAdmin, )
+    queryset = CollectionMember.objects.all()
+    serializer_class = CollectionMemberSerializer
+    lookup_field = 'user__' + User.USERNAME_FIELD
+    lookup_url_kwarg = 'username'
+
+    # FIXME: need to make sure that there's always an admin, and maybe also don't let an owner remove adm access
+    # (if we want to transfer, we need to do that specifically)
+
+    def get_queryset(self, queryset=None):
+        collection_uid = self.kwargs['collection_uid']
+        try:
+            collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
+        except Collection.DoesNotExist:
+            raise Http404('Collection does not exist')
+
+        if queryset is None:
+            queryset = type(self).queryset
+
+        return queryset.filter(collection=collection)
+
+    def create(self, request):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class AuthenticationViewSet(viewsets.ViewSet):
