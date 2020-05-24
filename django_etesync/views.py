@@ -34,7 +34,7 @@ import nacl.secret
 import nacl.hash
 
 from . import app_settings, permissions
-from .models import Collection, CollectionItem, CollectionItemRevision, CollectionMember, CollectionInvitation
+from .models import Collection, CollectionItem, CollectionItemRevision, CollectionMember, CollectionInvitation, UserInfo
 from .serializers import (
         b64encode,
         AuthenticationSignupSerializer,
@@ -50,6 +50,7 @@ from .serializers import (
         CollectionMemberSerializer,
         CollectionInvitationSerializer,
         InvitationAcceptSerializer,
+        UserInfoPubkeySerializer,
         UserSerializer,
     )
 
@@ -455,6 +456,14 @@ class CollectionInvitationViewSet(BaseViewSet):
             queryset = type(self).queryset
 
         return queryset.filter(fromMember__collection=collection)
+
+    @action_decorator(detail=False, allowed_methods=['GET'], methods=['GET'])
+    def fetch_user_profile(self, request, collection_uid=None):
+        username = request.GET.get('username')
+        kwargs = {'owner__' + User.USERNAME_FIELD: username}
+        user_info = get_object_or_404(UserInfo.objects.all(), **kwargs)
+        serializer = UserInfoPubkeySerializer(user_info)
+        return Response(serializer.data)
 
 
 class InvitationIncomingViewSet(BaseViewSet):
