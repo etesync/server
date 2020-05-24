@@ -282,12 +282,15 @@ class CollectionInvitationSerializer(serializers.ModelSerializer):
     def get_from_pubkey(self, obj):
         return b64encode(obj.fromMember.user.userinfo.pubkey)
 
+    def validate_user(self, value):
+        request = self.context['request']
+
+        if request.user == value:
+            raise serializers.ValidationError('Inviting yourself is not allowed')
+
     def create(self, validated_data):
         collection = self.context['collection']
         request = self.context['request']
-
-        if request.user == validated_data.get('user'):
-            raise serializers.ValidationError('Inviting yourself is not allowed')
 
         member = collection.members.get(user=request.user)
 
