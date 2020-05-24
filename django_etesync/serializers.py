@@ -313,11 +313,11 @@ class InvitationAcceptSerializer(serializers.Serializer):
             encryption_key = validated_data.get('encryptionKey')
 
             member = models.CollectionMember.objects.create(
-                    collection=invitation.collection,
-                    user=invitation.user,
-                    accessLevel=invitation.accessLevel,
-                    encryptionKey=encryption_key,
-                    )
+                collection=invitation.collection,
+                user=invitation.user,
+                accessLevel=invitation.accessLevel,
+                encryptionKey=encryption_key,
+                )
 
             invitation.delete()
 
