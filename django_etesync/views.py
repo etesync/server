@@ -16,6 +16,7 @@ import json
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 from django.db import transaction, IntegrityError
 from django.db.models import Max
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
@@ -426,9 +427,9 @@ class CollectionMemberViewSet(BaseViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-class CollectionInvitationViewSet(BaseViewSet):
+class InvitationOutgoingViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST', 'PUT', 'DELETE']
-    permission_classes = BaseViewSet.permission_classes + (permissions.IsCollectionAdmin, )
+    permission_classes = BaseViewSet.permission_classes
     queryset = CollectionInvitation.objects.all()
     serializer_class = CollectionInvitationSerializer
     lookup_field = 'uid'
@@ -436,29 +437,36 @@ class CollectionInvitationViewSet(BaseViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        collection_uid = self.kwargs['collection_uid']
-        try:
-            collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
-        except Collection.DoesNotExist:
-            raise Http404('Collection does not exist')
-
-        context.update({'request': self.request, 'collection': collection})
+        context.update({'request': self.request})
         return context
 
     def get_queryset(self, queryset=None):
-        collection_uid = self.kwargs['collection_uid']
-        try:
-            collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
-        except Collection.DoesNotExist:
-            raise Http404('Collection does not exist')
-
         if queryset is None:
             queryset = type(self).queryset
 
-        return queryset.filter(fromMember__collection=collection)
+        return queryset.filter(fromMember__user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
+        if serializer.is_valid():
+            collection_uid = serializer.validated_data.get('collection', {}).get('uid')
+
+            try:
+                collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
+            except Collection.DoesNotExist:
+                raise Http404('Collection does not exist')
+
+            if not permissions.is_collection_admin(collection, request.user):
+                raise PermissionDenied('User is not an admin of this collection')
+
+            serializer.save(collection=collection)
+
+            return Response({}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action_decorator(detail=False, allowed_methods=['GET'], methods=['GET'])
-    def fetch_user_profile(self, request, collection_uid=None):
+    def fetch_user_profile(self, request):
         username = request.GET.get('username')
         kwargs = {'owner__' + User.USERNAME_FIELD: username}
         user_info = get_object_or_404(UserInfo.objects.all(), **kwargs)

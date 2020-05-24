@@ -16,6 +16,11 @@ from rest_framework import permissions
 from django_etesync.models import Collection, AccessLevels
 
 
+def is_collection_admin(collection, user):
+    member = collection.members.filter(user=user).first()
+    return (member is not None) and (member.accessLevel == AccessLevels.ADMIN)
+
+
 class IsCollectionAdmin(permissions.BasePermission):
     """
     Custom permission to only allow owners of a collection to view it
@@ -27,8 +32,7 @@ class IsCollectionAdmin(permissions.BasePermission):
         collection_uid = view.kwargs['collection_uid']
         try:
             collection = view.get_collection_queryset().get(uid=collection_uid)
-            member = collection.members.filter(user=request.user).first()
-            return (member is not None) and (member.accessLevel == AccessLevels.ADMIN)
+            return is_collection_admin(collection, request.user)
         except Collection.DoesNotExist:
             # If the collection does not exist, we want to 404 later, not permission denied.
             return True
