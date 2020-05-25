@@ -34,6 +34,8 @@ from django.views.generic import TemplateView
 
 from rest_framework_nested import routers
 from rest_framework.authtoken import views as token_views
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from journal import views
 
@@ -47,11 +49,17 @@ journals_router.register(r'members', views.MembersViewSet, basename='journal-mem
 journals_router.register(r'entries', views.EntryViewSet, basename='journal-entries')
 
 
+@api_view(['POST'])
+def nop_view(request):
+    return Response({})
+
+
 urlpatterns = [
     re_path(r'^api/v1/', include(router.urls)),
     re_path(r'^api/v1/', include(journals_router.urls)),
     re_path(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     re_path(r'^api-token-auth/', token_views.obtain_auth_token),
+    path('api/logout/', nop_view),
     path('admin/', admin.site.urls),
     path('', TemplateView.as_view(template_name='success.html')),
 ]
