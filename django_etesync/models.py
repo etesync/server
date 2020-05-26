@@ -20,13 +20,13 @@ from django.core.validators import RegexValidator
 from django.utils.functional import cached_property
 
 
-Base64Url256BitValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{43}$', message='Expected a 256bit base64url.')
+Base64Url256BitlValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{42,43}$', message='Expected a base64url.')
 UidValidator = RegexValidator(regex=r'^[a-zA-Z0-9]*$', message='Not a valid UID')
 
 
 class Collection(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
-                           max_length=44, validators=[UidValidator])
+                           max_length=43, validators=[UidValidator])
     version = models.PositiveSmallIntegerField()
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
@@ -60,7 +60,7 @@ class Collection(models.Model):
 
 class CollectionItem(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=True,
-                           max_length=44, validators=[UidValidator])
+                           max_length=43, validators=[UidValidator])
     collection = models.ForeignKey(Collection, related_name='items', on_delete=models.CASCADE)
     version = models.PositiveSmallIntegerField()
     encryptionKey = models.BinaryField(editable=True, blank=False, null=True)
@@ -90,7 +90,7 @@ def chunk_directory_path(instance, filename):
 
 class CollectionItemChunk(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
-                           max_length=44, validators=[Base64Url256BitValidator])
+                           max_length=43, validators=[Base64Url256BitlValidator])
     item = models.ForeignKey(CollectionItem, related_name='chunks', on_delete=models.CASCADE)
     chunkFile = models.FileField(upload_to=chunk_directory_path, max_length=150, unique=True)
 
@@ -100,7 +100,7 @@ class CollectionItemChunk(models.Model):
 
 class CollectionItemRevision(models.Model):
     uid = models.CharField(db_index=True, unique=True, blank=False, null=False,
-                           max_length=44, validators=[Base64Url256BitValidator])
+                           max_length=43, validators=[Base64Url256BitlValidator])
     item = models.ForeignKey(CollectionItem, related_name='revisions', on_delete=models.CASCADE)
     meta = models.BinaryField(editable=True, blank=False, null=False)
     current = models.BooleanField(db_index=True, default=True, null=True)
@@ -146,7 +146,7 @@ class CollectionMember(models.Model):
 
 class CollectionInvitation(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
-                           max_length=44, validators=[Base64Url256BitValidator])
+                           max_length=43, validators=[Base64Url256BitlValidator])
     version = models.PositiveSmallIntegerField(default=1)
     fromMember = models.ForeignKey(CollectionMember, on_delete=models.CASCADE)
     # FIXME: make sure to delete all invitations for the same collection once one is accepted
