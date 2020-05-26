@@ -175,6 +175,8 @@ class UserInfo(models.Model):
     owner = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
     version = models.PositiveSmallIntegerField(default=1)
     loginPubkey = models.BinaryField(editable=True, blank=False, null=False)
+    pubkey = models.BinaryField(editable=True, blank=False, null=False)
+    encryptedSeckey = models.BinaryField(editable=True, blank=False, null=False)
     salt = models.BinaryField(editable=True, blank=False, null=False)
 
     def __str__(self):
