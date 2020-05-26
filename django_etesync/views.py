@@ -59,6 +59,24 @@ from .serializers import (
 User = get_user_model()
 
 
+def get_fresh_stoken(obj):
+    try:
+        del obj.main_item
+    except AttributeError:
+        pass
+
+    return obj.stoken
+
+
+def get_fresh_item_stoken(obj):
+    try:
+        del obj.content
+    except AttributeError:
+        pass
+
+    return obj.stoken
+
+
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = tuple(app_settings.API_AUTHENTICATORS)
     permission_classes = tuple(app_settings.API_PERMISSIONS)
@@ -141,16 +159,24 @@ class CollectionViewSet(BaseViewSet):
     def partial_update(self, request, uid=None):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response({'stoken': get_fresh_stoken(instance)})
+
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
         if serializer.is_valid():
             try:
-                serializer.save(owner=self.request.user)
+                instance = serializer.save(owner=self.request.user)
             except IntegrityError:
                 content = {'code': 'integrity_error'}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({}, status=status.HTTP_201_CREATED)
+            return Response({'stoken': get_fresh_stoken(instance)}, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -304,7 +330,7 @@ class CollectionItemViewSet(BaseViewSet):
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
             ret = {
-                "data": [item.stoken for item in items],
+                "data": [get_fresh_item_stoken(item) for item in items],
             }
             return Response(ret, status=status.HTTP_200_OK)
 
@@ -343,7 +369,7 @@ class CollectionItemViewSet(BaseViewSet):
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
             ret = {
-                "data": [item.stoken for item in items],
+                "data": [get_fresh_item_stoken(item) for item in items],
             }
             return Response(ret, status=status.HTTP_200_OK)
 

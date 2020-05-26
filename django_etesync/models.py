@@ -44,7 +44,7 @@ class Collection(models.Model):
     def content(self):
         return self.main_item.content
 
-    @cached_property
+    @property
     def stoken(self):
         return self.main_item.stoken
 
@@ -75,7 +75,7 @@ class CollectionItem(models.Model):
     def content(self):
         return self.revisions.get(current=True)
 
-    @cached_property
+    @property
     def stoken(self):
         return self.content.uid
 
