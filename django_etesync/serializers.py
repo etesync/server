@@ -348,13 +348,11 @@ class UserInfoPubkeySerializer(serializers.ModelSerializer):
 class AuthenticationSignupSerializer(serializers.Serializer):
     user = UserQuerySerializer(many=False)
     salt = BinaryBase64Field()
-    pubkey = BinaryBase64Field()
+    loginPubkey = BinaryBase64Field()
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
         user_data = validated_data.pop('user')
-        salt = validated_data.pop('salt')
-        pubkey = validated_data.pop('pubkey')
 
         with transaction.atomic():
             instance, _ = User.objects.get_or_create(**user_data)
@@ -364,7 +362,7 @@ class AuthenticationSignupSerializer(serializers.Serializer):
             instance.set_unusable_password()
             # FIXME: send email verification
 
-            models.UserInfo.objects.create(salt=salt, pubkey=pubkey, owner=instance)
+            models.UserInfo.objects.create(**validated_data, owner=instance)
 
         return instance
 

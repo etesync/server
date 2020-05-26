@@ -603,7 +603,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
                     content = {'code': 'wrong_host', 'detail': detail}
                     return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-                verify_key = nacl.signing.VerifyKey(user.userinfo.pubkey, encoder=nacl.encoding.RawEncoder)
+                verify_key = nacl.signing.VerifyKey(user.userinfo.loginPubkey, encoder=nacl.encoding.RawEncoder)
                 verify_key.verify(response_raw, signature)
 
                 data = self.login_response_data(user)
