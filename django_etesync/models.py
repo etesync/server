@@ -18,6 +18,7 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.utils.functional import cached_property
+from django.utils.crypto import get_random_string
 
 
 Base64Url256BitlValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{42,43}$', message='Expected a base64url.')
@@ -55,7 +56,7 @@ class Collection(models.Model):
             # FIXME: what is the etag for None? Though if we use the revision for collection it should be shared anyway.
             return None
 
-        return last_revision.uid
+        return last_revision.stoken.uid
 
 
 class CollectionItem(models.Model):
@@ -77,7 +78,7 @@ class CollectionItem(models.Model):
 
     @property
     def stoken(self):
-        return self.content.uid
+        return self.content.stoken.uid
 
 
 def chunk_directory_path(instance, filename):
@@ -98,7 +99,17 @@ class CollectionItemChunk(models.Model):
         return self.uid
 
 
+def generate_stoken_uid():
+    return get_random_string(32, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_')
+
+
+class Stoken(models.Model):
+    uid = models.CharField(db_index=True, unique=True, blank=False, null=False, default=generate_stoken_uid,
+                           max_length=43, validators=[Base64Url256BitlValidator])
+
+
 class CollectionItemRevision(models.Model):
+    stoken = models.OneToOneField(Stoken, on_delete=models.PROTECT)
     uid = models.CharField(db_index=True, unique=True, blank=False, null=False,
                            max_length=43, validators=[Base64Url256BitlValidator])
     item = models.ForeignKey(CollectionItem, related_name='revisions', on_delete=models.CASCADE)

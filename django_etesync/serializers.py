@@ -38,7 +38,9 @@ def process_revisions_for_item(item, revision_data):
             chunk = models.CollectionItemChunk.objects.get(uid=uid)
             chunks_objs.append(chunk)
 
-    revision = models.CollectionItemRevision.objects.create(**revision_data, item=item)
+    stoken = models.Stoken.objects.create()
+
+    revision = models.CollectionItemRevision.objects.create(**revision_data, item=item, stoken=stoken)
     for chunk in chunks_objs:
         models.RevisionChunkRelation.objects.create(chunk=chunk, revision=revision)
     return revision
