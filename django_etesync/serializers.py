@@ -357,7 +357,7 @@ class AuthenticationSignupSerializer(serializers.Serializer):
         pubkey = validated_data.pop('pubkey')
 
         with transaction.atomic():
-            instance = User.objects.get_or_create(**user_data)
+            instance, _ = User.objects.get_or_create(**user_data)
             if hasattr(instance, 'userinfo'):
                 raise serializers.ValidationError('User already exists')
 
