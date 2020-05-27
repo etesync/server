@@ -42,6 +42,7 @@ from .models import (
         CollectionItem,
         CollectionItemRevision,
         CollectionMember,
+        CollectionMemberRemoved,
         CollectionInvitation,
         Stoken,
         UserInfo,
@@ -181,6 +182,15 @@ class CollectionViewSet(BaseViewSet):
             'data': serializer.data,
             'stoken': new_stoken,
         }
+
+        stoken_obj = self.get_stoken_obj(request)
+        if stoken_obj is not None:
+            # FIXME: honour limit? (the limit should be combined for data and this because of stoken)
+            remed = CollectionMemberRemoved.objects.filter(user=request.user, stoken__id__gt=stoken_obj.id) \
+                .values_list('collection__uid', flat=True)
+            if len(remed) > 0:
+                ret['removedMemberships'] = [{'uid': x} for x in remed]
+
         return Response(ret)
 
 
@@ -417,7 +427,8 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
 
 class CollectionMemberViewSet(BaseViewSet):
     allowed_methods = ['GET', 'PUT', 'DELETE']
-    permission_classes = BaseViewSet.permission_classes + (permissions.IsCollectionAdmin, )
+    our_base_permission_classes = BaseViewSet.permission_classes
+    permission_classes = our_base_permission_classes + (permissions.IsCollectionAdmin, )
     queryset = CollectionMember.objects.all()
     serializer_class = CollectionMemberSerializer
     lookup_field = 'user__' + User.USERNAME_FIELD
@@ -440,6 +451,21 @@ class CollectionMemberViewSet(BaseViewSet):
 
     def create(self, request):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    # FIXME: block leaving if we are the last admins - should be deleted / assigned in this case depending if there
+    # are other memebers.
+    def perform_destroy(self, instance):
+        instance.revoke()
+
+    @action_decorator(detail=False, methods=['POST'], permission_classes=our_base_permission_classes)
+    def leave(self, request, collection_uid=None):
+        collection_uid = self.kwargs['collection_uid']
+        col = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
+
+        member = col.members.get(user=request.user)
+        self.perform_destroy(member)
+
+        return Response({})
 
 
 class InvitationOutgoingViewSet(BaseViewSet):

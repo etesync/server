@@ -247,11 +247,10 @@ class CollectionMemberSerializer(serializers.ModelSerializer):
         slug_field=User.USERNAME_FIELD,
         queryset=User.objects
     )
-    encryptionKey = BinaryBase64Field()
 
     class Meta:
         model = models.CollectionMember
-        fields = ('username', 'encryptionKey', 'accessLevel')
+        fields = ('username', 'accessLevel')
 
     def create(self, validated_data):
         raise NotImplementedError()
@@ -323,6 +322,9 @@ class InvitationAcceptSerializer(serializers.Serializer):
                 accessLevel=invitation.accessLevel,
                 encryptionKey=encryption_key,
                 )
+
+            models.CollectionMemberRemoved.objects.filter(
+                user=invitation.user, collection=invitation.collection).delete()
 
             invitation.delete()
 

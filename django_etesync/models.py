@@ -14,7 +14,7 @@
 
 from pathlib import Path
 
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db.models import Q
@@ -151,6 +151,29 @@ class CollectionMember(models.Model):
         choices=AccessLevels.choices,
         default=AccessLevels.READ_ONLY,
     )
+
+    class Meta:
+        unique_together = ('user', 'collection')
+
+    def __str__(self):
+        return '{} {}'.format(self.collection.uid, self.user)
+
+    def revoke(self):
+        with transaction.atomic():
+            CollectionMemberRemoved.objects.update_or_create(
+                collection=self.collection, user=self.user,
+                defaults={
+                    'stoken': Stoken.objects.create(),
+                },
+            )
+
+            self.delete()
+
+
+class CollectionMemberRemoved(models.Model):
+    stoken = models.OneToOneField(Stoken, on_delete=models.PROTECT, null=True)
+    collection = models.ForeignKey(Collection, related_name='removed_members', on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ('user', 'collection')
