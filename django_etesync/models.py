@@ -139,6 +139,7 @@ class AccessLevels(models.TextChoices):
 
 
 class CollectionMember(models.Model):
+    stoken = models.OneToOneField(Stoken, on_delete=models.PROTECT, null=True)
     collection = models.ForeignKey(Collection, related_name='members', on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     encryptionKey = models.BinaryField(editable=True, blank=False, null=False)

@@ -212,6 +212,7 @@ class CollectionSerializer(serializers.ModelSerializer):
             process_revisions_for_item(main_item, revision_data)
 
             models.CollectionMember(collection=instance,
+                                    stoken=models.Stoken.objects.create(),
                                     user=validated_data.get('owner'),
                                     accessLevel=models.AccessLevels.ADMIN,
                                     encryptionKey=encryption_key,
@@ -258,8 +259,11 @@ class CollectionMemberSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         with transaction.atomic():
             # We only allow updating accessLevel
-            instance.accessLevel = validated_data.pop('accessLevel')
-            instance.save()
+            access_level = validated_data.pop('accessLevel')
+            if instance.accessLevel != access_level:
+                instance.stoken = models.Stoken.objects.create()
+                instance.accessLevel = access_level
+                instance.save()
 
         return instance
 
@@ -314,6 +318,7 @@ class InvitationAcceptSerializer(serializers.Serializer):
 
             member = models.CollectionMember.objects.create(
                 collection=invitation.collection,
+                stoken=models.Stoken.objects.create(),
                 user=invitation.user,
                 accessLevel=invitation.accessLevel,
                 encryptionKey=encryption_key,
