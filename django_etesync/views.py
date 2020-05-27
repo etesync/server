@@ -449,6 +449,16 @@ class CollectionMemberViewSet(BaseViewSet):
 
         return queryset.filter(collection=collection)
 
+    def list(self, request, collection_uid=None):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+
+        ret = {
+            'data': serializer.data,
+        }
+
+        return Response(ret)
+
     def create(self, request):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
