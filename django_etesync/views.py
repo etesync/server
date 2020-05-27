@@ -222,22 +222,8 @@ class CollectionItemViewSet(BaseViewSet):
         return context
 
     def create(self, request, collection_uid=None):
-        collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
-
-        # FIXME: change this to also support bulk update, or have another endpoint for that.
-        # See https://www.django-rest-framework.org/api-guide/serializers/#customizing-multiple-update
-        many = isinstance(request.data, list)
-        serializer = self.serializer_class(data=request.data, many=many)
-        if serializer.is_valid():
-            try:
-                serializer.save(collection=collection_object)
-            except IntegrityError:
-                content = {'code': 'integrity_error'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-            return Response({}, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # We create using batch and transaction
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def destroy(self, request, collection_uid=None, uid=None):
         # We can't have destroy because we need to get data from the user (in the body) such as hmac.
