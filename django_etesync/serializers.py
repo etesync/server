@@ -114,17 +114,17 @@ class CollectionItemRevisionSerializer(serializers.ModelSerializer):
 
 class CollectionItemSerializer(serializers.ModelSerializer):
     encryptionKey = BinaryBase64Field()
-    stoken = serializers.CharField(allow_null=True)
+    etag = serializers.CharField(allow_null=True)
     content = CollectionItemRevisionSerializer(many=False)
 
     class Meta:
         model = models.CollectionItem
-        fields = ('uid', 'version', 'encryptionKey', 'content', 'stoken')
+        fields = ('uid', 'version', 'encryptionKey', 'content', 'etag')
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
-        validate_stoken = self.context.get('validate_stoken', False)
-        stoken = validated_data.pop('stoken')
+        validate_etag = self.context.get('validate_etag', False)
+        etag = validated_data.pop('etag')
         revision_data = validated_data.pop('content')
         uid = validated_data.pop('uid')
 
@@ -132,10 +132,10 @@ class CollectionItemSerializer(serializers.ModelSerializer):
 
         with transaction.atomic():
             instance, created = Model.objects.get_or_create(uid=uid, defaults=validated_data)
-            cur_stoken = instance.stoken if not created else None
+            cur_etag = instance.etag if not created else None
 
-            if validate_stoken and cur_stoken != stoken:
-                raise serializers.ValidationError('Wrong stoken. Expected {} got {}'.format(cur_stoken, stoken))
+            if validate_etag and cur_etag != etag:
+                raise serializers.ValidationError('Wrong etag. Expected {} got {}'.format(cur_etag, etag))
 
             if not created:
                 # We don't have to use select_for_update here because the unique constraint on current guards against
@@ -154,39 +154,39 @@ class CollectionItemSerializer(serializers.ModelSerializer):
 
 
 class CollectionItemDepSerializer(serializers.ModelSerializer):
-    stoken = serializers.CharField()
+    etag = serializers.CharField()
 
     class Meta:
         model = models.CollectionItem
-        fields = ('uid', 'stoken')
+        fields = ('uid', 'etag')
 
     def validate(self, data):
         item = self.__class__.Meta.model.objects.get(uid=data['uid'])
-        stoken = data['stoken']
-        if item.stoken != stoken:
-            raise serializers.ValidationError('Wrong stoken. Expected {} got {}'.format(item.stoken, stoken))
+        etag = data['etag']
+        if item.etag != etag:
+            raise serializers.ValidationError('Wrong etag. Expected {} got {}'.format(item.etag, etag))
 
         return data
 
 
 class CollectionItemBulkGetSerializer(serializers.ModelSerializer):
-    stoken = serializers.CharField(required=False)
+    etag = serializers.CharField(required=False)
 
     class Meta:
         model = models.CollectionItem
-        fields = ('uid', 'stoken')
+        fields = ('uid', 'etag')
 
 
 class CollectionSerializer(serializers.ModelSerializer):
     encryptionKey = CollectionEncryptionKeyField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
-    cstoken = serializers.CharField(read_only=True)
-    stoken = serializers.CharField(allow_null=True)
+    stoken = serializers.CharField(read_only=True)
+    etag = serializers.CharField(allow_null=True)
     content = CollectionItemRevisionSerializer(many=False)
 
     class Meta:
         model = models.Collection
-        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'content', 'cstoken', 'stoken')
+        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'content', 'stoken', 'etag')
 
     def get_access_level_from_context(self, obj):
         request = self.context.get('request', None)
@@ -196,13 +196,13 @@ class CollectionSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
-        stoken = validated_data.pop('stoken')
+        etag = validated_data.pop('etag')
         revision_data = validated_data.pop('content')
         encryption_key = validated_data.pop('encryptionKey')
         instance = self.__class__.Meta.model(**validated_data)
 
         with transaction.atomic():
-            if stoken is not None:
+            if etag is not None:
                 raise serializers.ValidationError('Stoken is not None')
 
             instance.save()
@@ -221,12 +221,12 @@ class CollectionSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Function that's called when this serializer is meant to update an item"""
-        stoken = validated_data.pop('stoken')
+        etag = validated_data.pop('etag')
         revision_data = validated_data.pop('content')
 
         with transaction.atomic():
-            if stoken != instance.stoken:
-                raise serializers.ValidationError('Wrong stoken. Expected {} got {}'.format(instance.stoken, stoken))
+            if etag != instance.etag:
+                raise serializers.ValidationError('Wrong etag. Expected {} got {}'.format(instance.etag, etag))
 
             main_item = instance.main_item
             # We don't have to use select_for_update here because the unique constraint on current guards against

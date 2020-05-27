@@ -70,7 +70,7 @@ User = get_user_model()
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = tuple(app_settings.API_AUTHENTICATORS)
     permission_classes = tuple(app_settings.API_PERMISSIONS)
-    cstoken_id_field = None
+    stoken_id_field = None
 
     def get_serializer_class(self):
         serializer_class = self.serializer_class
@@ -84,43 +84,43 @@ class BaseViewSet(viewsets.ModelViewSet):
         user = self.request.user
         return queryset.filter(members__user=user)
 
-    def get_cstoken_obj(self, request):
-        cstoken = request.GET.get('cstoken', None)
+    def get_stoken_obj(self, request):
+        stoken = request.GET.get('stoken', None)
 
-        if cstoken is not None:
-            return get_object_or_404(Stoken.objects.all(), uid=cstoken)
+        if stoken is not None:
+            return get_object_or_404(Stoken.objects.all(), uid=stoken)
 
         return None
 
-    def filter_by_cstoken(self, request, queryset):
-        cstoken_id_field = self.cstoken_id_field + '__id'
+    def filter_by_stoken(self, request, queryset):
+        stoken_id_field = self.stoken_id_field + '__id'
 
-        cstoken_rev = self.get_cstoken_obj(request)
-        if cstoken_rev is not None:
-            filter_by = {cstoken_id_field + '__gt': cstoken_rev.id}
+        stoken_rev = self.get_stoken_obj(request)
+        if stoken_rev is not None:
+            filter_by = {stoken_id_field + '__gt': stoken_rev.id}
             queryset = queryset.filter(**filter_by)
 
-        return queryset, cstoken_rev
+        return queryset, stoken_rev
 
-    def get_queryset_cstoken(self, queryset):
-        cstoken_id_field = self.cstoken_id_field + '__id'
+    def get_queryset_stoken(self, queryset):
+        stoken_id_field = self.stoken_id_field + '__id'
 
-        new_cstoken_id = queryset.aggregate(cstoken_id=Max(cstoken_id_field))['cstoken_id']
-        new_cstoken = new_cstoken_id and Stoken.objects.get(id=new_cstoken_id).uid
+        new_stoken_id = queryset.aggregate(stoken_id=Max(stoken_id_field))['stoken_id']
+        new_stoken = new_stoken_id and Stoken.objects.get(id=new_stoken_id).uid
 
-        return queryset, new_cstoken
+        return queryset, new_stoken
 
-    def filter_by_cstoken_and_limit(self, request, queryset):
+    def filter_by_stoken_and_limit(self, request, queryset):
         limit = int(request.GET.get('limit', 50))
 
-        queryset, cstoken_rev = self.filter_by_cstoken(request, queryset)
-        cstoken = cstoken_rev.uid if cstoken_rev is not None else None
+        queryset, stoken_rev = self.filter_by_stoken(request, queryset)
+        stoken = stoken_rev.uid if stoken_rev is not None else None
 
         queryset = queryset[:limit]
-        queryset, new_cstoken = self.get_queryset_cstoken(queryset)
-        new_cstoken = new_cstoken or cstoken
+        queryset, new_stoken = self.get_queryset_stoken(queryset)
+        new_stoken = new_stoken or stoken
 
-        return queryset, new_cstoken
+        return queryset, new_stoken
 
 
 class CollectionViewSet(BaseViewSet):
@@ -129,7 +129,7 @@ class CollectionViewSet(BaseViewSet):
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
     lookup_field = 'uid'
-    cstoken_id_field = 'items__revisions__stoken'
+    stoken_id_field = 'items__revisions__stoken'
 
     def get_queryset(self, queryset=None):
         if queryset is None:
@@ -172,13 +172,13 @@ class CollectionViewSet(BaseViewSet):
 
     def list(self, request):
         queryset = self.get_queryset()
-        queryset, new_cstoken = self.filter_by_cstoken_and_limit(request, queryset)
+        queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
 
         serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
 
         ret = {
             'data': serializer.data,
-            'cstoken': new_cstoken,
+            'stoken': new_stoken,
         }
         return Response(ret)
 
@@ -189,7 +189,7 @@ class CollectionItemViewSet(BaseViewSet):
     queryset = CollectionItem.objects.all()
     serializer_class = CollectionItemSerializer
     lookup_field = 'uid'
-    cstoken_id_field = 'revisions__stoken'
+    stoken_id_field = 'revisions__stoken'
 
     def get_queryset(self):
         collection_uid = self.kwargs['collection_uid']
@@ -240,13 +240,13 @@ class CollectionItemViewSet(BaseViewSet):
 
     def list(self, request, collection_uid=None):
         queryset = self.get_queryset()
-        queryset, new_cstoken = self.filter_by_cstoken_and_limit(request, queryset)
+        queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
 
         serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
 
         ret = {
             'data': serializer.data,
-            'cstoken': new_cstoken,
+            'stoken': new_stoken,
         }
         return Response(ret)
 
@@ -277,21 +277,21 @@ class CollectionItemViewSet(BaseViewSet):
                            'detail': 'Request has too many items. Limit: {}'. format(item_limit)}
                 return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-            queryset, cstoken_rev = self.filter_by_cstoken(request, queryset)
+            queryset, stoken_rev = self.filter_by_stoken(request, queryset)
 
-            uids, stokens = zip(*[(item['uid'], item.get('stoken')) for item in serializer.validated_data])
-            revs = CollectionItemRevision.objects.filter(uid__in=stokens, current=True)
+            uids, etags = zip(*[(item['uid'], item.get('etag')) for item in serializer.validated_data])
+            revs = CollectionItemRevision.objects.filter(uid__in=etags, current=True)
             queryset = queryset.filter(uid__in=uids).exclude(revisions__in=revs)
 
-            queryset, new_cstoken = self.get_queryset_cstoken(queryset)
-            cstoken = cstoken_rev and cstoken_rev.uid
-            new_cstoken = new_cstoken or cstoken
+            queryset, new_stoken = self.get_queryset_stoken(queryset)
+            stoken = stoken_rev and stoken_rev.uid
+            new_stoken = new_stoken or stoken
 
             serializer = self.get_serializer_class()(queryset, context=self.get_serializer_context(), many=True)
 
             ret = {
                 'data': serializer.data,
-                'cstoken': new_cstoken,
+                'stoken': new_stoken,
             }
             return Response(ret)
 
@@ -299,11 +299,11 @@ class CollectionItemViewSet(BaseViewSet):
 
     @action_decorator(detail=False, methods=['POST'])
     def batch(self, request, collection_uid=None):
-        cstoken = request.GET.get('cstoken', None)
+        stoken = request.GET.get('stoken', None)
         collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
 
-        if cstoken is not None and cstoken != collection_object.cstoken:
-            content = {'code': 'stale_cstoken', 'detail': 'CSToken is too old'}
+        if stoken is not None and stoken != collection_object.stoken:
+            content = {'code': 'stale_stoken', 'detail': 'Stoken is too old'}
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         items = request.data.get('items')
@@ -331,18 +331,18 @@ class CollectionItemViewSet(BaseViewSet):
 
     @action_decorator(detail=False, methods=['POST'])
     def transaction(self, request, collection_uid=None):
-        cstoken = request.GET.get('cstoken', None)
+        stoken = request.GET.get('stoken', None)
         collection_object = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
 
-        if cstoken is not None and cstoken != collection_object.cstoken:
-            content = {'code': 'stale_cstoken', 'detail': 'CSToken is too old'}
+        if stoken is not None and stoken != collection_object.stoken:
+            content = {'code': 'stale_stoken', 'detail': 'Stoken is too old'}
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         items = request.data.get('items')
         deps = request.data.get('deps', None)
         # FIXME: It should just be one serializer
         context = self.get_serializer_context()
-        context.update({'validate_stoken': True})
+        context.update({'validate_etag': True})
         serializer = self.get_serializer_class()(data=items, context=context, many=True)
         deps_serializer = CollectionItemDepSerializer(data=deps, context=context, many=True)
 
