@@ -41,13 +41,13 @@ class Collection(models.Model):
     def main_item(self):
         return self.items.get(uid=None)
 
-    @cached_property
+    @property
     def content(self):
         return self.main_item.content
 
     @property
     def stoken(self):
-        return self.main_item.stoken
+        return self.content.uid
 
     @cached_property
     def cstoken(self):
@@ -78,7 +78,7 @@ class CollectionItem(models.Model):
 
     @property
     def stoken(self):
-        return self.content.stoken.uid
+        return self.content.uid
 
 
 def chunk_directory_path(instance, filename):
