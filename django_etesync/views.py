@@ -473,11 +473,6 @@ class InvitationOutgoingViewSet(BaseViewSet):
     lookup_field = 'uid'
     lookup_url_kwarg = 'invitation_uid'
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update({'request': self.request})
-        return context
-
     def get_queryset(self, queryset=None):
         if queryset is None:
             queryset = type(self).queryset
