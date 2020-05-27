@@ -114,7 +114,7 @@ class CollectionItemRevisionSerializer(serializers.ModelSerializer):
 
 class CollectionItemSerializer(serializers.ModelSerializer):
     encryptionKey = BinaryBase64Field()
-    etag = serializers.CharField(allow_null=True)
+    etag = serializers.CharField(allow_null=True, write_only=True)
     content = CollectionItemRevisionSerializer(many=False)
 
     class Meta:
@@ -181,7 +181,7 @@ class CollectionSerializer(serializers.ModelSerializer):
     encryptionKey = CollectionEncryptionKeyField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
     stoken = serializers.CharField(read_only=True)
-    etag = serializers.CharField(allow_null=True)
+    etag = serializers.CharField(allow_null=True, write_only=True)
     content = CollectionItemRevisionSerializer(many=False)
 
     class Meta:
