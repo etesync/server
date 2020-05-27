@@ -127,7 +127,7 @@ class BaseViewSet(viewsets.ModelViewSet):
 
 class CollectionViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST', 'DELETE']
-    permission_classes = BaseViewSet.permission_classes
+    permission_classes = BaseViewSet.permission_classes + (permissions.IsCollectionAdminOrReadOnly, )
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
     lookup_field = 'uid'
@@ -196,7 +196,7 @@ class CollectionViewSet(BaseViewSet):
 
 class CollectionItemViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST', 'PUT']
-    permission_classes = BaseViewSet.permission_classes
+    permission_classes = BaseViewSet.permission_classes + (permissions.HasWriteAccessOrReadOnly, )
     queryset = CollectionItem.objects.all()
     serializer_class = CollectionItemSerializer
     lookup_field = 'uid'
