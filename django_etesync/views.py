@@ -13,12 +13,14 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import json
+from functools import reduce
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.db import transaction, IntegrityError
-from django.db.models import Max
+from django.db.models import Max, Q
+from django.db.models.functions import Greatest
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 
@@ -70,7 +72,7 @@ User = get_user_model()
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = tuple(app_settings.API_AUTHENTICATORS)
     permission_classes = tuple(app_settings.API_PERMISSIONS)
-    stoken_id_field = None
+    stoken_id_fields = None
 
     def get_serializer_class(self):
         serializer_class = self.serializer_class
@@ -93,20 +95,19 @@ class BaseViewSet(viewsets.ModelViewSet):
         return None
 
     def filter_by_stoken(self, request, queryset):
-        stoken_id_field = self.stoken_id_field + '__id'
-
         stoken_rev = self.get_stoken_obj(request)
         if stoken_rev is not None:
-            filter_by = {stoken_id_field + '__gt': stoken_rev.id}
-            queryset = queryset.filter(**filter_by)
+            filter_by_map = map(lambda x: Q(**{x + '__gt': stoken_rev.id}), self.stoken_id_fields)
+            filter_by = reduce(lambda x, y: x | y, filter_by_map)
+            queryset = queryset.filter(filter_by).distinct()
 
         return queryset, stoken_rev
 
     def get_queryset_stoken(self, queryset):
-        stoken_id_field = self.stoken_id_field + '__id'
-
-        new_stoken_id = queryset.aggregate(stoken_id=Max(stoken_id_field))['stoken_id']
-        new_stoken = new_stoken_id and Stoken.objects.get(id=new_stoken_id).uid
+        aggr_fields = {x: Max(x) for x in self.stoken_id_fields}
+        aggr = queryset.aggregate(**aggr_fields)
+        maxid = max(map(lambda x: x or -1, aggr.values()))
+        new_stoken = (maxid >= 0) and Stoken.objects.get(id=maxid).uid
 
         return queryset, new_stoken
 
@@ -129,7 +130,7 @@ class CollectionViewSet(BaseViewSet):
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
     lookup_field = 'uid'
-    stoken_id_field = 'items__revisions__stoken'
+    stoken_id_fields = ['items__revisions__stoken__id', 'members__stoken__id']
 
     def get_queryset(self, queryset=None):
         if queryset is None:
@@ -189,7 +190,7 @@ class CollectionItemViewSet(BaseViewSet):
     queryset = CollectionItem.objects.all()
     serializer_class = CollectionItemSerializer
     lookup_field = 'uid'
-    stoken_id_field = 'revisions__stoken'
+    stoken_id_fields = ['revisions__stoken__id']
 
     def get_queryset(self):
         collection_uid = self.kwargs['collection_uid']

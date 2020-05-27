@@ -17,6 +17,7 @@ from pathlib import Path
 from django.db import models
 from django.conf import settings
 from django.core.validators import RegexValidator
+from django.db.models import Q
 from django.utils.functional import cached_property
 from django.utils.crypto import get_random_string
 
@@ -51,12 +52,14 @@ class Collection(models.Model):
 
     @cached_property
     def stoken(self):
-        last_revision = CollectionItemRevision.objects.filter(item__collection=self).last()
-        if last_revision is None:
-            # FIXME: what is the etag for None? Though if we use the revision for collection it should be shared anyway.
-            return None
+        stoken = Stoken.objects.filter(
+            Q(collectionitemrevision__item__collection=self) | Q(collectionmember__collection=self)
+        ).order_by('id').last()
 
-        return last_revision.stoken.uid
+        if stoken is None:
+            raise Exception('stoken is None. Should never happen')
+
+        return stoken.uid
 
 
 class CollectionItem(models.Model):
