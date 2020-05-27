@@ -123,6 +123,17 @@ class BaseViewSet(viewsets.ModelViewSet):
 
         return queryset, new_stoken
 
+    # Change how our list works by default
+    def list(self, request, collection_uid=None):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+
+        ret = {
+            'data': serializer.data,
+        }
+
+        return Response(ret)
+
 
 class CollectionViewSet(BaseViewSet):
     allowed_methods = ['GET', 'POST', 'DELETE']
