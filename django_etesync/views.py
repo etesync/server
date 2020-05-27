@@ -20,7 +20,6 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.db import transaction, IntegrityError
 from django.db.models import Max, Q
-from django.db.models.functions import Greatest
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 
@@ -160,7 +159,7 @@ class CollectionViewSet(BaseViewSet):
         return Response({})
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             try:
                 serializer.save(owner=self.request.user)
@@ -176,7 +175,7 @@ class CollectionViewSet(BaseViewSet):
         queryset = self.get_queryset()
         queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
 
-        serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
+        serializer = self.get_serializer(queryset, many=True)
 
         ret = {
             'data': serializer.data,
@@ -239,7 +238,7 @@ class CollectionItemViewSet(BaseViewSet):
         queryset = self.get_queryset()
         queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
 
-        serializer = self.serializer_class(queryset, context=self.get_serializer_context(), many=True)
+        serializer = self.get_serializer(queryset, many=True)
 
         ret = {
             'data': serializer.data,
@@ -284,7 +283,7 @@ class CollectionItemViewSet(BaseViewSet):
             stoken = stoken_rev and stoken_rev.uid
             new_stoken = new_stoken or stoken
 
-            serializer = self.get_serializer_class()(queryset, context=self.get_serializer_context(), many=True)
+            serializer = self.get_serializer(queryset, many=True)
 
             ret = {
                 'data': serializer.data,
@@ -304,8 +303,7 @@ class CollectionItemViewSet(BaseViewSet):
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         items = request.data.get('items')
-        context = self.get_serializer_context()
-        serializer = self.get_serializer_class()(data=items, context=context, many=True)
+        serializer = self.get_serializer(data=items, many=True)
 
         if serializer.is_valid():
             try:
@@ -374,6 +372,9 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
     serializer_class = CollectionItemChunkSerializer
     lookup_field = 'uid'
 
+    def get_serializer_class(self):
+        return self.serializer_class
+
     def get_collection_queryset(self, queryset=Collection.objects):
         user = self.request.user
         return queryset.filter(members__user=user)
@@ -382,7 +383,7 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         col = get_object_or_404(self.get_collection_queryset(), uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=collection_item_uid)
 
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.get_serializer_class()(data=request.data)
         if serializer.is_valid():
             try:
                 serializer.save(item=col_it)
@@ -484,7 +485,7 @@ class InvitationOutgoingViewSet(BaseViewSet):
         return queryset.filter(fromMember__user=self.request.user)
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data, context=self.get_serializer_context())
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             collection_uid = serializer.validated_data.get('collection', {}).get('uid')
 
