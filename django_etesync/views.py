@@ -573,13 +573,11 @@ class AuthenticationViewSet(viewsets.ViewSet):
     @action_decorator(detail=False, methods=['POST'])
     def signup(self, request):
         serializer = AuthenticationSignupSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
 
-            data = self.login_response_data(user)
-            return Response(data, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = self.login_response_data(user)
+        return Response(data, status=status.HTTP_201_CREATED)
 
     def get_login_user(self, serializer):
         username = serializer.validated_data.get('username')
