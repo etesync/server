@@ -579,17 +579,9 @@ class AuthenticationViewSet(viewsets.ViewSet):
         data = self.login_response_data(user)
         return Response(data, status=status.HTTP_201_CREATED)
 
-    def get_login_user(self, serializer):
-        username = serializer.validated_data.get('username')
-        email = serializer.validated_data.get('email')
-        if username:
-            kwargs = {User.USERNAME_FIELD: username}
-            user = get_object_or_404(self.get_queryset(), **kwargs)
-        elif email:
-            kwargs = {User.EMAIL_FIELD: email}
-            user = get_object_or_404(self.get_queryset(), **kwargs)
-
-        return user
+    def get_login_user(self, username):
+        kwargs = {User.USERNAME_FIELD: username}
+        return get_object_or_404(self.get_queryset(), **kwargs)
 
     @action_decorator(detail=False, methods=['POST'])
     def login_challenge(self, request):
@@ -597,7 +589,8 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
         serializer = AuthenticationLoginChallengeSerializer(data=request.data)
         if serializer.is_valid():
-            user = self.get_login_user(serializer)
+            username = serializer.validated_data.get('username')
+            user = self.get_login_user(username)
 
             salt = bytes(user.userinfo.salt)
             enc_key = self.get_encryption_key(salt)
@@ -631,7 +624,8 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
             serializer = AuthenticationLoginInnerSerializer(data=response, context={'host': request.get_host()})
             if serializer.is_valid():
-                user = self.get_login_user(serializer)
+                username = serializer.validated_data.get('username')
+                user = self.get_login_user(username)
                 host = serializer.validated_data['host']
                 challenge = serializer.validated_data['challenge']
 

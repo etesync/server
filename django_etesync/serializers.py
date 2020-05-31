@@ -381,13 +381,7 @@ class AuthenticationSignupSerializer(serializers.Serializer):
 
 
 class AuthenticationLoginChallengeSerializer(serializers.Serializer):
-    username = serializers.CharField(required=False)
-    email = serializers.EmailField(required=False)
-
-    def validate(self, data):
-        if not data.get('email') and not data.get('username'):
-            raise serializers.ValidationError('Either email or username must be set')
-        return data
+    username = serializers.CharField(required=True)
 
     def create(self, validated_data):
         raise NotImplementedError()
