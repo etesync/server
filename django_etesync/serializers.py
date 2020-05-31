@@ -339,12 +339,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (User.USERNAME_FIELD, User.EMAIL_FIELD, 'pubkey', 'encryptedSeckey')
 
 
-class UserQuerySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = (User.USERNAME_FIELD, User.EMAIL_FIELD)
-
-
 class UserInfoPubkeySerializer(serializers.ModelSerializer):
     pubkey = BinaryBase64Field()
 
@@ -353,8 +347,14 @@ class UserInfoPubkeySerializer(serializers.ModelSerializer):
         fields = ('pubkey', )
 
 
+class UserSignupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (User.USERNAME_FIELD, User.EMAIL_FIELD)
+
+
 class AuthenticationSignupSerializer(serializers.Serializer):
-    user = UserQuerySerializer(many=False)
+    user = UserSignupSerializer(many=False)
     salt = BinaryBase64Field()
     loginPubkey = BinaryBase64Field()
     pubkey = BinaryBase64Field()
