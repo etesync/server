@@ -203,7 +203,7 @@ class CollectionSerializer(serializers.ModelSerializer):
 
         with transaction.atomic():
             if etag is not None:
-                raise serializers.ValidationError('Stoken is not None')
+                raise serializers.ValidationError('etag is not None')
 
             instance.save()
             main_item = models.CollectionItem.objects.create(
@@ -222,13 +222,9 @@ class CollectionSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Function that's called when this serializer is meant to update an item"""
-        etag = validated_data.pop('etag')
         revision_data = validated_data.pop('content')
 
         with transaction.atomic():
-            if etag != instance.etag:
-                raise serializers.ValidationError('Wrong etag. Expected {} got {}'.format(instance.etag, etag))
-
             main_item = instance.main_item
             # We don't have to use select_for_update here because the unique constraint on current guards against
             # the race condition. But it's a good idea because it'll lock and wait rather than fail.

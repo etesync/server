@@ -163,6 +163,13 @@ class CollectionViewSet(BaseViewSet):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
+
+        stoken = request.GET.get('stoken', None)
+
+        if stoken is not None and stoken != instance.stoken:
+            content = {'code': 'stale_stoken', 'detail': 'Stoken is too old'}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = self.get_serializer(instance, data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
