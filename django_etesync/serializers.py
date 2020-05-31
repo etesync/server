@@ -15,6 +15,7 @@
 import base64
 
 from django.core.files.base import ContentFile
+from django.core import exceptions as django_exceptions
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
@@ -351,6 +352,9 @@ class UserSignupSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (User.USERNAME_FIELD, User.EMAIL_FIELD)
+        extra_kwargs = {
+            'username': {'validators': []},  # We specifically validate in SignupSerializer
+        }
 
 
 class AuthenticationSignupSerializer(serializers.Serializer):
@@ -370,6 +374,11 @@ class AuthenticationSignupSerializer(serializers.Serializer):
                 raise serializers.ValidationError('User already exists')
 
             instance.set_unusable_password()
+
+            try:
+                instance.clean_fields()
+            except django_exceptions.ValidationError as e:
+                raise serializers.ValidationError(e)
             # FIXME: send email verification
 
             models.UserInfo.objects.create(**validated_data, owner=instance)
