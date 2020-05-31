@@ -647,7 +647,11 @@ class AuthenticationViewSet(viewsets.ViewSet):
                     return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
                 verify_key = nacl.signing.VerifyKey(bytes(user.userinfo.loginPubkey), encoder=nacl.encoding.RawEncoder)
-                verify_key.verify(response_raw, signature)
+
+                try:
+                    verify_key.verify(response_raw, signature)
+                except nacl.exceptions.BadSignatureError:
+                    return Response({'code': 'login_bad_signature'}, status=status.HTTP_400_BAD_REQUEST)
 
                 data = self.login_response_data(user)
                 return Response(data, status=status.HTTP_200_OK)
