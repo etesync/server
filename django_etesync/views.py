@@ -601,7 +601,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             user = self.get_login_user(serializer)
 
-            salt = user.userinfo.salt
+            salt = bytes(user.userinfo.salt)
             enc_key = self.get_encryption_key(salt)
             box = nacl.secret.SecretBox(enc_key)
 
@@ -637,7 +637,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
                 host = serializer.validated_data['host']
                 challenge = serializer.validated_data['challenge']
 
-                salt = user.userinfo.salt
+                salt = bytes(user.userinfo.salt)
                 enc_key = self.get_encryption_key(salt)
                 box = nacl.secret.SecretBox(enc_key)
 
@@ -654,7 +654,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
                     content = {'code': 'wrong_host', 'detail': detail}
                     return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-                verify_key = nacl.signing.VerifyKey(user.userinfo.loginPubkey, encoder=nacl.encoding.RawEncoder)
+                verify_key = nacl.signing.VerifyKey(bytes(user.userinfo.loginPubkey), encoder=nacl.encoding.RawEncoder)
                 verify_key.verify(response_raw, signature)
 
                 data = self.login_response_data(user)
