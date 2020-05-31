@@ -1,11 +1,7 @@
 django
-django-allauth
 django-anymail
-django-appconf
 django-cors-headers
-django-debug-toolbar
 django-fullurl
-django-ipware
 djangorestframework
 drf-nested-routers
 psycopg2-binary

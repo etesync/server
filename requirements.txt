@@ -8,26 +8,18 @@ asgiref==3.2.3            # via django
 certifi==2019.11.28       # via requests
 cffi==1.14.0              # via pynacl
 chardet==3.0.4            # via requests
-defusedxml==0.6.0         # via python3-openid
-django-allauth==0.41.0    # via -r requirements.in/base.txt
 django-anymail==7.0.0     # via -r requirements.in/base.txt
-django-appconf==1.0.3     # via -r requirements.in/base.txt
 django-cors-headers==3.2.1  # via -r requirements.in/base.txt
-django-debug-toolbar==2.2  # via -r requirements.in/base.txt
 django-fullurl==1.0       # via -r requirements.in/base.txt
-django-ipware==2.1.0      # via -r requirements.in/base.txt
-django==3.0.3             # via -r requirements.in/base.txt, django-allauth, django-anymail, django-appconf, django-cors-headers, django-debug-toolbar, django-fullurl, djangorestframework, drf-nested-routers
+django==3.0.3             # via -r requirements.in/base.txt, django-anymail, django-cors-headers, django-fullurl, djangorestframework, drf-nested-routers
 djangorestframework==3.11.0  # via -r requirements.in/base.txt, drf-nested-routers
 drf-nested-routers==0.91  # via -r requirements.in/base.txt
 idna==2.8                 # via requests
-oauthlib==3.1.0           # via requests-oauthlib
 psycopg2-binary==2.8.4    # via -r requirements.in/base.txt
 pycparser==2.20           # via cffi
 pynacl==1.3.0             # via -r requirements.in/base.txt
-python3-openid==3.1.0     # via django-allauth
 pytz==2019.3              # via django
-requests-oauthlib==1.3.0  # via django-allauth
-requests==2.22.0          # via django-allauth, django-anymail, requests-oauthlib
-six==1.14.0               # via django-anymail, django-appconf, pynacl
-sqlparse==0.3.0           # via django, django-debug-toolbar
+requests==2.22.0          # via django-anymail
+six==1.14.0               # via django-anymail, pynacl
+sqlparse==0.3.0           # via django
 urllib3==1.25.8           # via requests
