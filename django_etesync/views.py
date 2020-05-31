@@ -16,7 +16,7 @@ import json
 from functools import reduce
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, user_logged_in
 from django.core.exceptions import PermissionDenied
 from django.db import transaction, IntegrityError
 from django.db.models import Max, Q
@@ -654,6 +654,9 @@ class AuthenticationViewSet(viewsets.ViewSet):
                     return Response({'code': 'login_bad_signature'}, status=status.HTTP_400_BAD_REQUEST)
 
                 data = self.login_response_data(user)
+
+                user_logged_in.send(sender=user.__class__, request=request, user=user)
+
                 return Response(data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
