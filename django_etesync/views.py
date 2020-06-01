@@ -227,6 +227,7 @@ class CollectionItemViewSet(BaseViewSet):
             raise Http404("Collection does not exist")
         # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
         queryset = type(self).queryset.filter(collection__pk=collection.pk,
+                                              uid__isnull=False,
                                               revisions__current=True,
                                               revisions__deleted=False)
 
