@@ -333,11 +333,11 @@ class InvitationAcceptSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     pubkey = BinaryBase64Field(source='userinfo.pubkey')
-    encryptedSeckey = BinaryBase64Field(source='userinfo.encryptedSeckey')
+    encryptedContent = BinaryBase64Field(source='userinfo.encryptedContent')
 
     class Meta:
         model = User
-        fields = (User.USERNAME_FIELD, User.EMAIL_FIELD, 'pubkey', 'encryptedSeckey')
+        fields = (User.USERNAME_FIELD, User.EMAIL_FIELD, 'pubkey', 'encryptedContent')
 
 
 class UserInfoPubkeySerializer(serializers.ModelSerializer):
@@ -362,7 +362,7 @@ class AuthenticationSignupSerializer(serializers.Serializer):
     salt = BinaryBase64Field()
     loginPubkey = BinaryBase64Field()
     pubkey = BinaryBase64Field()
-    encryptedSeckey = BinaryBase64Field()
+    encryptedContent = BinaryBase64Field()
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""

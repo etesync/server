@@ -214,7 +214,7 @@ class UserInfo(models.Model):
     version = models.PositiveSmallIntegerField(default=1)
     loginPubkey = models.BinaryField(editable=True, blank=False, null=False)
     pubkey = models.BinaryField(editable=True, blank=False, null=False)
-    encryptedSeckey = models.BinaryField(editable=True, blank=False, null=False)
+    encryptedContent = models.BinaryField(editable=True, blank=False, null=False)
     salt = models.BinaryField(editable=True, blank=False, null=False)
 
     def __str__(self):
