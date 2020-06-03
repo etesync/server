@@ -681,8 +681,6 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
 
 class TestAuthenticationViewSet(viewsets.ViewSet):
-    authentication_classes = BaseViewSet.authentication_classes
-    permission_classes = BaseViewSet.permission_classes
     allowed_methods = ['POST']
 
     def list(self, request):
@@ -694,13 +692,22 @@ class TestAuthenticationViewSet(viewsets.ViewSet):
         if not settings.DEBUG:
             return HttpResponseBadRequest("Only allowed in debug mode.")
 
-        # Only allow local users, for extra safety
-        if not getattr(request.user, User.EMAIL_FIELD).endswith('@localhost'):
+        user = get_object_or_404(User.objects.all(), username=request.data.get('user').get('username'))
+
+        # Only allow test users for extra safety
+        if not getattr(user, User.USERNAME_FIELD).startswith('test_user'):
             return HttpResponseBadRequest("Endpoint not allowed for user.")
 
+        if hasattr(user, 'userinfo'):
+            user.userinfo.delete()
+
+        serializer = AuthenticationSignupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
         # Delete all of the journal data for this user for a clear test env
-        request.user.collection_set.all().delete()
-        request.user.incoming_invitations.all().delete()
+        user.collection_set.all().delete()
+        user.incoming_invitations.all().delete()
 
         # FIXME: also delete chunk files!!!
 
