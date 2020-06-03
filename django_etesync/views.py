@@ -553,6 +553,7 @@ class InvitationIncomingViewSet(BaseViewSet):
 
 class AuthenticationViewSet(viewsets.ViewSet):
     allowed_methods = ['POST']
+    authentication_classes = BaseViewSet.authentication_classes
 
     def get_encryption_key(self, salt):
         key = nacl.hash.blake2b(settings.SECRET_KEY.encode(), encoder=nacl.encoding.RawEncoder)
@@ -662,7 +663,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action_decorator(detail=False, methods=['POST'])
+    @action_decorator(detail=False, methods=['POST'], permission_classes=BaseViewSet.permission_classes)
     def logout(self, request):
         # FIXME: expire the token - we need better token handling - using knox? Something else?
         return Response({}, status=status.HTTP_200_OK)
