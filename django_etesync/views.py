@@ -48,6 +48,7 @@ from .models import (
     )
 from .serializers import (
         b64encode,
+        AuthenticationChangePasswordSerializer,
         AuthenticationSignupSerializer,
         AuthenticationLoginChallengeSerializer,
         AuthenticationLoginSerializer,
@@ -667,6 +668,14 @@ class AuthenticationViewSet(viewsets.ViewSet):
     def logout(self, request):
         # FIXME: expire the token - we need better token handling - using knox? Something else?
         return Response({}, status=status.HTTP_200_OK)
+
+    @action_decorator(detail=False, methods=['POST'], permission_classes=BaseViewSet.permission_classes)
+    def change_password(self, request):
+        serializer = AuthenticationChangePasswordSerializer(request.user.userinfo, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(status=status.HTTP_200_OK)
 
 
 class TestAuthenticationViewSet(viewsets.ViewSet):

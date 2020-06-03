@@ -419,3 +419,23 @@ class AuthenticationLoginInnerSerializer(AuthenticationLoginChallengeSerializer)
 
     def update(self, instance, validated_data):
         raise NotImplementedError()
+
+
+class AuthenticationChangePasswordSerializer(serializers.ModelSerializer):
+    loginPubkey = BinaryBase64Field()
+    encryptedContent = BinaryBase64Field()
+
+    class Meta:
+        model = models.UserInfo
+        fields = ('loginPubkey', 'encryptedContent')
+
+    def create(self, validated_data):
+        raise NotImplementedError()
+
+    def update(self, instance, validated_data):
+        with transaction.atomic():
+            instance.loginPubkey = validated_data.pop('loginPubkey')
+            instance.encryptedContent = validated_data.pop('encryptedContent')
+            instance.save()
+
+        return instance
