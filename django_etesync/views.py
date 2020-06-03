@@ -16,7 +16,7 @@ import json
 from functools import reduce
 
 from django.conf import settings
-from django.contrib.auth import get_user_model, user_logged_in
+from django.contrib.auth import get_user_model, user_logged_in, user_logged_out
 from django.core.exceptions import PermissionDenied
 from django.db import transaction, IntegrityError
 from django.db.models import Max, Q
@@ -28,12 +28,13 @@ from rest_framework import viewsets
 from rest_framework import parsers
 from rest_framework.decorators import action as action_decorator
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
 
 import nacl.encoding
 import nacl.signing
 import nacl.secret
 import nacl.hash
+
+from .token_auth.models import AuthToken
 
 from . import app_settings, permissions
 from .models import (
@@ -566,7 +567,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
     def login_response_data(self, user):
         return {
-            'token': Token.objects.get_or_create(user=user)[0].key,
+            'token': AuthToken.objects.create(user=user).key,
             'user': UserSerializer(user).data,
         }
 
@@ -666,8 +667,9 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
     @action_decorator(detail=False, methods=['POST'], permission_classes=BaseViewSet.permission_classes)
     def logout(self, request):
-        # FIXME: expire the token - we need better token handling - using knox? Something else?
-        return Response({}, status=status.HTTP_200_OK)
+        request._auth.delete()
+        user_logged_out.send(sender=request.user.__class__, request=request, user=request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action_decorator(detail=False, methods=['POST'], permission_classes=BaseViewSet.permission_classes)
     def change_password(self, request):
