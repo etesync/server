@@ -115,6 +115,7 @@ class CollectionItemRevision(models.Model):
     stoken = models.OneToOneField(Stoken, on_delete=models.PROTECT)
     uid = models.CharField(db_index=True, unique=True, blank=False, null=False,
                            max_length=43, validators=[Base64Url256BitlValidator])
+    salt = models.BinaryField(editable=True, blank=False, null=False, default=b'')
     item = models.ForeignKey(CollectionItem, related_name='revisions', on_delete=models.CASCADE)
     meta = models.BinaryField(editable=True, blank=False, null=False)
     current = models.BooleanField(db_index=True, default=True, null=True)
