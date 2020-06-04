@@ -91,6 +91,8 @@ class ChunksField(serializers.RelatedField):
             return (obj.uid, )
 
     def to_internal_value(self, data):
+        if data[0] is None or data[1] is None:
+            raise serializers.ValidationError('null is not allowed')
         return (data[0], b64decode(data[1]))
 
 
