@@ -51,4 +51,4 @@ class AppSettings:
         return self._setting("CHALLENGE_VALID_SECONDS", 60)
 
 
-app_settings = AppSettings('ETESYNC_')
+app_settings = AppSettings('ETEBASE_')

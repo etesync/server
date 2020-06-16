@@ -13,7 +13,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from rest_framework import permissions
-from django_etesync.models import Collection, AccessLevels
+from django_etebase.models import Collection, AccessLevels
 
 
 def is_collection_admin(collection, user):

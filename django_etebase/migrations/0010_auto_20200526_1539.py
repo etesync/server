@@ -7,13 +7,13 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etesync', '0009_auto_20200526_1535'),
+        ('django_etebase', '0009_auto_20200526_1535'),
     ]
 
     operations = [
         migrations.AlterField(
             model_name='collectionitemrevision',
             name='stoken',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.PROTECT, to='django_etesync.Stoken'),
+            field=models.OneToOneField(on_delete=django.db.models.deletion.PROTECT, to='django_etebase.Stoken'),
         ),
     ]

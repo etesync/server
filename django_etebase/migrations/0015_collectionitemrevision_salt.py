@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etesync', '0014_auto_20200602_1558'),
+        ('django_etebase', '0014_auto_20200602_1558'),
     ]
 
     operations = [

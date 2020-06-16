@@ -4,8 +4,8 @@ from django.db import migrations
 
 
 def create_stokens(apps, schema_editor):
-    Stoken = apps.get_model('django_etesync', 'Stoken')
-    CollectionItemRevision = apps.get_model('django_etesync', 'CollectionItemRevision')
+    Stoken = apps.get_model('django_etebase', 'Stoken')
+    CollectionItemRevision = apps.get_model('django_etebase', 'CollectionItemRevision')
 
     for rev in CollectionItemRevision.objects.all():
         rev.stoken = Stoken.objects.create()
@@ -15,7 +15,7 @@ def create_stokens(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etesync', '0008_auto_20200526_1535'),
+        ('django_etebase', '0008_auto_20200526_1535'),
     ]
 
     operations = [

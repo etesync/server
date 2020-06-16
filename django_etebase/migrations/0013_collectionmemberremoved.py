@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('django_etesync', '0012_auto_20200527_0743'),
+        ('django_etebase', '0012_auto_20200527_0743'),
     ]
 
     operations = [
@@ -17,8 +17,8 @@ class Migration(migrations.Migration):
             name='CollectionMemberRemoved',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('collection', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='removed_members', to='django_etesync.Collection')),
-                ('stoken', models.OneToOneField(null=True, on_delete=django.db.models.deletion.PROTECT, to='django_etesync.Stoken')),
+                ('collection', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='removed_members', to='django_etebase.Collection')),
+                ('stoken', models.OneToOneField(null=True, on_delete=django.db.models.deletion.PROTECT, to='django_etebase.Stoken')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
             options={

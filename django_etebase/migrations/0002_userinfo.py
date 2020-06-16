@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('myauth', '0001_initial'),
-        ('django_etesync', '0001_initial'),
+        ('django_etebase', '0001_initial'),
     ]
 
     operations = [

@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etesync', '0006_auto_20200526_1040'),
+        ('django_etebase', '0006_auto_20200526_1040'),
     ]
 
     operations = [
