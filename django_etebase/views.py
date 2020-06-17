@@ -49,7 +49,7 @@ from .models import (
     )
 from .serializers import (
         b64encode,
-        AuthenticationChangePasswordSerializer,
+        AuthenticationChangePasswordInnerSerializer,
         AuthenticationSignupSerializer,
         AuthenticationLoginChallengeSerializer,
         AuthenticationLoginSerializer,
@@ -562,6 +562,44 @@ class AuthenticationViewSet(viewsets.ViewSet):
         kwargs = {User.USERNAME_FIELD: username}
         return get_object_or_404(self.get_queryset(), **kwargs)
 
+    def validate_login_request(self, request, validated_data, response_raw, signature, expected_action):
+        from datetime import datetime
+
+        username = validated_data.get('username')
+        user = self.get_login_user(username)
+        host = validated_data['host']
+        challenge = validated_data['challenge']
+        action = validated_data['action']
+
+        salt = bytes(user.userinfo.salt)
+        enc_key = self.get_encryption_key(salt)
+        box = nacl.secret.SecretBox(enc_key)
+
+        challenge_data = json.loads(box.decrypt(challenge).decode())
+        now = int(datetime.now().timestamp())
+        if action != expected_action:
+            content = {'code': 'wrong_action', 'detail': 'Expected "{}" but got something else'.format(expected_action)}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        elif now - challenge_data['timestamp'] > app_settings.CHALLENGE_VALID_SECONDS:
+            content = {'code': 'challenge_expired', 'detail': 'Login challange has expired'}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        elif challenge_data['userId'] != user.id:
+            content = {'code': 'wrong_user', 'detail': 'This challenge is for the wrong user'}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        elif not settings.DEBUG and host != request.get_host():
+            detail = 'Found wrong host name. Got: "{}" expected: "{}"'.format(host, request.get_host())
+            content = {'code': 'wrong_host', 'detail': detail}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
+        verify_key = nacl.signing.VerifyKey(bytes(user.userinfo.loginPubkey), encoder=nacl.encoding.RawEncoder)
+
+        try:
+            verify_key.verify(response_raw, signature)
+        except nacl.exceptions.BadSignatureError:
+            return Response({'code': 'login_bad_signature'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return None
+
     @action_decorator(detail=False, methods=['POST'])
     def login_challenge(self, request):
         from datetime import datetime
@@ -593,56 +631,29 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
     @action_decorator(detail=False, methods=['POST'])
     def login(self, request):
-        from datetime import datetime
-
         outer_serializer = AuthenticationLoginSerializer(data=request.data)
-        if outer_serializer.is_valid():
-            response_raw = outer_serializer.validated_data['response']
-            response = json.loads(response_raw.decode())
-            signature = outer_serializer.validated_data['signature']
+        outer_serializer.is_valid(raise_exception=True)
 
-            serializer = AuthenticationLoginInnerSerializer(data=response, context={'host': request.get_host()})
-            if serializer.is_valid():
-                username = serializer.validated_data.get('username')
-                user = self.get_login_user(username)
-                host = serializer.validated_data['host']
-                challenge = serializer.validated_data['challenge']
-                action = serializer.validated_data['action']
+        response_raw = outer_serializer.validated_data['response']
+        response = json.loads(response_raw.decode())
+        signature = outer_serializer.validated_data['signature']
 
-                salt = bytes(user.userinfo.salt)
-                enc_key = self.get_encryption_key(salt)
-                box = nacl.secret.SecretBox(enc_key)
+        serializer = AuthenticationLoginInnerSerializer(data=response, context={'host': request.get_host()})
+        serializer.is_valid(raise_exception=True)
 
-                challenge_data = json.loads(box.decrypt(challenge).decode())
-                now = int(datetime.now().timestamp())
-                if action != "login":
-                    content = {'code': 'wrong_action', 'detail': 'Expected "login" but got something else'}
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
-                elif now - challenge_data['timestamp'] > app_settings.CHALLENGE_VALID_SECONDS:
-                    content = {'code': 'challenge_expired', 'detail': 'Login challange has expired'}
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
-                elif challenge_data['userId'] != user.id:
-                    content = {'code': 'wrong_user', 'detail': 'This challenge is for the wrong user'}
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
-                elif not settings.DEBUG and host != request.get_host():
-                    detail = 'Found wrong host name. Got: "{}" expected: "{}"'.format(host, request.get_host())
-                    content = {'code': 'wrong_host', 'detail': detail}
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        bad_login_response = self.validate_login_request(
+            request, serializer.validated_data, response_raw, signature, "login")
+        if bad_login_response is not None:
+            return bad_login_response
 
-                verify_key = nacl.signing.VerifyKey(bytes(user.userinfo.loginPubkey), encoder=nacl.encoding.RawEncoder)
+        username = serializer.validated_data.get('username')
+        user = self.get_login_user(username)
 
-                try:
-                    verify_key.verify(response_raw, signature)
-                except nacl.exceptions.BadSignatureError:
-                    return Response({'code': 'login_bad_signature'}, status=status.HTTP_400_BAD_REQUEST)
+        data = self.login_response_data(user)
 
-                data = self.login_response_data(user)
+        user_logged_in.send(sender=user.__class__, request=request, user=user)
 
-                user_logged_in.send(sender=user.__class__, request=request, user=user)
-
-                return Response(data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data, status=status.HTTP_200_OK)
 
     @action_decorator(detail=False, methods=['POST'], permission_classes=BaseViewSet.permission_classes)
     def logout(self, request):
@@ -652,11 +663,25 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
     @action_decorator(detail=False, methods=['POST'], permission_classes=BaseViewSet.permission_classes)
     def change_password(self, request):
-        serializer = AuthenticationChangePasswordSerializer(request.user.userinfo, data=request.data)
+        outer_serializer = AuthenticationLoginSerializer(data=request.data)
+        outer_serializer.is_valid(raise_exception=True)
+
+        response_raw = outer_serializer.validated_data['response']
+        response = json.loads(response_raw.decode())
+        signature = outer_serializer.validated_data['signature']
+
+        serializer = AuthenticationChangePasswordInnerSerializer(
+            request.user.userinfo, data=response, context={'host': request.get_host()})
         serializer.is_valid(raise_exception=True)
+
+        bad_login_response = self.validate_login_request(
+            request, serializer.validated_data, response_raw, signature, "changePassword")
+        if bad_login_response is not None:
+            return bad_login_response
+
         serializer.save()
 
-        return Response(status=status.HTTP_200_OK)
+        return Response({}, status=status.HTTP_200_OK)
 
 
 class TestAuthenticationViewSet(viewsets.ViewSet):

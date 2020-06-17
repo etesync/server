@@ -425,7 +425,7 @@ class AuthenticationLoginInnerSerializer(AuthenticationLoginChallengeSerializer)
         raise NotImplementedError()
 
 
-class AuthenticationChangePasswordSerializer(serializers.ModelSerializer):
+class AuthenticationChangePasswordInnerSerializer(AuthenticationLoginInnerSerializer):
     loginPubkey = BinaryBase64Field()
     encryptedContent = BinaryBase64Field()
 
