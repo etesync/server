@@ -607,6 +607,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
                 user = self.get_login_user(username)
                 host = serializer.validated_data['host']
                 challenge = serializer.validated_data['challenge']
+                action = serializer.validated_data['action']
 
                 salt = bytes(user.userinfo.salt)
                 enc_key = self.get_encryption_key(salt)
@@ -614,7 +615,10 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
                 challenge_data = json.loads(box.decrypt(challenge).decode())
                 now = int(datetime.now().timestamp())
-                if now - challenge_data['timestamp'] > app_settings.CHALLENGE_VALID_SECONDS:
+                if action != "login":
+                    content = {'code': 'wrong_action', 'detail': 'Expected "login" but got something else'}
+                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                elif now - challenge_data['timestamp'] > app_settings.CHALLENGE_VALID_SECONDS:
                     content = {'code': 'challenge_expired', 'detail': 'Login challange has expired'}
                     return Response(content, status=status.HTTP_400_BAD_REQUEST)
                 elif challenge_data['userId'] != user.id:

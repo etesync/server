@@ -416,6 +416,7 @@ class AuthenticationLoginSerializer(serializers.Serializer):
 class AuthenticationLoginInnerSerializer(AuthenticationLoginChallengeSerializer):
     challenge = BinaryBase64Field()
     host = serializers.CharField()
+    action = serializers.CharField()
 
     def create(self, validated_data):
         raise NotImplementedError()
