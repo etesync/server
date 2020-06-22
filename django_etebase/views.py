@@ -486,13 +486,41 @@ class CollectionMemberViewSet(BaseViewSet):
         return Response({})
 
 
-class InvitationOutgoingViewSet(BaseViewSet):
-    allowed_methods = ['GET', 'POST', 'PUT', 'DELETE']
-    permission_classes = BaseViewSet.permission_classes
+class InvitationBaseViewSet(BaseViewSet):
     queryset = CollectionInvitation.objects.all()
     serializer_class = CollectionInvitationSerializer
     lookup_field = 'uid'
     lookup_url_kwarg = 'invitation_uid'
+
+    def list(self, request, collection_uid=None):
+        limit = int(request.GET.get('limit', 50))
+        iterator = request.GET.get('iterator', None)
+
+        queryset = self.get_queryset().order_by('id')
+
+        if iterator is not None:
+            iterator = get_object_or_404(queryset, uid=iterator)
+            queryset = queryset.filter(id__gt=iterator.id)
+
+        queryset = queryset[:limit]
+        serializer = self.get_serializer(queryset, many=True)
+
+        # This is not the most efficient way of implementing this, but it's good enough
+        done = len(queryset) < limit
+
+        last_item = len(queryset) > 0 and serializer.data[-1]
+
+        ret = {
+            'data': serializer.data,
+            'iterator': last_item and last_item['uid'],
+            'done': done,
+        }
+
+        return Response(ret)
+
+
+class InvitationOutgoingViewSet(InvitationBaseViewSet):
+    allowed_methods = ['GET', 'POST', 'PUT', 'DELETE']
 
     def get_queryset(self, queryset=None):
         if queryset is None:
@@ -528,12 +556,8 @@ class InvitationOutgoingViewSet(BaseViewSet):
         return Response(serializer.data)
 
 
-class InvitationIncomingViewSet(BaseViewSet):
+class InvitationIncomingViewSet(InvitationBaseViewSet):
     allowed_methods = ['GET', 'DELETE']
-    queryset = CollectionInvitation.objects.all()
-    serializer_class = CollectionInvitationSerializer
-    lookup_field = 'uid'
-    lookup_url_kwarg = 'invitation_uid'
 
     def get_queryset(self, queryset=None):
         if queryset is None:
