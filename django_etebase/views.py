@@ -140,6 +140,7 @@ class BaseViewSet(viewsets.ModelViewSet):
 
         ret = {
             'data': serializer.data,
+            'done': True,  # we always return all the items, so it's always done
         }
 
         return Response(ret)
@@ -449,6 +450,7 @@ class CollectionMemberViewSet(BaseViewSet):
 
         ret = {
             'data': serializer.data,
+            'done': True,  # we always return all the items, so it's always done
         }
 
         return Response(ret)
