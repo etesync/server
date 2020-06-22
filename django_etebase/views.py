@@ -106,9 +106,15 @@ class BaseViewSet(viewsets.ModelViewSet):
         return queryset, stoken_rev
 
     def get_queryset_stoken(self, queryset):
-        aggr_fields = {x: Max(x) for x in self.stoken_id_fields}
-        aggr = queryset.aggregate(**aggr_fields)
-        maxid = max(map(lambda x: x or -1, aggr.values()))
+        aggr_field_names = ['max_{}'.format(i) for i, x in enumerate(self.stoken_id_fields)]
+        aggr_fields = {name: Max(field) for name, field in zip(aggr_field_names, self.stoken_id_fields)}
+        aggr = queryset.annotate(**aggr_fields).values(*aggr_field_names)
+        # FIXME: we are doing it in python instead of SQL because I just couldn't get aggregate to work over the
+        # annotated values. This should probably be fixed as it could be quite slow
+        maxid = -1
+        for row in aggr:
+            rowmaxid = max(map(lambda x: x or -1, row.values()))
+            maxid = max(maxid, rowmaxid)
         new_stoken = (maxid >= 0) and Stoken.objects.get(id=maxid).uid
 
         return queryset, new_stoken
