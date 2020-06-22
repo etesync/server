@@ -428,6 +428,7 @@ class CollectionMemberViewSet(BaseViewSet):
     serializer_class = CollectionMemberSerializer
     lookup_field = 'user__' + User.USERNAME_FIELD
     lookup_url_kwarg = 'username'
+    stoken_id_fields = ['stoken__id']
 
     # FIXME: need to make sure that there's always an admin, and maybe also don't let an owner remove adm access
     # (if we want to transfer, we need to do that specifically)
@@ -444,13 +445,24 @@ class CollectionMemberViewSet(BaseViewSet):
 
         return queryset.filter(collection=collection)
 
+    # We override this method because we expect the stoken to be called iterator
+    def get_stoken_obj(self, request):
+        stoken = request.GET.get('iterator', None)
+
+        if stoken is not None:
+            return get_object_or_404(Stoken.objects.all(), uid=stoken)
+
+        return None
+
     def list(self, request, collection_uid=None):
         queryset = self.get_queryset()
+        queryset, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
         serializer = self.get_serializer(queryset, many=True)
 
         ret = {
             'data': serializer.data,
-            'done': True,  # we always return all the items, so it's always done
+            'iterator': new_stoken,  # Here we call it an iterator, it's only stoken for collection/items
+            'done': done,
         }
 
         return Response(ret)
