@@ -122,8 +122,10 @@ class BaseViewSet(viewsets.ModelViewSet):
         queryset = queryset[:limit]
         queryset, new_stoken = self.get_queryset_stoken(queryset)
         new_stoken = new_stoken or stoken
+        # This is not the most efficient way of implementing this, but it's good enough
+        done = len(queryset) < limit
 
-        return queryset, new_stoken
+        return queryset, new_stoken, done
 
     # Change how our list works by default
     def list(self, request, collection_uid=None):
@@ -193,13 +195,14 @@ class CollectionViewSet(BaseViewSet):
 
     def list(self, request):
         queryset = self.get_queryset()
-        queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
+        queryset, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
 
         serializer = self.get_serializer(queryset, many=True)
 
         ret = {
             'data': serializer.data,
             'stoken': new_stoken,
+            'done': done,
         }
 
         stoken_obj = self.get_stoken_obj(request)
@@ -256,13 +259,14 @@ class CollectionItemViewSet(BaseViewSet):
 
     def list(self, request, collection_uid=None):
         queryset = self.get_queryset()
-        queryset, new_stoken = self.filter_by_stoken_and_limit(request, queryset)
+        queryset, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
 
         serializer = self.get_serializer(queryset, many=True)
 
         ret = {
             'data': serializer.data,
             'stoken': new_stoken,
+            'done': done,
         }
         return Response(ret)
 
@@ -275,6 +279,7 @@ class CollectionItemViewSet(BaseViewSet):
         serializer = CollectionItemRevisionSerializer(col_it.revisions.order_by('-id'), many=True)
         ret = {
             'data': serializer.data,
+            'done': True,  # we always return all the items, so it's always done
         }
         return Response(ret)
 
@@ -308,6 +313,7 @@ class CollectionItemViewSet(BaseViewSet):
             ret = {
                 'data': serializer.data,
                 'stoken': new_stoken,
+                'done': True,  # we always return all the items, so it's always done
             }
             return Response(ret)
 
