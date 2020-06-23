@@ -31,7 +31,7 @@ class IsCollectionAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         collection_uid = view.kwargs['collection_uid']
         try:
-            collection = view.get_collection_queryset().get(uid=collection_uid)
+            collection = view.get_collection_queryset().get(main_item__uid=collection_uid)
             return is_collection_admin(collection, request.user)
         except Collection.DoesNotExist:
             # If the collection does not exist, we want to 404 later, not permission denied.
@@ -53,7 +53,7 @@ class IsCollectionAdminOrReadOnly(permissions.BasePermission):
             return True
 
         try:
-            collection = view.get_collection_queryset().get(uid=collection_uid)
+            collection = view.get_collection_queryset().get(main_item__uid=collection_uid)
             if request.method in permissions.SAFE_METHODS:
                 return True
 
@@ -73,7 +73,7 @@ class HasWriteAccessOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         collection_uid = view.kwargs['collection_uid']
         try:
-            collection = view.get_collection_queryset().get(uid=collection_uid)
+            collection = view.get_collection_queryset().get(main_item__uid=collection_uid)
             if request.method in permissions.SAFE_METHODS:
                 return True
             else:

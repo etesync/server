@@ -147,11 +147,12 @@ class BaseViewSet(viewsets.ModelViewSet):
 
 
 class CollectionViewSet(BaseViewSet):
-    allowed_methods = ['GET', 'POST', 'DELETE']
+    allowed_methods = ['GET', 'POST']
     permission_classes = BaseViewSet.permission_classes + (permissions.IsCollectionAdminOrReadOnly, )
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
-    lookup_field = 'uid'
+    lookup_field = 'main_item__uid'
+    lookup_url_kwarg = 'uid'
     stoken_id_fields = ['items__revisions__stoken__id', 'members__stoken__id']
 
     def get_queryset(self, queryset=None):
@@ -173,19 +174,7 @@ class CollectionViewSet(BaseViewSet):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-
-        stoken = request.GET.get('stoken', None)
-
-        if stoken is not None and stoken != instance.stoken:
-            content = {'code': 'stale_stoken', 'detail': 'Stoken is too old'}
-            return Response(content, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = self.get_serializer(instance, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        return Response({})
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -216,7 +205,7 @@ class CollectionViewSet(BaseViewSet):
         if stoken_obj is not None:
             # FIXME: honour limit? (the limit should be combined for data and this because of stoken)
             remed = CollectionMemberRemoved.objects.filter(user=request.user, stoken__id__gt=stoken_obj.id) \
-                .values_list('collection__uid', flat=True)
+                .values_list('collection__main_item__uid', flat=True)
             if len(remed) > 0:
                 ret['removedMemberships'] = [{'uid': x} for x in remed]
 
@@ -234,7 +223,7 @@ class CollectionItemViewSet(BaseViewSet):
     def get_queryset(self):
         collection_uid = self.kwargs['collection_uid']
         try:
-            collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
+            collection = self.get_collection_queryset(Collection.objects).get(main_item__uid=collection_uid)
         except Collection.DoesNotExist:
             raise Http404("Collection does not exist")
         # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
@@ -280,7 +269,7 @@ class CollectionItemViewSet(BaseViewSet):
     @action_decorator(detail=True, methods=['GET'])
     def revision(self, request, collection_uid=None, uid=None):
         # FIXME: need pagination support
-        col = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
+        col = get_object_or_404(self.get_collection_queryset(Collection.objects), main_item__uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=uid)
 
         serializer = CollectionItemRevisionSerializer(col_it.revisions.order_by('-id'), many=True)
@@ -336,7 +325,7 @@ class CollectionItemViewSet(BaseViewSet):
         with transaction.atomic():  # We need this for locking on the collection object
             collection_object = get_object_or_404(
                 self.get_collection_queryset(Collection.objects).select_for_update(),  # Lock writes on the collection
-                uid=collection_uid)
+                main_item__uid=collection_uid)
 
             if stoken is not None and stoken != collection_object.stoken:
                 content = {'code': 'stale_stoken', 'detail': 'Stoken is too old'}
@@ -388,7 +377,7 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         return queryset.filter(members__user=user)
 
     def create(self, request, collection_uid=None, collection_item_uid=None):
-        col = get_object_or_404(self.get_collection_queryset(), uid=collection_uid)
+        col = get_object_or_404(self.get_collection_queryset(), main_item__uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=collection_item_uid)
 
         serializer = self.get_serializer_class()(data=request.data)
@@ -408,7 +397,7 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         import os
         from django.views.static import serve
 
-        col = get_object_or_404(self.get_collection_queryset(), uid=collection_uid)
+        col = get_object_or_404(self.get_collection_queryset(), main_item__uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=collection_item_uid)
         chunk = get_object_or_404(col_it.chunks, uid=uid)
 
@@ -436,7 +425,7 @@ class CollectionMemberViewSet(BaseViewSet):
     def get_queryset(self, queryset=None):
         collection_uid = self.kwargs['collection_uid']
         try:
-            collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
+            collection = self.get_collection_queryset(Collection.objects).get(main_item__uid=collection_uid)
         except Collection.DoesNotExist:
             raise Http404('Collection does not exist')
 
@@ -478,7 +467,7 @@ class CollectionMemberViewSet(BaseViewSet):
     @action_decorator(detail=False, methods=['POST'], permission_classes=our_base_permission_classes)
     def leave(self, request, collection_uid=None):
         collection_uid = self.kwargs['collection_uid']
-        col = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
+        col = get_object_or_404(self.get_collection_queryset(Collection.objects), main_item__uid=collection_uid)
 
         member = col.members.get(user=request.user)
         self.perform_destroy(member)
@@ -534,7 +523,7 @@ class InvitationOutgoingViewSet(InvitationBaseViewSet):
             collection_uid = serializer.validated_data.get('collection', {}).get('uid')
 
             try:
-                collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
+                collection = self.get_collection_queryset(Collection.objects).get(main_item__uid=collection_uid)
             except Collection.DoesNotExist:
                 raise Http404('Collection does not exist')
 

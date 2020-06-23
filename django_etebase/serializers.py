@@ -182,15 +182,19 @@ class CollectionItemBulkGetSerializer(serializers.ModelSerializer):
 
 
 class CollectionSerializer(serializers.ModelSerializer):
-    encryptionKey = CollectionEncryptionKeyField()
+    collectionKey = CollectionEncryptionKeyField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
     stoken = serializers.CharField(read_only=True)
+
+    uid = serializers.CharField(source='main_item.uid')
+    encryptionKey = BinaryBase64Field(source='main_item.encryptionKey')
     etag = serializers.CharField(allow_null=True, write_only=True)
-    content = CollectionItemRevisionSerializer(many=False)
+    version = serializers.IntegerField(min_value=0, source='main_item.version')
+    content = CollectionItemRevisionSerializer(many=False, source='main_item.content')
 
     class Meta:
         model = models.Collection
-        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'content', 'stoken', 'etag')
+        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'collectionKey', 'content', 'stoken', 'etag')
 
     def get_access_level_from_context(self, obj):
         request = self.context.get('request', None)
@@ -200,9 +204,16 @@ class CollectionSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
+        collection_key = validated_data.pop('collectionKey')
+
         etag = validated_data.pop('etag')
-        revision_data = validated_data.pop('content')
-        encryption_key = validated_data.pop('encryptionKey')
+
+        main_item_data = validated_data.pop('main_item')
+        uid = main_item_data.pop('uid')
+        version = main_item_data.pop('version')
+        revision_data = main_item_data.pop('content')
+        encryption_key = main_item_data.pop('encryptionKey')
+
         instance = self.__class__.Meta.model(**validated_data)
 
         with transaction.atomic():
@@ -211,7 +222,10 @@ class CollectionSerializer(serializers.ModelSerializer):
 
             instance.save()
             main_item = models.CollectionItem.objects.create(
-                uid=None, encryptionKey=None, version=instance.version, collection=instance)
+                uid=uid, encryptionKey=encryption_key, version=version, collection=instance)
+
+            instance.main_item = main_item
+            instance.save()
 
             process_revisions_for_item(main_item, revision_data)
 
@@ -219,26 +233,13 @@ class CollectionSerializer(serializers.ModelSerializer):
                                     stoken=models.Stoken.objects.create(),
                                     user=validated_data.get('owner'),
                                     accessLevel=models.AccessLevels.ADMIN,
-                                    encryptionKey=encryption_key,
+                                    encryptionKey=collection_key,
                                     ).save()
 
         return instance
 
     def update(self, instance, validated_data):
-        """Function that's called when this serializer is meant to update an item"""
-        revision_data = validated_data.pop('content')
-
-        with transaction.atomic():
-            main_item = instance.main_item
-            # We don't have to use select_for_update here because the unique constraint on current guards against
-            # the race condition. But it's a good idea because it'll lock and wait rather than fail.
-            current_revision = main_item.revisions.filter(current=True).select_for_update().first()
-            current_revision.current = None
-            current_revision.save()
-
-            process_revisions_for_item(main_item, revision_data)
-
-        return instance
+        raise NotImplementedError()
 
 
 class CollectionMemberSerializer(serializers.ModelSerializer):

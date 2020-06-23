@@ -27,20 +27,15 @@ UidValidator = RegexValidator(regex=r'^[a-zA-Z0-9]*$', message='Not a valid UID'
 
 
 class Collection(models.Model):
-    uid = models.CharField(db_index=True, blank=False, null=False,
-                           max_length=43, validators=[UidValidator])
-    version = models.PositiveSmallIntegerField()
+    main_item = models.ForeignKey('CollectionItem', related_name='parent', null=True, on_delete=models.SET_NULL)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ('uid', 'owner')
 
     def __str__(self):
         return self.uid
 
     @cached_property
-    def main_item(self):
-        return self.items.get(uid=None)
+    def uid(self):
+        return self.main_item.uid
 
     @property
     def content(self):
