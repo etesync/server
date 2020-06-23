@@ -284,7 +284,7 @@ class CollectionItemViewSet(BaseViewSet):
             queryset = queryset.filter(id__lt=iterator.id)
 
         queryset = queryset[:limit]
-        serializer = CollectionItemRevisionSerializer(queryset, many=True)
+        serializer = CollectionItemRevisionSerializer(queryset, context=self.get_serializer_context(), many=True)
 
         # This is not the most efficient way of implementing this, but it's good enough
         done = len(queryset) < limit
