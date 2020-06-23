@@ -271,15 +271,30 @@ class CollectionItemViewSet(BaseViewSet):
 
     @action_decorator(detail=True, methods=['GET'])
     def revision(self, request, collection_uid=None, uid=None):
-        # FIXME: need pagination support
         col = get_object_or_404(self.get_collection_queryset(Collection.objects), main_item__uid=collection_uid)
-        col_it = get_object_or_404(col.items, uid=uid)
+        item = get_object_or_404(col.items, uid=uid)
 
-        revisions = col_it.revisions.exclude(current=True).order_by('-id')
-        serializer = CollectionItemRevisionSerializer(revisions, many=True)
+        limit = int(request.GET.get('limit', 50))
+        iterator = request.GET.get('iterator', None)
+
+        queryset = item.revisions.exclude(current=True).order_by('-id')
+
+        if iterator is not None:
+            iterator = get_object_or_404(queryset, uid=iterator)
+            queryset = queryset.filter(id__lt=iterator.id)
+
+        queryset = queryset[:limit]
+        serializer = CollectionItemRevisionSerializer(queryset, many=True)
+
+        # This is not the most efficient way of implementing this, but it's good enough
+        done = len(queryset) < limit
+
+        last_item = len(queryset) > 0 and serializer.data[-1]
+
         ret = {
             'data': serializer.data,
-            'done': True,  # we always return all the items, so it's always done
+            'iterator': last_item and last_item['uid'],
+            'done': done,
         }
         return Response(ret)
 
