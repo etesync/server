@@ -254,6 +254,10 @@ class CollectionItemViewSet(BaseViewSet):
 
     def list(self, request, collection_uid=None):
         queryset = self.get_queryset()
+
+        if not self.request.query_params.get('withCollection', False):
+            queryset = queryset.filter(parent__isnull=True)
+
         queryset, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
 
         serializer = self.get_serializer(queryset, many=True)
