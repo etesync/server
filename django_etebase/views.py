@@ -275,7 +275,8 @@ class CollectionItemViewSet(BaseViewSet):
         col = get_object_or_404(self.get_collection_queryset(Collection.objects), main_item__uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=uid)
 
-        serializer = CollectionItemRevisionSerializer(col_it.revisions.order_by('-id'), many=True)
+        revisions = col_it.revisions.exclude(current=True).order_by('-id')
+        serializer = CollectionItemRevisionSerializer(revisions, many=True)
         ret = {
             'data': serializer.data,
             'done': True,  # we always return all the items, so it's always done
