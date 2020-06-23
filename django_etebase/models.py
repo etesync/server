@@ -58,7 +58,7 @@ class Collection(models.Model):
 
 
 class CollectionItem(models.Model):
-    uid = models.CharField(db_index=True, blank=False, null=True,
+    uid = models.CharField(db_index=True, blank=False,
                            max_length=43, validators=[UidValidator])
     collection = models.ForeignKey(Collection, related_name='items', on_delete=models.CASCADE)
     version = models.PositiveSmallIntegerField()
