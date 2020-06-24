@@ -288,13 +288,16 @@ class CollectionItemViewSet(BaseViewSet):
             iterator = get_object_or_404(queryset, uid=iterator)
             queryset = queryset.filter(id__lt=iterator.id)
 
-        queryset = queryset[:limit]
-        serializer = CollectionItemRevisionSerializer(queryset, context=self.get_serializer_context(), many=True)
+        result = list(queryset[:limit + 1])
+        if len(result) < limit + 1:
+            done = True
+        else:
+            done = False
+            result = result[:-1]
 
-        # This is not the most efficient way of implementing this, but it's good enough
-        done = len(queryset) < limit
+        serializer = CollectionItemRevisionSerializer(result, context=self.get_serializer_context(), many=True)
 
-        last_item = len(queryset) > 0 and serializer.data[-1]
+        last_item = len(result) > 0 and serializer.data[-1]
 
         ret = {
             'data': serializer.data,
@@ -510,13 +513,16 @@ class InvitationBaseViewSet(BaseViewSet):
             iterator = get_object_or_404(queryset, uid=iterator)
             queryset = queryset.filter(id__gt=iterator.id)
 
-        queryset = queryset[:limit]
-        serializer = self.get_serializer(queryset, many=True)
+        result = list(queryset[:limit + 1])
+        if len(result) < limit + 1:
+            done = True
+        else:
+            done = False
+            result = result[:-1]
 
-        # This is not the most efficient way of implementing this, but it's good enough
-        done = len(queryset) < limit
+        serializer = self.get_serializer(result, many=True)
 
-        last_item = len(queryset) > 0 and serializer.data[-1]
+        last_item = len(result) > 0 and serializer.data[-1]
 
         ret = {
             'data': serializer.data,
