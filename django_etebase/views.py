@@ -277,7 +277,7 @@ class CollectionItemViewSet(BaseViewSet):
         limit = int(request.GET.get('limit', 50))
         iterator = request.GET.get('iterator', None)
 
-        queryset = item.revisions.exclude(current=True).order_by('-id')
+        queryset = item.revisions.order_by('-id')
 
         if iterator is not None:
             iterator = get_object_or_404(queryset, uid=iterator)
