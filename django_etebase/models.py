@@ -23,7 +23,7 @@ from django.utils.crypto import get_random_string
 
 
 Base64Url256BitlValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{42,43}$', message='Expected a base64url.')
-UidValidator = RegexValidator(regex=r'^[a-zA-Z0-9]*$', message='Not a valid UID')
+UidValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]*$', message='Not a valid UID')
 
 
 class Collection(models.Model):
