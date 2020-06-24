@@ -105,7 +105,7 @@ class BaseViewSet(viewsets.ModelViewSet):
 
         aggr_fields = [Coalesce(Max(field), V(0)) for field in self.stoken_id_fields]
         max_stoken = Greatest(*aggr_fields) if len(aggr_fields) > 1 else aggr_fields[0]
-        queryset = queryset.annotate(max_stoken=max_stoken)
+        queryset = queryset.annotate(max_stoken=max_stoken).order_by('max_stoken')
 
         if stoken_rev is not None:
             queryset = queryset.filter(max_stoken__gt=stoken_rev.id)
