@@ -88,8 +88,11 @@ class BaseViewSet(viewsets.ModelViewSet):
         user = self.request.user
         return queryset.filter(members__user=user)
 
+    def get_stoken_obj_id(self, request):
+        return request.GET.get('stoken', None)
+
     def get_stoken_obj(self, request):
-        stoken = request.GET.get('stoken', None)
+        stoken = self.get_stoken_obj_id(request)
 
         if stoken is not None:
             return get_object_or_404(Stoken.objects.all(), uid=stoken)
@@ -454,13 +457,8 @@ class CollectionMemberViewSet(BaseViewSet):
         return queryset.filter(collection=collection)
 
     # We override this method because we expect the stoken to be called iterator
-    def get_stoken_obj(self, request):
-        stoken = request.GET.get('iterator', None)
-
-        if stoken is not None:
-            return get_object_or_404(Stoken.objects.all(), uid=stoken)
-
-        return None
+    def get_stoken_obj_id(self, request):
+        return request.GET.get('iterator', None)
 
     def list(self, request, collection_uid=None):
         queryset = self.get_queryset().order_by('id')
