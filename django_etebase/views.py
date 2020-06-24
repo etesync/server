@@ -463,7 +463,7 @@ class CollectionMemberViewSet(BaseViewSet):
         return None
 
     def list(self, request, collection_uid=None):
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().order_by('id')
         queryset, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
         serializer = self.get_serializer(queryset, many=True)
 
