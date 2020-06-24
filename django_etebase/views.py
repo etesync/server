@@ -19,7 +19,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, user_logged_in, user_logged_out
 from django.core.exceptions import PermissionDenied
 from django.db import transaction, IntegrityError
-from django.db.models import Max, Q
+from django.db.models import Max, Q, F, Value as V
+from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 
@@ -101,22 +102,20 @@ class BaseViewSet(viewsets.ModelViewSet):
 
     def filter_by_stoken(self, request, queryset):
         stoken_rev = self.get_stoken_obj(request)
+
+        aggr_fields = [Coalesce(Max(field), V(0)) for field in self.stoken_id_fields]
+        max_stoken = Greatest(*aggr_fields) if len(aggr_fields) > 1 else aggr_fields[0]
+        queryset = queryset.annotate(max_stoken=max_stoken)
+
         if stoken_rev is not None:
-            filter_by_map = map(lambda x: Q(**{x + '__gt': stoken_rev.id}), self.stoken_id_fields)
-            filter_by = reduce(lambda x, y: x | y, filter_by_map)
-            queryset = queryset.filter(filter_by).distinct()
+            queryset = queryset.filter(max_stoken__gt=stoken_rev.id)
 
         return queryset, stoken_rev
 
     def get_queryset_stoken(self, queryset):
-        aggr_field_names = ['max_{}'.format(i) for i, x in enumerate(self.stoken_id_fields)]
-        aggr_fields = {name: Max(field) for name, field in zip(aggr_field_names, self.stoken_id_fields)}
-        aggr = queryset.annotate(**aggr_fields).values(*aggr_field_names)
-        # FIXME: we are doing it in python instead of SQL because I just couldn't get aggregate to work over the
-        # annotated values. This should probably be fixed as it could be quite slow
         maxid = -1
-        for row in aggr:
-            rowmaxid = max(map(lambda x: x or -1, row.values()))
+        for row in queryset:
+            rowmaxid = getattr(row, 'max_stoken') or -1
             maxid = max(maxid, rowmaxid)
         new_stoken = (maxid >= 0) and Stoken.objects.get(id=maxid).uid
 
