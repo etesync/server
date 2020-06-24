@@ -167,8 +167,8 @@ class CollectionViewSet(BaseViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        inline = 'inline' in self.request.query_params
-        context.update({'request': self.request, 'inline': inline})
+        prefetch = self.request.query_params.get('prefetch', True)
+        context.update({'request': self.request, 'prefetch': prefetch})
         return context
 
     def destroy(self, request, uid=None):
@@ -239,8 +239,8 @@ class CollectionItemViewSet(BaseViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        inline = 'inline' in self.request.query_params
-        context.update({'request': self.request, 'inline': inline})
+        prefetch = self.request.query_params.get('prefetch', True)
+        context.update({'request': self.request, 'prefetch': prefetch})
         return context
 
     def create(self, request, collection_uid=None):

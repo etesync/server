@@ -83,8 +83,7 @@ class CollectionContentField(BinaryBase64Field):
 class ChunksField(serializers.RelatedField):
     def to_representation(self, obj):
         obj = obj.chunk
-        inline = self.context.get('inline', False)
-        if inline:
+        if self.context.get('prefetch'):
             with open(obj.chunkFile.path, 'rb') as f:
                 return (obj.uid, b64encode(f.read()))
         else:
