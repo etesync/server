@@ -119,7 +119,7 @@ class BaseViewSet(viewsets.ModelViewSet):
             maxid = max(maxid, rowmaxid)
         new_stoken = (maxid >= 0) and Stoken.objects.get(id=maxid).uid
 
-        return queryset, new_stoken
+        return new_stoken
 
     def filter_by_stoken_and_limit(self, request, queryset):
         limit = int(request.GET.get('limit', 50))
@@ -127,13 +127,16 @@ class BaseViewSet(viewsets.ModelViewSet):
         queryset, stoken_rev = self.filter_by_stoken(request, queryset)
         stoken = stoken_rev.uid if stoken_rev is not None else None
 
-        queryset = queryset[:limit]
-        queryset, new_stoken = self.get_queryset_stoken(queryset)
-        new_stoken = new_stoken or stoken
-        # This is not the most efficient way of implementing this, but it's good enough
-        done = len(queryset) < limit
+        result = list(queryset[:limit + 1])
+        if len(result) < limit + 1:
+            done = True
+        else:
+            done = False
+            result = result[:-1]
 
-        return queryset, new_stoken, done
+        new_stoken = self.get_queryset_stoken(result) or stoken
+
+        return result, new_stoken, done
 
     # Change how our list works by default
     def list(self, request, collection_uid=None):
@@ -193,9 +196,9 @@ class CollectionViewSet(BaseViewSet):
 
     def list(self, request):
         queryset = self.get_queryset()
-        queryset, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
+        result, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(result, many=True)
 
         ret = {
             'data': serializer.data,
@@ -260,9 +263,9 @@ class CollectionItemViewSet(BaseViewSet):
         if not self.request.query_params.get('withCollection', False):
             queryset = queryset.filter(parent__isnull=True)
 
-        queryset, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
+        result, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(result, many=True)
 
         ret = {
             'data': serializer.data,
@@ -321,7 +324,7 @@ class CollectionItemViewSet(BaseViewSet):
             revs = CollectionItemRevision.objects.filter(uid__in=etags, current=True)
             queryset = queryset.filter(uid__in=uids).exclude(revisions__in=revs)
 
-            queryset, new_stoken = self.get_queryset_stoken(queryset)
+            new_stoken = self.get_queryset_stoken(queryset)
             stoken = stoken_rev and stoken_rev.uid
             new_stoken = new_stoken or stoken
 
@@ -461,8 +464,8 @@ class CollectionMemberViewSet(BaseViewSet):
 
     def list(self, request, collection_uid=None):
         queryset = self.get_queryset().order_by('id')
-        queryset, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
-        serializer = self.get_serializer(queryset, many=True)
+        result, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
+        serializer = self.get_serializer(result, many=True)
 
         ret = {
             'data': serializer.data,
