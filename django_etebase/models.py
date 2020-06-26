@@ -22,8 +22,7 @@ from django.utils.functional import cached_property
 from django.utils.crypto import get_random_string
 
 
-Base64Url256BitlValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{42,43}$', message='Expected a base64url.')
-UidValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]*$', message='Not a valid UID')
+UidValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{20,}$', message='Not a valid UID')
 
 
 class Collection(models.Model):
@@ -103,13 +102,13 @@ def generate_stoken_uid():
 
 class Stoken(models.Model):
     uid = models.CharField(db_index=True, unique=True, blank=False, null=False, default=generate_stoken_uid,
-                           max_length=43, validators=[Base64Url256BitlValidator])
+                           max_length=43, validators=[UidValidator])
 
 
 class CollectionItemRevision(models.Model):
     stoken = models.OneToOneField(Stoken, on_delete=models.PROTECT)
     uid = models.CharField(db_index=True, unique=True, blank=False, null=False,
-                           max_length=43, validators=[Base64Url256BitlValidator])
+                           max_length=43, validators=[UidValidator])
     item = models.ForeignKey(CollectionItem, related_name='revisions', on_delete=models.CASCADE)
     meta = models.BinaryField(editable=True, blank=False, null=False)
     current = models.BooleanField(db_index=True, default=True, null=True)
@@ -179,7 +178,7 @@ class CollectionMemberRemoved(models.Model):
 
 class CollectionInvitation(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
-                           max_length=43, validators=[Base64Url256BitlValidator])
+                           max_length=43, validators=[UidValidator])
     version = models.PositiveSmallIntegerField(default=1)
     fromMember = models.ForeignKey(CollectionMember, on_delete=models.CASCADE)
     # FIXME: make sure to delete all invitations for the same collection once one is accepted
