@@ -89,7 +89,7 @@ def chunk_directory_path(instance, filename):
 
 class CollectionItemChunk(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
-                           max_length=43, validators=[Base64Url256BitlValidator])
+                           max_length=60, validators=[UidValidator])
     item = models.ForeignKey(CollectionItem, related_name='chunks', on_delete=models.CASCADE)
     chunkFile = models.FileField(upload_to=chunk_directory_path, max_length=150, unique=True)
 
