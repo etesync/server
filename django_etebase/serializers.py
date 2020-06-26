@@ -116,7 +116,7 @@ class CollectionItemRevisionSerializer(serializers.ModelSerializer):
 
 
 class CollectionItemSerializer(serializers.ModelSerializer):
-    encryptionKey = BinaryBase64Field()
+    encryptionKey = BinaryBase64Field(required=False, default=None)
     etag = serializers.CharField(allow_null=True, write_only=True)
     content = CollectionItemRevisionSerializer(many=False)
 
@@ -186,7 +186,7 @@ class CollectionSerializer(serializers.ModelSerializer):
     stoken = serializers.CharField(read_only=True)
 
     uid = serializers.CharField(source='main_item.uid')
-    encryptionKey = BinaryBase64Field(source='main_item.encryptionKey')
+    encryptionKey = BinaryBase64Field(source='main_item.encryptionKey', required=False, default=None)
     etag = serializers.CharField(allow_null=True, write_only=True)
     version = serializers.IntegerField(min_value=0, source='main_item.version')
     content = CollectionItemRevisionSerializer(many=False, source='main_item.content')
