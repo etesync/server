@@ -107,12 +107,11 @@ class CollectionItemRevisionSerializer(serializers.ModelSerializer):
         queryset=models.RevisionChunkRelation.objects.all(),
         many=True
     )
-    salt = BinaryBase64Field()
     meta = BinaryBase64Field()
 
     class Meta:
         model = models.CollectionItemRevision
-        fields = ('chunks', 'meta', 'uid', 'salt', 'deleted')
+        fields = ('chunks', 'meta', 'uid', 'deleted')
 
 
 class CollectionItemSerializer(serializers.ModelSerializer):
