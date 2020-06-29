@@ -29,7 +29,7 @@ from rest_framework import viewsets
 from rest_framework.decorators import action as action_decorator
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
-from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
+from rest_framework.renderers import BrowsableAPIRenderer
 
 import nacl.encoding
 import nacl.signing
@@ -42,6 +42,7 @@ from .drf_msgpack.parsers import MessagePackParser
 from .drf_msgpack.renderers import MessagePackRenderer
 
 from . import app_settings, permissions
+from .renderers import JSONRenderer
 from .models import (
         Collection,
         CollectionItem,
@@ -53,7 +54,6 @@ from .models import (
         UserInfo,
     )
 from .serializers import (
-        b64encode,
         AuthenticationChangePasswordInnerSerializer,
         AuthenticationSignupSerializer,
         AuthenticationLoginChallengeSerializer,
@@ -700,8 +700,8 @@ class AuthenticationViewSet(viewsets.ViewSet):
             challenge = box.encrypt(msgpack_encode(challenge_data), encoder=nacl.encoding.RawEncoder)
 
             ret = {
-                "salt": b64encode(salt),
-                "challenge": b64encode(challenge),
+                "salt": salt,
+                "challenge": challenge,
                 "version": user.userinfo.version,
             }
             return Response(ret, status=status.HTTP_200_OK)
@@ -717,7 +717,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
         response = msgpack_decode(response_raw)
         signature = outer_serializer.validated_data['signature']
 
-        context = {'host': request.get_host(), 'supports_binary': True}
+        context = {'host': request.get_host()}
         serializer = AuthenticationLoginInnerSerializer(data=response, context=context)
         serializer.is_valid(raise_exception=True)
 
@@ -750,7 +750,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
         response = msgpack_decode(response_raw)
         signature = outer_serializer.validated_data['signature']
 
-        context = {'host': request.get_host(), 'supports_binary': True}
+        context = {'host': request.get_host()}
         serializer = AuthenticationChangePasswordInnerSerializer(request.user.userinfo, data=response, context=context)
         serializer.is_valid(raise_exception=True)
 

@@ -56,18 +56,19 @@ def b64decode(data):
     return base64.urlsafe_b64decode(data)
 
 
+def b64decode_or_bytes(data):
+    if isinstance(data, bytes):
+        return data
+    else:
+        return b64decode(data)
+
+
 class BinaryBase64Field(serializers.Field):
     def to_representation(self, value):
-        if self.context.get('supports_binary', False):
-            return value
-        else:
-            return b64encode(value)
+        return value
 
     def to_internal_value(self, data):
-        if isinstance(data, bytes):
-            return data
-        else:
-            return b64decode(data)
+        return b64decode_or_bytes(data)
 
 
 class CollectionEncryptionKeyField(BinaryBase64Field):
@@ -91,14 +92,14 @@ class ChunksField(serializers.RelatedField):
         obj = obj.chunk
         if self.context.get('prefetch'):
             with open(obj.chunkFile.path, 'rb') as f:
-                return (obj.uid, b64encode(f.read()))
+                return (obj.uid, f.read())
         else:
             return (obj.uid, )
 
     def to_internal_value(self, data):
         if data[0] is None or data[1] is None:
             raise serializers.ValidationError('null is not allowed')
-        return (data[0], b64decode(data[1]))
+        return (data[0], b64decode_or_bytes(data[1]))
 
 
 class CollectionItemChunkSerializer(serializers.ModelSerializer):
