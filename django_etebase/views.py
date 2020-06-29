@@ -26,9 +26,10 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework import parsers
 from rest_framework.decorators import action as action_decorator
 from rest_framework.response import Response
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 
 import nacl.encoding
 import nacl.signing
@@ -36,6 +37,9 @@ import nacl.secret
 import nacl.hash
 
 from .token_auth.models import AuthToken
+
+from .drf_msgpack.parsers import MessagePackParser
+from .drf_msgpack.renderers import MessagePackRenderer
 
 from . import app_settings, permissions
 from .models import (
@@ -83,6 +87,8 @@ def msgpack_decode(content):
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = tuple(app_settings.API_AUTHENTICATORS)
     permission_classes = tuple(app_settings.API_PERMISSIONS)
+    renderer_classes = [JSONRenderer, MessagePackRenderer, BrowsableAPIRenderer]
+    parser_classes = [JSONParser, MessagePackParser, FormParser, MultiPartParser]
     stoken_id_fields = None
 
     def get_serializer_class(self):
@@ -398,9 +404,10 @@ class CollectionItemViewSet(BaseViewSet):
 
 class CollectionItemChunkViewSet(viewsets.ViewSet):
     allowed_methods = ['GET', 'POST']
-    parser_classes = (parsers.MultiPartParser, )
     authentication_classes = BaseViewSet.authentication_classes
     permission_classes = BaseViewSet.permission_classes
+    renderer_classes = BaseViewSet.renderer_classes
+    parser_classes = (MultiPartParser, )
     serializer_class = CollectionItemChunkSerializer
     lookup_field = 'uid'
 
@@ -602,6 +609,8 @@ class InvitationIncomingViewSet(InvitationBaseViewSet):
 class AuthenticationViewSet(viewsets.ViewSet):
     allowed_methods = ['POST']
     authentication_classes = BaseViewSet.authentication_classes
+    renderer_classes = BaseViewSet.renderer_classes
+    parser_classes = BaseViewSet.parser_classes
 
     def get_encryption_key(self, salt):
         key = nacl.hash.blake2b(settings.SECRET_KEY.encode(), encoder=nacl.encoding.RawEncoder)
@@ -757,6 +766,8 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
 class TestAuthenticationViewSet(viewsets.ViewSet):
     allowed_methods = ['POST']
+    renderer_classes = BaseViewSet.renderer_classes
+    parser_classes = BaseViewSet.parser_classes
 
     def list(self, request):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
