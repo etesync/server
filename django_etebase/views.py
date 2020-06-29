@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import json
+import msgpack
 from functools import reduce
 
 from django.conf import settings
@@ -70,6 +70,14 @@ from .serializers import (
 
 
 User = get_user_model()
+
+
+def msgpack_encode(content):
+    return msgpack.packb(content, use_bin_type=True)
+
+
+def msgpack_decode(content):
+    return msgpack.unpackb(content, raw=False)
 
 
 class BaseViewSet(viewsets.ModelViewSet):
@@ -638,7 +646,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
         enc_key = self.get_encryption_key(salt)
         box = nacl.secret.SecretBox(enc_key)
 
-        challenge_data = json.loads(box.decrypt(challenge).decode())
+        challenge_data = msgpack_decode(box.decrypt(challenge))
         now = int(datetime.now().timestamp())
         if action != expected_action:
             content = {'code': 'wrong_action', 'detail': 'Expected "{}" but got something else'.format(expected_action)}
@@ -680,8 +688,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
                 "timestamp": int(datetime.now().timestamp()),
                 "userId": user.id,
             }
-            challenge = box.encrypt(json.dumps(
-                challenge_data, separators=(',', ':')).encode(), encoder=nacl.encoding.RawEncoder)
+            challenge = box.encrypt(msgpack_encode(challenge_data), encoder=nacl.encoding.RawEncoder)
 
             ret = {
                 "salt": b64encode(salt),
@@ -698,10 +705,11 @@ class AuthenticationViewSet(viewsets.ViewSet):
         outer_serializer.is_valid(raise_exception=True)
 
         response_raw = outer_serializer.validated_data['response']
-        response = json.loads(response_raw.decode())
+        response = msgpack_decode(response_raw)
         signature = outer_serializer.validated_data['signature']
 
-        serializer = AuthenticationLoginInnerSerializer(data=response, context={'host': request.get_host()})
+        context = {'host': request.get_host(), 'supports_binary': True}
+        serializer = AuthenticationLoginInnerSerializer(data=response, context=context)
         serializer.is_valid(raise_exception=True)
 
         bad_login_response = self.validate_login_request(
@@ -730,11 +738,11 @@ class AuthenticationViewSet(viewsets.ViewSet):
         outer_serializer.is_valid(raise_exception=True)
 
         response_raw = outer_serializer.validated_data['response']
-        response = json.loads(response_raw.decode())
+        response = msgpack_decode(response_raw)
         signature = outer_serializer.validated_data['signature']
 
-        serializer = AuthenticationChangePasswordInnerSerializer(
-            request.user.userinfo, data=response, context={'host': request.get_host()})
+        context = {'host': request.get_host(), 'supports_binary': True}
+        serializer = AuthenticationChangePasswordInnerSerializer(request.user.userinfo, data=response, context=context)
         serializer.is_valid(raise_exception=True)
 
         bad_login_response = self.validate_login_request(

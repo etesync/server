@@ -64,6 +64,15 @@ class BinaryBase64Field(serializers.Field):
         return b64decode(data)
 
 
+# This field does nothing to the data. It's useful for raw binary data
+class RawField(serializers.Field):
+    def to_representation(self, value):
+        return value
+
+    def to_internal_value(self, data):
+        return data
+
+
 class CollectionEncryptionKeyField(BinaryBase64Field):
     def get_attribute(self, instance):
         request = self.context.get('request', None)
@@ -413,7 +422,7 @@ class AuthenticationLoginSerializer(serializers.Serializer):
 
 
 class AuthenticationLoginInnerSerializer(AuthenticationLoginChallengeSerializer):
-    challenge = BinaryBase64Field()
+    challenge = RawField()
     host = serializers.CharField()
     action = serializers.CharField()
 

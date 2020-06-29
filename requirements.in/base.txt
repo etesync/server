@@ -4,5 +4,6 @@ django-cors-headers
 django-fullurl
 djangorestframework
 drf-nested-routers
+msgpack
 psycopg2-binary
 pynacl
