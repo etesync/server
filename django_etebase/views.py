@@ -778,23 +778,24 @@ class TestAuthenticationViewSet(viewsets.ViewSet):
         if not settings.DEBUG:
             return HttpResponseBadRequest("Only allowed in debug mode.")
 
-        user = get_object_or_404(User.objects.all(), username=request.data.get('user').get('username'))
+        with transaction.atomic():
+            user = get_object_or_404(User.objects.all(), username=request.data.get('user').get('username'))
 
-        # Only allow test users for extra safety
-        if not getattr(user, User.USERNAME_FIELD).startswith('test_user'):
-            return HttpResponseBadRequest("Endpoint not allowed for user.")
+            # Only allow test users for extra safety
+            if not getattr(user, User.USERNAME_FIELD).startswith('test_user'):
+                return HttpResponseBadRequest("Endpoint not allowed for user.")
 
-        if hasattr(user, 'userinfo'):
-            user.userinfo.delete()
+            if hasattr(user, 'userinfo'):
+                user.userinfo.delete()
 
-        serializer = AuthenticationSignupSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+            serializer = AuthenticationSignupSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
-        # Delete all of the journal data for this user for a clear test env
-        user.collection_set.all().delete()
-        user.incoming_invitations.all().delete()
+            # Delete all of the journal data for this user for a clear test env
+            user.collection_set.all().delete()
+            user.incoming_invitations.all().delete()
 
-        # FIXME: also delete chunk files!!!
+            # FIXME: also delete chunk files!!!
 
         return HttpResponse()
