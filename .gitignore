@@ -1,0 +1,15 @@
+/journal
+/db.sqlite3*
+Session.vim
+/.venv
+/assets
+/logs
+/.coverage
+/tmp
+/media
+
+__pycache__
+.*.swp
+
+
+/etebase_server_settings.py
