@@ -15,15 +15,17 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+AUTH_USER_MODEL = 'myauth.User'
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = ''
+# Should be set in the site specific settings
+# SECRET_KEY =
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -37,11 +39,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
+    'rest_framework',
+    'fullurl',
+    'myauth.apps.MyauthConfig',
+    'django_etebase.apps.DjangoEtebaseConfig',
+    'django_etebase.token_auth.apps.TokenAuthConfig',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -54,7 +63,9 @@ ROOT_URLCONF = 'etebase_server.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates')
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,7 +87,8 @@ WSGI_APPLICATION = 'etebase_server.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.environ.get('ETEBASE_DB_PATH',
+                               os.path.join(BASE_DIR, 'db.sqlite3')),
     }
 }
 
@@ -113,8 +125,23 @@ USE_L10N = True
 
 USE_TZ = True
 
+# Cors
+CORS_ORIGIN_ALLOW_ALL = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
+STATIC_ROOT = os.environ.get('DJANGO_STATIC_ROOT', os.path.join(BASE_DIR, 'assets'))
 STATIC_URL = '/static/'
+
+MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
+MEDIA_URL = '/user-media/'
+
+ETEBASE_API_PERMISSIONS = ('rest_framework.permissions.IsAuthenticated', )
+ETEBASE_API_AUTHENTICATORS = ('django_etebase.token_auth.authentication.TokenAuthentication',
+                              'rest_framework.authentication.SessionAuthentication')
+
+try:
+    from etebase_server_settings import *
+except ImportError:
+    pass
