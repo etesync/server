@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        # XXX removed this to make this migration generic ('myauth', '0001_initial'),
+        ('myauth', '0001_initial'),
         ('django_etebase', '0001_initial'),
     ]
 
