@@ -197,16 +197,10 @@ class CollectionViewSet(BaseViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            try:
-                serializer.save(owner=self.request.user)
-            except IntegrityError:
-                content = {'code': 'integrity_error'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(owner=self.request.user)
 
-            return Response({}, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({}, status=status.HTTP_201_CREATED)
 
     def list(self, request):
         queryset = self.get_queryset()
@@ -326,35 +320,33 @@ class CollectionItemViewSet(BaseViewSet):
         queryset = self.get_queryset()
 
         serializer = CollectionItemBulkGetSerializer(data=request.data, many=True)
-        if serializer.is_valid():
-            # FIXME: make configurable?
-            item_limit = 200
+        serializer.is_valid(raise_exception=True)
+        # FIXME: make configurable?
+        item_limit = 200
 
-            if len(serializer.validated_data) > item_limit:
-                content = {'code': 'too_many_items',
-                           'detail': 'Request has too many items. Limit: {}'. format(item_limit)}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        if len(serializer.validated_data) > item_limit:
+            content = {'code': 'too_many_items',
+                       'detail': 'Request has too many items. Limit: {}'. format(item_limit)}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
-            queryset, stoken_rev = self.filter_by_stoken(request, queryset)
+        queryset, stoken_rev = self.filter_by_stoken(request, queryset)
 
-            uids, etags = zip(*[(item['uid'], item.get('etag')) for item in serializer.validated_data])
-            revs = CollectionItemRevision.objects.filter(uid__in=etags, current=True)
-            queryset = queryset.filter(uid__in=uids).exclude(revisions__in=revs)
+        uids, etags = zip(*[(item['uid'], item.get('etag')) for item in serializer.validated_data])
+        revs = CollectionItemRevision.objects.filter(uid__in=etags, current=True)
+        queryset = queryset.filter(uid__in=uids).exclude(revisions__in=revs)
 
-            new_stoken = self.get_queryset_stoken(queryset)
-            stoken = stoken_rev and stoken_rev.uid
-            new_stoken = new_stoken or stoken
+        new_stoken = self.get_queryset_stoken(queryset)
+        stoken = stoken_rev and stoken_rev.uid
+        new_stoken = new_stoken or stoken
 
-            serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(queryset, many=True)
 
-            ret = {
-                'data': serializer.data,
-                'stoken': new_stoken,
-                'done': True,  # we always return all the items, so it's always done
-            }
-            return Response(ret)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        ret = {
+            'data': serializer.data,
+            'stoken': new_stoken,
+            'done': True,  # we always return all the items, so it's always done
+        }
+        return Response(ret)
 
     @action_decorator(detail=False, methods=['POST'])
     def batch(self, request, collection_uid=None):
@@ -383,12 +375,7 @@ class CollectionItemViewSet(BaseViewSet):
             ser_valid = serializer.is_valid()
             deps_ser_valid = (deps is None or deps_serializer.is_valid())
             if ser_valid and deps_ser_valid:
-                try:
-                    items = serializer.save(collection=collection_object)
-                except IntegrityError:
-                    # FIXME: return the items with a bad token (including deps) so we don't have to fetch them after
-                    content = {'code': 'integrity_error'}
-                    return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                items = serializer.save(collection=collection_object)
 
                 ret = {
                 }
@@ -423,16 +410,10 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         col_it = get_object_or_404(col.items, uid=collection_item_uid)
 
         serializer = self.get_serializer_class()(data=request.data)
-        if serializer.is_valid():
-            try:
-                serializer.save(item=col_it)
-            except IntegrityError:
-                content = {'code': 'integrity_error'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(item=col_it)
 
-            return Response({}, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({}, status=status.HTTP_201_CREATED)
 
     @action_decorator(detail=True, methods=['GET'])
     def download(self, request, collection_uid=None, collection_item_uid=None, uid=None):
@@ -559,22 +540,20 @@ class InvitationOutgoingViewSet(InvitationBaseViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            collection_uid = serializer.validated_data.get('collection', {}).get('uid')
+        serializer.is_valid(raise_exception=True)
+        collection_uid = serializer.validated_data.get('collection', {}).get('uid')
 
-            try:
-                collection = self.get_collection_queryset(Collection.objects).get(main_item__uid=collection_uid)
-            except Collection.DoesNotExist:
-                raise Http404('Collection does not exist')
+        try:
+            collection = self.get_collection_queryset(Collection.objects).get(main_item__uid=collection_uid)
+        except Collection.DoesNotExist:
+            raise Http404('Collection does not exist')
 
-            if not permissions.is_collection_admin(collection, request.user):
-                raise PermissionDenied('User is not an admin of this collection')
+        if not permissions.is_collection_admin(collection, request.user):
+            raise PermissionDenied('User is not an admin of this collection')
 
-            serializer.save(collection=collection)
+        serializer.save(collection=collection)
 
-            return Response({}, status=status.HTTP_201_CREATED)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({}, status=status.HTTP_201_CREATED)
 
     @action_decorator(detail=False, allowed_methods=['GET'], methods=['GET'])
     def fetch_user_profile(self, request):
@@ -685,28 +664,26 @@ class AuthenticationViewSet(viewsets.ViewSet):
         from datetime import datetime
 
         serializer = AuthenticationLoginChallengeSerializer(data=request.data)
-        if serializer.is_valid():
-            username = serializer.validated_data.get('username')
-            user = self.get_login_user(username)
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data.get('username')
+        user = self.get_login_user(username)
 
-            salt = bytes(user.userinfo.salt)
-            enc_key = self.get_encryption_key(salt)
-            box = nacl.secret.SecretBox(enc_key)
+        salt = bytes(user.userinfo.salt)
+        enc_key = self.get_encryption_key(salt)
+        box = nacl.secret.SecretBox(enc_key)
 
-            challenge_data = {
-                "timestamp": int(datetime.now().timestamp()),
-                "userId": user.id,
-            }
-            challenge = box.encrypt(msgpack_encode(challenge_data), encoder=nacl.encoding.RawEncoder)
+        challenge_data = {
+            "timestamp": int(datetime.now().timestamp()),
+            "userId": user.id,
+        }
+        challenge = box.encrypt(msgpack_encode(challenge_data), encoder=nacl.encoding.RawEncoder)
 
-            ret = {
-                "salt": salt,
-                "challenge": challenge,
-                "version": user.userinfo.version,
-            }
-            return Response(ret, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        ret = {
+            "salt": salt,
+            "challenge": challenge,
+            "version": user.userinfo.version,
+        }
+        return Response(ret, status=status.HTTP_200_OK)
 
     @action_decorator(detail=False, methods=['POST'])
     def login(self, request):
