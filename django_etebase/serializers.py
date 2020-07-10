@@ -29,15 +29,19 @@ def process_revisions_for_item(item, revision_data):
     chunks = revision_data.pop('chunks_relation')
     for chunk in chunks:
         uid = chunk[0]
+        chunk_obj = models.CollectionItemChunk.objects.filter(uid=uid).first()
         if len(chunk) > 1:
             content = chunk[1]
-            chunk = models.CollectionItemChunk(uid=uid, item=item)
-            chunk.chunkFile.save('IGNORED', ContentFile(content))
-            chunk.save()
-            chunks_objs.append(chunk)
+            # If the chunk already exists we assume it's fine. Otherwise, we upload it.
+            if chunk_obj is None:
+                chunk_obj = models.CollectionItemChunk(uid=uid, item=item)
+                chunk_obj.chunkFile.save('IGNORED', ContentFile(content))
+                chunk_obj.save()
         else:
-            chunk = models.CollectionItemChunk.objects.get(uid=uid)
-            chunks_objs.append(chunk)
+            if chunk_obj is None:
+                raise serializers.ValidationError('Tried to create a new chunk without content')
+
+        chunks_objs.append(chunk_obj)
 
     stoken = models.Stoken.objects.create()
 
