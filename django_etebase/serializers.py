@@ -294,7 +294,7 @@ class CollectionInvitationSerializer(serializers.ModelSerializer):
     def validate_user(self, value):
         request = self.context['request']
 
-        if request.user == value.lower():
+        if request.user.username == value.lower():
             raise serializers.ValidationError('Inviting yourself is not allowed')
         return value
 
