@@ -382,7 +382,12 @@ class AuthenticationSignupSerializer(serializers.Serializer):
         user_data = validated_data.pop('user')
 
         with transaction.atomic():
-            instance, _ = User.objects.get_or_create(**user_data)
+            try:
+                instance = User.objects.get_by_natural_key(user_data['username'])
+            except User.DoesNotExist:
+                # Create the user and save the casing the user chose as the first name
+                instance = User.objects.create_user(**user_data, first_name=user_data['username'])
+
             if hasattr(instance, 'userinfo'):
                 raise serializers.ValidationError('User already exists')
 

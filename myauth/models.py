@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager as DjangoUserManager
 from django.core import validators
 from django.db import models
 from django.utils.deconstruct import deconstructible
@@ -15,8 +15,15 @@ class UnicodeUsernameValidator(validators.RegexValidator):
     flags = 0
 
 
+class UserManager(DjangoUserManager):
+    def get_by_natural_key(self, username):
+        return self.get(**{self.model.USERNAME_FIELD + '__iexact': username})
+
+
 class User(AbstractUser):
     username_validator = UnicodeUsernameValidator()
+
+    objects = UserManager()
 
     username = models.CharField(
         _('username'),
@@ -28,3 +35,7 @@ class User(AbstractUser):
             'unique': _("A user with that username already exists."),
         },
     )
+
+    @classmethod
+    def normalize_username(cls, username):
+        return super().normalize_username(username).lower()
