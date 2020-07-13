@@ -601,6 +601,13 @@ class AuthenticationViewSet(viewsets.ViewSet):
     def get_queryset(self):
         return get_user_queryset(User.objects.all(), self)
 
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self
+        }
+
     def login_response_data(self, user):
         return {
             'token': AuthToken.objects.create(user=user).key,
@@ -612,7 +619,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
     @action_decorator(detail=False, methods=['POST'])
     def signup(self, request, *args, **kwargs):
-        serializer = AuthenticationSignupSerializer(data=request.data)
+        serializer = AuthenticationSignupSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
@@ -748,6 +755,13 @@ class TestAuthenticationViewSet(viewsets.ViewSet):
     renderer_classes = BaseViewSet.renderer_classes
     parser_classes = BaseViewSet.parser_classes
 
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self
+        }
+
     def list(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
@@ -768,7 +782,7 @@ class TestAuthenticationViewSet(viewsets.ViewSet):
             if hasattr(user, 'userinfo'):
                 user.userinfo.delete()
 
-            serializer = AuthenticationSignupSerializer(data=request.data)
+            serializer = AuthenticationSignupSerializer(data=request.data, context=self.get_serializer_context())
             serializer.is_valid(raise_exception=True)
             serializer.save()
 

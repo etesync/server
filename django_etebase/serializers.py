@@ -394,7 +394,9 @@ class AuthenticationSignupSerializer(serializers.Serializer):
 
         with transaction.atomic():
             try:
-                instance = User.objects.get_by_natural_key(user_data['username'])
+                view = self.context.get('view', None)
+                user_queryset = get_user_queryset(User.objects.all(), view)
+                instance = user_queryset.get(**{User.USERNAME_FIELD: user_data['username'].lower()})
             except User.DoesNotExist:
                 # Create the user and save the casing the user chose as the first name
                 instance = User.objects.create_user(**user_data, password=None, first_name=user_data['username'])
