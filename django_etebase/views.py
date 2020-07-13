@@ -153,7 +153,7 @@ class BaseViewSet(viewsets.ModelViewSet):
         return result, new_stoken, done
 
     # Change how our list works by default
-    def list(self, request, collection_uid=None):
+    def list(self, request, collection_uid=None, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
 
@@ -185,11 +185,11 @@ class CollectionViewSet(BaseViewSet):
         context.update({'request': self.request, 'prefetch': prefetch})
         return context
 
-    def destroy(self, request, uid=None):
+    def destroy(self, request, uid=None, *args, **kwargs):
         # FIXME: implement
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def partial_update(self, request, uid=None):
+    def partial_update(self, request, uid=None, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def update(self, request, *args, **kwargs):
@@ -202,7 +202,7 @@ class CollectionViewSet(BaseViewSet):
 
         return Response({}, status=status.HTTP_201_CREATED)
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         result, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
 
@@ -251,21 +251,21 @@ class CollectionItemViewSet(BaseViewSet):
         context.update({'request': self.request, 'prefetch': prefetch})
         return context
 
-    def create(self, request, collection_uid=None):
+    def create(self, request, collection_uid=None, *args, **kwargs):
         # We create using batch and transaction
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def destroy(self, request, collection_uid=None, uid=None):
+    def destroy(self, request, collection_uid=None, uid=None, *args, **kwargs):
         # We can't have destroy because we need to get data from the user (in the body) such as hmac.
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def update(self, request, collection_uid=None, uid=None):
+    def update(self, request, collection_uid=None, uid=None, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def partial_update(self, request, collection_uid=None, uid=None):
+    def partial_update(self, request, collection_uid=None, uid=None, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    def list(self, request, collection_uid=None):
+    def list(self, request, collection_uid=None, *args, **kwargs):
         queryset = self.get_queryset()
 
         if not self.request.query_params.get('withCollection', False):
@@ -283,7 +283,7 @@ class CollectionItemViewSet(BaseViewSet):
         return Response(ret)
 
     @action_decorator(detail=True, methods=['GET'])
-    def revision(self, request, collection_uid=None, uid=None):
+    def revision(self, request, collection_uid=None, uid=None, *args, **kwargs):
         col = get_object_or_404(self.get_collection_queryset(Collection.objects), main_item__uid=collection_uid)
         item = get_object_or_404(col.items, uid=uid)
 
@@ -316,7 +316,7 @@ class CollectionItemViewSet(BaseViewSet):
 
     # FIXME: rename to something consistent with what the clients have - maybe list_updates?
     @action_decorator(detail=False, methods=['POST'])
-    def fetch_updates(self, request, collection_uid=None):
+    def fetch_updates(self, request, collection_uid=None, *args, **kwargs):
         queryset = self.get_queryset()
 
         serializer = CollectionItemBulkGetSerializer(data=request.data, many=True)
@@ -349,11 +349,11 @@ class CollectionItemViewSet(BaseViewSet):
         return Response(ret)
 
     @action_decorator(detail=False, methods=['POST'])
-    def batch(self, request, collection_uid=None):
+    def batch(self, request, collection_uid=None, *args, **kwargs):
         return self.transaction(request, collection_uid, validate_etag=False)
 
     @action_decorator(detail=False, methods=['POST'])
-    def transaction(self, request, collection_uid=None, validate_etag=True):
+    def transaction(self, request, collection_uid=None, validate_etag=True, *args, **kwargs):
         stoken = request.GET.get('stoken', None)
         with transaction.atomic():  # We need this for locking on the collection object
             collection_object = get_object_or_404(
@@ -405,7 +405,7 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         user = self.request.user
         return queryset.filter(members__user=user)
 
-    def create(self, request, collection_uid=None, collection_item_uid=None):
+    def create(self, request, collection_uid=None, collection_item_uid=None, *args, **kwargs):
         col = get_object_or_404(self.get_collection_queryset(), main_item__uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=collection_item_uid)
 
@@ -416,7 +416,7 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         return Response({}, status=status.HTTP_201_CREATED)
 
     @action_decorator(detail=True, methods=['GET'])
-    def download(self, request, collection_uid=None, collection_item_uid=None, uid=None):
+    def download(self, request, collection_uid=None, collection_item_uid=None, uid=None, *args, **kwargs):
         import os
         from django.views.static import serve
 
@@ -461,7 +461,7 @@ class CollectionMemberViewSet(BaseViewSet):
     def get_stoken_obj_id(self, request):
         return request.GET.get('iterator', None)
 
-    def list(self, request, collection_uid=None):
+    def list(self, request, collection_uid=None, *args, **kwargs):
         queryset = self.get_queryset().order_by('id')
         result, new_stoken, done = self.filter_by_stoken_and_limit(request, queryset)
         serializer = self.get_serializer(result, many=True)
@@ -474,7 +474,7 @@ class CollectionMemberViewSet(BaseViewSet):
 
         return Response(ret)
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     # FIXME: block leaving if we are the last admins - should be deleted / assigned in this case depending if there
@@ -483,7 +483,7 @@ class CollectionMemberViewSet(BaseViewSet):
         instance.revoke()
 
     @action_decorator(detail=False, methods=['POST'], permission_classes=our_base_permission_classes)
-    def leave(self, request, collection_uid=None):
+    def leave(self, request, collection_uid=None, *args, **kwargs):
         collection_uid = self.kwargs['collection_uid']
         col = get_object_or_404(self.get_collection_queryset(Collection.objects), main_item__uid=collection_uid)
 
@@ -499,7 +499,7 @@ class InvitationBaseViewSet(BaseViewSet):
     lookup_field = 'uid'
     lookup_url_kwarg = 'invitation_uid'
 
-    def list(self, request, collection_uid=None):
+    def list(self, request, collection_uid=None, *args, **kwargs):
         limit = int(request.GET.get('limit', 50))
         iterator = request.GET.get('iterator', None)
 
@@ -556,7 +556,7 @@ class InvitationOutgoingViewSet(InvitationBaseViewSet):
         return Response({}, status=status.HTTP_201_CREATED)
 
     @action_decorator(detail=False, allowed_methods=['GET'], methods=['GET'])
-    def fetch_user_profile(self, request):
+    def fetch_user_profile(self, request, *args, **kwargs):
         username = request.GET.get('username')
         kwargs = {'owner__' + User.USERNAME_FIELD: username}
         user_info = get_object_or_404(UserInfo.objects.all(), **kwargs)
@@ -574,7 +574,7 @@ class InvitationIncomingViewSet(InvitationBaseViewSet):
         return queryset.filter(user=self.request.user)
 
     @action_decorator(detail=True, allowed_methods=['POST'], methods=['POST'])
-    def accept(self, request, invitation_uid=None):
+    def accept(self, request, invitation_uid=None, *args, **kwargs):
         invitation = get_object_or_404(self.get_queryset(), uid=invitation_uid)
         context = self.get_serializer_context()
         context.update({'invitation': invitation})
@@ -605,11 +605,11 @@ class AuthenticationViewSet(viewsets.ViewSet):
             'user': UserSerializer(user).data,
         }
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @action_decorator(detail=False, methods=['POST'])
-    def signup(self, request):
+    def signup(self, request, *args, **kwargs):
         serializer = AuthenticationSignupSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -660,7 +660,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
         return None
 
     @action_decorator(detail=False, methods=['POST'])
-    def login_challenge(self, request):
+    def login_challenge(self, request, *args, **kwargs):
         from datetime import datetime
 
         serializer = AuthenticationLoginChallengeSerializer(data=request.data)
@@ -686,7 +686,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
         return Response(ret, status=status.HTTP_200_OK)
 
     @action_decorator(detail=False, methods=['POST'])
-    def login(self, request):
+    def login(self, request, *args, **kwargs):
         outer_serializer = AuthenticationLoginSerializer(data=request.data)
         outer_serializer.is_valid(raise_exception=True)
 
@@ -713,13 +713,13 @@ class AuthenticationViewSet(viewsets.ViewSet):
         return Response(data, status=status.HTTP_200_OK)
 
     @action_decorator(detail=False, methods=['POST'], permission_classes=BaseViewSet.permission_classes)
-    def logout(self, request):
+    def logout(self, request, *args, **kwargs):
         request.auth.delete()
         user_logged_out.send(sender=request.user.__class__, request=request, user=request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action_decorator(detail=False, methods=['POST'], permission_classes=BaseViewSet.permission_classes)
-    def change_password(self, request):
+    def change_password(self, request, *args, **kwargs):
         outer_serializer = AuthenticationLoginSerializer(data=request.data)
         outer_serializer.is_valid(raise_exception=True)
 
@@ -746,7 +746,7 @@ class TestAuthenticationViewSet(viewsets.ViewSet):
     renderer_classes = BaseViewSet.renderer_classes
     parser_classes = BaseViewSet.parser_classes
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @action_decorator(detail=False, methods=['POST'])
