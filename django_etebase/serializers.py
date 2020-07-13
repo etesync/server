@@ -255,7 +255,7 @@ class CollectionMemberSerializer(serializers.ModelSerializer):
     username = serializers.SlugRelatedField(
         source='user',
         slug_field=User.USERNAME_FIELD,
-        queryset=User.objects
+        read_only=True,
     )
 
     class Meta:
