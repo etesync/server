@@ -439,7 +439,7 @@ class CollectionMemberViewSet(BaseViewSet):
     permission_classes = our_base_permission_classes + (permissions.IsCollectionAdmin, )
     queryset = CollectionMember.objects.all()
     serializer_class = CollectionMemberSerializer
-    lookup_field = 'user__' + User.USERNAME_FIELD
+    lookup_field = f'user__{User.USERNAME_FIELD}__iexact'
     lookup_url_kwarg = 'username'
     stoken_id_fields = ['stoken__id']
 
@@ -559,7 +559,7 @@ class InvitationOutgoingViewSet(InvitationBaseViewSet):
     @action_decorator(detail=False, allowed_methods=['GET'], methods=['GET'])
     def fetch_user_profile(self, request, *args, **kwargs):
         username = request.GET.get('username')
-        kwargs = {User.USERNAME_FIELD: username}
+        kwargs = {User.USERNAME_FIELD: username.lower()}
         user = get_object_or_404(get_user_queryset(User.objects.all(), self), **kwargs)
         user_info = get_object_or_404(UserInfo.objects.all(), owner=user)
         serializer = UserInfoPubkeySerializer(user_info)
@@ -620,7 +620,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
         return Response(data, status=status.HTTP_201_CREATED)
 
     def get_login_user(self, username):
-        kwargs = {User.USERNAME_FIELD: username}
+        kwargs = {User.USERNAME_FIELD: username.lower()}
         return get_object_or_404(self.get_queryset(), **kwargs)
 
     def validate_login_request(self, request, validated_data, response_raw, signature, expected_action):

@@ -100,6 +100,9 @@ class UserSlugRelatedField(serializers.SlugRelatedField):
     def __init__(self, **kwargs):
         super().__init__(slug_field=User.USERNAME_FIELD, **kwargs)
 
+    def to_internal_value(self, data):
+        return super().to_internal_value(data.lower())
+
 
 class ChunksField(serializers.RelatedField):
     def to_representation(self, obj):
