@@ -397,12 +397,10 @@ class AuthenticationSignupSerializer(serializers.Serializer):
                 instance = User.objects.get_by_natural_key(user_data['username'])
             except User.DoesNotExist:
                 # Create the user and save the casing the user chose as the first name
-                instance = User.objects.create_user(**user_data, first_name=user_data['username'])
+                instance = User.objects.create_user(**user_data, password=None, first_name=user_data['username'])
 
             if hasattr(instance, 'userinfo'):
                 raise serializers.ValidationError('User already exists')
-
-            instance.set_unusable_password()
 
             try:
                 instance.clean_fields()
