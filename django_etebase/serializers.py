@@ -20,7 +20,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
 from . import models
-from .utils import get_user_queryset
+from .utils import get_user_queryset, create_user
 
 User = get_user_model()
 
@@ -399,7 +399,10 @@ class AuthenticationSignupSerializer(serializers.Serializer):
                 instance = user_queryset.get(**{User.USERNAME_FIELD: user_data['username'].lower()})
             except User.DoesNotExist:
                 # Create the user and save the casing the user chose as the first name
-                instance = User.objects.create_user(**user_data, password=None, first_name=user_data['username'])
+                try:
+                    instance = create_user(**user_data, password=None, first_name=user_data['username'], view=view)
+                except Exception as e:
+                    raise serializers.ValidationError(e)
 
             if hasattr(instance, 'userinfo'):
                 raise serializers.ValidationError('User already exists')
