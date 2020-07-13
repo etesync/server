@@ -21,6 +21,8 @@ from django.db.models import Q
 from django.utils.functional import cached_property
 from django.utils.crypto import get_random_string
 
+from . import app_settings
+
 
 UidValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{20,}$', message='Not a valid UID')
 
@@ -79,6 +81,10 @@ class CollectionItem(models.Model):
 
 
 def chunk_directory_path(instance, filename):
+    custom_func = app_settings.CHUNK_PATH_FUNC
+    if custom_func is not None:
+        return custom_func(instance, filename)
+
     item = instance.item
     col = item.collection
     user_id = col.owner.id

@@ -62,6 +62,13 @@ class AppSettings:
         return None
 
     @cached_property
+    def CHUNK_PATH_FUNC(self):  # pylint: disable=invalid-name
+        func = self._setting("CHUNK_PATH_FUNC", None)
+        if func is not None:
+            return self.import_from_str(func)
+        return None
+
+    @cached_property
     def CHALLENGE_VALID_SECONDS(self):  # pylint: disable=invalid-name
         return self._setting("CHALLENGE_VALID_SECONDS", 60)
 
