@@ -11,6 +11,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+from django.utils.functional import cached_property
 
 
 class AppSettings:
@@ -29,7 +30,7 @@ class AppSettings:
         from django.conf import settings
         return getattr(settings, self.prefix + name, dflt)
 
-    @property
+    @cached_property
     def API_PERMISSIONS(self):  # pylint: disable=invalid-name
         perms = self._setting("API_PERMISSIONS", ('rest_framework.permissions.IsAuthenticated', ))
         ret = []
@@ -37,7 +38,7 @@ class AppSettings:
             ret.append(self.import_from_str(perm))
         return ret
 
-    @property
+    @cached_property
     def API_AUTHENTICATORS(self):  # pylint: disable=invalid-name
         perms = self._setting("API_AUTHENTICATORS", ('rest_framework.authentication.TokenAuthentication',
                                                      'rest_framework.authentication.SessionAuthentication'))
@@ -46,14 +47,14 @@ class AppSettings:
             ret.append(self.import_from_str(perm))
         return ret
 
-    @property
+    @cached_property
     def GET_USER_QUERYSET(self):  # pylint: disable=invalid-name
         get_user_queryset = self._setting("GET_USER_QUERYSET", None)
         if get_user_queryset is not None:
             return self.import_from_str(get_user_queryset)
         return None
 
-    @property
+    @cached_property
     def CHALLENGE_VALID_SECONDS(self):  # pylint: disable=invalid-name
         return self._setting("CHALLENGE_VALID_SECONDS", 60)
 
