@@ -20,6 +20,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
 from . import models
+from .utils import get_user_queryset
 
 User = get_user_model()
 
@@ -89,6 +90,15 @@ class CollectionContentField(BinaryBase64Field):
         if request is not None:
             return instance.members.get(user=request.user).encryptionKey
         return None
+
+
+class UserSlugRelatedField(serializers.SlugRelatedField):
+    def get_queryset(self):
+        view = self.context.get('view', None)
+        return get_user_queryset(super().get_queryset(), view)
+
+    def __init__(self, **kwargs):
+        super().__init__(slug_field=User.USERNAME_FIELD, **kwargs)
 
 
 class ChunksField(serializers.RelatedField):
@@ -252,9 +262,8 @@ class CollectionSerializer(serializers.ModelSerializer):
 
 
 class CollectionMemberSerializer(serializers.ModelSerializer):
-    username = serializers.SlugRelatedField(
+    username = UserSlugRelatedField(
         source='user',
-        slug_field=User.USERNAME_FIELD,
         read_only=True,
     )
 
@@ -278,9 +287,8 @@ class CollectionMemberSerializer(serializers.ModelSerializer):
 
 
 class CollectionInvitationSerializer(serializers.ModelSerializer):
-    username = serializers.SlugRelatedField(
+    username = UserSlugRelatedField(
         source='user',
-        slug_field=User.USERNAME_FIELD,
         queryset=User.objects
     )
     collection = serializers.CharField(source='collection.uid')

@@ -71,6 +71,7 @@ from .serializers import (
         UserInfoPubkeySerializer,
         UserSerializer,
     )
+from .utils import get_user_queryset
 
 
 User = get_user_model()
@@ -558,8 +559,9 @@ class InvitationOutgoingViewSet(InvitationBaseViewSet):
     @action_decorator(detail=False, allowed_methods=['GET'], methods=['GET'])
     def fetch_user_profile(self, request, *args, **kwargs):
         username = request.GET.get('username')
-        kwargs = {'owner__' + User.USERNAME_FIELD: username}
-        user_info = get_object_or_404(UserInfo.objects.all(), **kwargs)
+        kwargs = {User.USERNAME_FIELD: username}
+        user = get_object_or_404(get_user_queryset(User.objects.all(), self), **kwargs)
+        user_info = get_object_or_404(UserInfo.objects.all(), owner=user)
         serializer = UserInfoPubkeySerializer(user_info)
         return Response(serializer.data)
 
@@ -597,7 +599,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
                                  encoder=nacl.encoding.RawEncoder)
 
     def get_queryset(self):
-        return User.objects.all()
+        return get_user_queryset(User.objects.all(), self)
 
     def login_response_data(self, user):
         return {
@@ -756,7 +758,8 @@ class TestAuthenticationViewSet(viewsets.ViewSet):
             return HttpResponseBadRequest("Only allowed in debug mode.")
 
         with transaction.atomic():
-            user = get_object_or_404(User.objects.all(), username=request.data.get('user').get('username'))
+            user_queryset = get_user_queryset(User.objects.all(), self)
+            user = get_object_or_404(user_queryset, username=request.data.get('user').get('username'))
 
             # Only allow test users for extra safety
             if not getattr(user, User.USERNAME_FIELD).startswith('test_user'):

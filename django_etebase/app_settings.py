@@ -47,6 +47,13 @@ class AppSettings:
         return ret
 
     @property
+    def GET_USER_QUERYSET(self):  # pylint: disable=invalid-name
+        get_user_queryset = self._setting("GET_USER_QUERYSET", None)
+        if get_user_queryset is not None:
+            return self.import_from_str(get_user_queryset)
+        return None
+
+    @property
     def CHALLENGE_VALID_SECONDS(self):  # pylint: disable=invalid-name
         return self._setting("CHALLENGE_VALID_SECONDS", 60)
 
