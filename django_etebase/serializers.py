@@ -208,15 +208,11 @@ class CollectionSerializer(serializers.ModelSerializer):
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
     stoken = serializers.CharField(read_only=True)
 
-    uid = serializers.CharField(source='main_item.uid')
-    encryptionKey = BinaryBase64Field(source='main_item.encryptionKey', required=False, default=None, allow_null=True)
-    etag = serializers.CharField(allow_null=True, write_only=True)
-    version = serializers.IntegerField(min_value=0, source='main_item.version')
-    content = CollectionItemRevisionSerializer(many=False, source='main_item.content')
+    item = CollectionItemSerializer(many=False, source='main_item')
 
     class Meta:
         model = models.Collection
-        fields = ('uid', 'version', 'accessLevel', 'encryptionKey', 'collectionKey', 'content', 'stoken', 'etag')
+        fields = ('item', 'accessLevel', 'collectionKey', 'stoken')
 
     def get_access_level_from_context(self, obj):
         request = self.context.get('request', None)
@@ -228,13 +224,9 @@ class CollectionSerializer(serializers.ModelSerializer):
         """Function that's called when this serializer creates an item"""
         collection_key = validated_data.pop('collectionKey')
 
-        etag = validated_data.pop('etag')
-
         main_item_data = validated_data.pop('main_item')
-        uid = main_item_data.pop('uid')
-        version = main_item_data.pop('version')
+        etag = main_item_data.pop('etag')
         revision_data = main_item_data.pop('content')
-        encryption_key = main_item_data.pop('encryptionKey')
 
         instance = self.__class__.Meta.model(**validated_data)
 
@@ -243,8 +235,7 @@ class CollectionSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('etag is not None')
 
             instance.save()
-            main_item = models.CollectionItem.objects.create(
-                uid=uid, encryptionKey=encryption_key, version=version, collection=instance)
+            main_item = models.CollectionItem.objects.create(**main_item_data, collection=instance)
 
             instance.main_item = main_item
             instance.save()
