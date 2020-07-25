@@ -306,11 +306,11 @@ class CollectionItemViewSet(BaseViewSet):
 
         serializer = CollectionItemRevisionSerializer(result, context=self.get_serializer_context(), many=True)
 
-        last_item = len(result) > 0 and serializer.data[-1]
+        iterator = serializer.data[-1]['uid'] if len(result) > 0 else None
 
         ret = {
             'data': serializer.data,
-            'iterator': last_item and last_item['uid'],
+            'iterator': iterator,
             'done': done,
         }
         return Response(ret)
@@ -337,7 +337,7 @@ class CollectionItemViewSet(BaseViewSet):
         queryset = queryset.filter(uid__in=uids).exclude(revisions__in=revs)
 
         new_stoken = self.get_queryset_stoken(queryset)
-        stoken = stoken_rev and stoken_rev.uid
+        stoken = getattr(stoken_rev, 'uid', None) if stoken_rev is not None else None
         new_stoken = new_stoken or stoken
 
         serializer = self.get_serializer(queryset, many=True)
@@ -519,11 +519,11 @@ class InvitationBaseViewSet(BaseViewSet):
 
         serializer = self.get_serializer(result, many=True)
 
-        last_item = len(result) > 0 and serializer.data[-1]
+        iterator = serializer.data[-1]['uid'] if len(result) > 0 else None
 
         ret = {
             'data': serializer.data,
-            'iterator': last_item and last_item['uid'],
+            'iterator': iterator,
             'done': done,
         }
 
