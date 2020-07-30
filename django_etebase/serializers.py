@@ -18,9 +18,11 @@ from django.core.files.base import ContentFile
 from django.core import exceptions as django_exceptions
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from rest_framework import serializers
+from rest_framework import serializers, status
 from . import models
 from .utils import get_user_queryset, create_user
+
+from .exceptions import EtebaseValidationError
 
 User = get_user_model()
 
@@ -40,7 +42,7 @@ def process_revisions_for_item(item, revision_data):
                 chunk_obj.save()
         else:
             if chunk_obj is None:
-                raise serializers.ValidationError('Tried to create a new chunk without content')
+                raise EtebaseValidationError('chunk_no_content', 'Tried to create a new chunk without content')
 
         chunks_objs.append(chunk_obj)
 
@@ -115,7 +117,7 @@ class ChunksField(serializers.RelatedField):
 
     def to_internal_value(self, data):
         if data[0] is None or data[1] is None:
-            raise serializers.ValidationError('null is not allowed')
+            raise EtebaseValidationError('null is not allowed')
         return (data[0], b64decode_or_bytes(data[1]))
 
 
@@ -161,7 +163,7 @@ class CollectionItemSerializer(serializers.ModelSerializer):
             cur_etag = instance.etag if not created else None
 
             if validate_etag and cur_etag != etag:
-                raise serializers.ValidationError('Wrong etag. Expected {} got {}'.format(cur_etag, etag))
+                raise EtebaseValidationError('wrong_etag', 'Wrong etag. Expected {} got {}'.format(cur_etag, etag), status_code=status.HTTP_409_CONFLICT)
 
             if not created:
                 # We don't have to use select_for_update here because the unique constraint on current guards against
@@ -190,7 +192,7 @@ class CollectionItemDepSerializer(serializers.ModelSerializer):
         item = self.__class__.Meta.model.objects.get(uid=data['uid'])
         etag = data['etag']
         if item.etag != etag:
-            raise serializers.ValidationError('Wrong etag. Expected {} got {}'.format(item.etag, etag))
+            raise EtebaseValidationError('wrong_etag', 'Wrong etag. Expected {} got {}'.format(item.etag, etag), status_code=status.HTTP_409_CONFLICT)
 
         return data
 
@@ -232,7 +234,7 @@ class CollectionSerializer(serializers.ModelSerializer):
 
         with transaction.atomic():
             if etag is not None:
-                raise serializers.ValidationError('etag is not None')
+                raise EtebaseValidationError('bad_etag', 'etag is not null')
 
             instance.save()
             main_item = models.CollectionItem.objects.create(**main_item_data, collection=instance)
@@ -297,7 +299,7 @@ class CollectionInvitationSerializer(serializers.ModelSerializer):
         request = self.context['request']
 
         if request.user.username == value.lower():
-            raise serializers.ValidationError('Inviting yourself is not allowed')
+            raise EtebaseValidationError('no_self_invite', 'Inviting yourself is not allowed')
         return value
 
     def create(self, validated_data):
@@ -393,15 +395,15 @@ class AuthenticationSignupSerializer(serializers.Serializer):
                 try:
                     instance = create_user(**user_data, password=None, first_name=user_data['username'], view=view)
                 except Exception as e:
-                    raise serializers.ValidationError(e)
+                    raise EtebaseValidationError('generic', str(e))
 
             if hasattr(instance, 'userinfo'):
-                raise serializers.ValidationError('User already exists')
+                raise EtebaseValidationError('user_exists', 'User already exists', status_code=status.HTTP_409_CONFLICT)
 
             try:
                 instance.clean_fields()
             except django_exceptions.ValidationError as e:
-                raise serializers.ValidationError(e)
+                raise EtebaseValidationError('generic', str(e))
             # FIXME: send email verification
 
             models.UserInfo.objects.create(**validated_data, owner=instance)

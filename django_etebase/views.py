@@ -72,7 +72,7 @@ from .serializers import (
         UserSerializer,
     )
 from .utils import get_user_queryset
-
+from .exceptions import EtebaseValidationError
 
 User = get_user_model()
 
@@ -111,7 +111,14 @@ class BaseViewSet(viewsets.ModelViewSet):
         stoken = self.get_stoken_obj_id(request)
 
         if stoken is not None:
-            return get_object_or_404(Stoken.objects.all(), uid=stoken)
+            try:
+                return Stoken.objects.get(uid=stoken)
+            except Stoken.DoesNotExist:
+                raise EtebaseValidationError({
+                        'code': 'bad_stoken',
+                        'detail': 'Invalid stoken.',
+                    },
+                    status_code=status.HTTP_400_BAD_REQUEST)
 
         return None
 
@@ -363,7 +370,7 @@ class CollectionItemViewSet(BaseViewSet):
 
             if stoken is not None and stoken != collection_object.stoken:
                 content = {'code': 'stale_stoken', 'detail': 'Stoken is too old'}
-                return Response(content, status=status.HTTP_400_BAD_REQUEST)
+                return Response(content, status=status.HTTP_409_CONFLICT)
 
             items = request.data.get('items')
             deps = request.data.get('deps', None)
@@ -387,7 +394,7 @@ class CollectionItemViewSet(BaseViewSet):
                     "items": serializer.errors,
                     "deps": deps_serializer.errors if deps is not None else [],
                 },
-                status=status.HTTP_400_BAD_REQUEST)
+                status=status.HTTP_409_CONFLICT)
 
 
 class CollectionItemChunkViewSet(viewsets.ViewSet):
