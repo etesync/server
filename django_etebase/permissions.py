@@ -25,8 +25,10 @@ class IsCollectionAdmin(permissions.BasePermission):
     """
     Custom permission to only allow owners of a collection to view it
     """
-    message = 'Only collection admins can perform this operation.'
-    code = 'admin_access_required'
+    message = {
+        'detail': 'Only collection admins can perform this operation.',
+        'code': 'admin_access_required',
+    }
 
     def has_permission(self, request, view):
         collection_uid = view.kwargs['collection_uid']
@@ -42,8 +44,10 @@ class IsCollectionAdminOrReadOnly(permissions.BasePermission):
     """
     Custom permission to only allow owners of a collection to edit it
     """
-    message = 'Only collection admins can edit collections.'
-    code = 'admin_access_required'
+    message = {
+        'detail': 'Only collection admins can edit collections.',
+        'code': 'admin_access_required',
+    }
 
     def has_permission(self, request, view):
         collection_uid = view.kwargs.get('collection_uid', None)
@@ -67,8 +71,10 @@ class HasWriteAccessOrReadOnly(permissions.BasePermission):
     """
     Custom permission to restrict write
     """
-    message = 'You need write access to write to this collection'
-    code = 'no_write_access'
+    message = {
+        'detail': 'You need write access to write to this collection',
+        'code': 'no_write_access',
+    }
 
     def has_permission(self, request, view):
         collection_uid = view.kwargs['collection_uid']
