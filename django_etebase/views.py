@@ -416,7 +416,7 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
 
     def update(self, request, *args, collection_uid=None, collection_item_uid=None, uid=None, **kwargs):
         col = get_object_or_404(self.get_collection_queryset(), main_item__uid=collection_uid)
-        col_it = get_object_or_404(col.items, uid=collection_item_uid)
+        # IGNORED FOR NOW: col_it = get_object_or_404(col.items, uid=collection_item_uid)
 
         data = {
             "uid": uid,
@@ -426,7 +426,7 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         serializer = self.get_serializer_class()(data=data)
         serializer.is_valid(raise_exception=True)
         try:
-            serializer.save(item=col_it)
+            serializer.save(collection=col)
         except IntegrityError:
             return Response(
                 {"code": "chunk_exists", "detail": "Chunk already exists."},
@@ -441,8 +441,8 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         from django.views.static import serve
 
         col = get_object_or_404(self.get_collection_queryset(), main_item__uid=collection_uid)
-        col_it = get_object_or_404(col.items, uid=collection_item_uid)
-        chunk = get_object_or_404(col_it.chunks, uid=uid)
+        # IGNORED FOR NOW: col_it = get_object_or_404(col.items, uid=collection_item_uid)
+        chunk = get_object_or_404(col.chunks, uid=uid)
 
         filename = chunk.chunkFile.path
         dirname = os.path.dirname(filename)

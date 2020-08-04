@@ -85,23 +85,22 @@ def chunk_directory_path(instance, filename):
     if custom_func is not None:
         return custom_func(instance, filename)
 
-    item = instance.item
-    col = item.collection
+    col = instance.collection
     user_id = col.owner.id
-    return Path('user_{}'.format(user_id), col.uid, item.uid, instance.uid)
+    return Path('user_{}'.format(user_id), col.uid, instance.uid)
 
 
 class CollectionItemChunk(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False,
                            max_length=60, validators=[UidValidator])
-    item = models.ForeignKey(CollectionItem, related_name='chunks', on_delete=models.CASCADE)
+    collection = models.ForeignKey(Collection, related_name='chunks', on_delete=models.CASCADE)
     chunkFile = models.FileField(upload_to=chunk_directory_path, max_length=150, unique=True)
 
     def __str__(self):
         return self.uid
 
     class Meta:
-        unique_together = ('item', 'uid')
+        unique_together = ('collection', 'uid')
 
 
 def generate_stoken_uid():

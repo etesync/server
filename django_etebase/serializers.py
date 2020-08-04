@@ -37,7 +37,7 @@ def process_revisions_for_item(item, revision_data):
             content = chunk[1]
             # If the chunk already exists we assume it's fine. Otherwise, we upload it.
             if chunk_obj is None:
-                chunk_obj = models.CollectionItemChunk(uid=uid, item=item)
+                chunk_obj = models.CollectionItemChunk(uid=uid, collection=item.collection)
                 chunk_obj.chunkFile.save('IGNORED', ContentFile(content))
                 chunk_obj.save()
         else:
