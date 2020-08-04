@@ -100,6 +100,9 @@ class CollectionItemChunk(models.Model):
     def __str__(self):
         return self.uid
 
+    class Meta:
+        unique_together = ('item', 'uid')
+
 
 def generate_stoken_uid():
     return get_random_string(32, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_')

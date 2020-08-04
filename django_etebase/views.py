@@ -73,6 +73,7 @@ from .serializers import (
     )
 from .utils import get_user_queryset
 from .exceptions import EtebaseValidationError
+from .parsers import ChunkUploadParser
 
 User = get_user_model()
 
@@ -398,11 +399,11 @@ class CollectionItemViewSet(BaseViewSet):
 
 
 class CollectionItemChunkViewSet(viewsets.ViewSet):
-    allowed_methods = ['GET', 'POST']
+    allowed_methods = ['GET', 'PUT']
     authentication_classes = BaseViewSet.authentication_classes
     permission_classes = BaseViewSet.permission_classes
     renderer_classes = BaseViewSet.renderer_classes
-    parser_classes = (MultiPartParser, )
+    parser_classes = (ChunkUploadParser, )
     serializer_class = CollectionItemChunkSerializer
     lookup_field = 'uid'
 
@@ -413,13 +414,24 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         user = self.request.user
         return queryset.filter(members__user=user)
 
-    def create(self, request, collection_uid=None, collection_item_uid=None, *args, **kwargs):
+    def update(self, request, *args, collection_uid=None, collection_item_uid=None, uid=None, **kwargs):
         col = get_object_or_404(self.get_collection_queryset(), main_item__uid=collection_uid)
         col_it = get_object_or_404(col.items, uid=collection_item_uid)
 
-        serializer = self.get_serializer_class()(data=request.data)
+        data = {
+            "uid": uid,
+            "chunkFile": request.data["file"],
+        }
+
+        serializer = self.get_serializer_class()(data=data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(item=col_it)
+        try:
+            serializer.save(item=col_it)
+        except IntegrityError:
+            return Response(
+                {"code": "chunk_exists", "detail": "Chunk already exists."},
+                status=status.HTTP_409_CONFLICT
+            )
 
         return Response({}, status=status.HTTP_201_CREATED)
 
