@@ -190,7 +190,7 @@ class CollectionViewSet(BaseViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        prefetch = self.request.query_params.get('prefetch', 'true') != 'false'
+        prefetch = self.request.query_params.get('prefetch', 'auto')
         context.update({'request': self.request, 'prefetch': prefetch})
         return context
 
@@ -256,7 +256,7 @@ class CollectionItemViewSet(BaseViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        prefetch = self.request.query_params.get('prefetch', 'true') != 'false'
+        prefetch = self.request.query_params.get('prefetch', 'auto')
         context.update({'request': self.request, 'prefetch': prefetch})
         return context
 

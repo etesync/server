@@ -109,7 +109,7 @@ class UserSlugRelatedField(serializers.SlugRelatedField):
 class ChunksField(serializers.RelatedField):
     def to_representation(self, obj):
         obj = obj.chunk
-        if self.context.get('prefetch'):
+        if self.context.get('prefetch') == 'auto':
             with open(obj.chunkFile.path, 'rb') as f:
                 return (obj.uid, f.read())
         else:
