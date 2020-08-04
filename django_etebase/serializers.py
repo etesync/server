@@ -117,7 +117,7 @@ class ChunksField(serializers.RelatedField):
 
     def to_internal_value(self, data):
         if data[0] is None or data[1] is None:
-            raise EtebaseValidationError('null is not allowed')
+            raise EtebaseValidationError('no_null', 'null is not allowed')
         return (data[0], b64decode_or_bytes(data[1]))
 
 
