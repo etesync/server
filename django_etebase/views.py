@@ -687,6 +687,10 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
         return None
 
+    @action_decorator(detail=False, methods=['GET'])
+    def is_etebase(self, request, *args, **kwargs):
+        return Response({}, status=status.HTTP_200_OK)
+
     @action_decorator(detail=False, methods=['POST'])
     def login_challenge(self, request, *args, **kwargs):
         from datetime import datetime
