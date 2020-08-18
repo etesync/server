@@ -683,7 +683,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
         try:
             verify_key.verify(response_raw, signature)
         except nacl.exceptions.BadSignatureError:
-            return Response({'code': 'login_bad_signature'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'code': 'login_bad_signature', 'detail': 'Wrong password for user.'}, status=status.HTTP_401_UNAUTHORIZED)
 
         return None
 
