@@ -568,6 +568,10 @@ class InvitationOutgoingViewSet(InvitationBaseViewSet):
         except Collection.DoesNotExist:
             raise Http404('Collection does not exist')
 
+        if request.user == serializer.validated_data.get('user'):
+            content = {'code': 'self_invite', 'detail': 'Inviting yourself is invalid'}
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
+
         if not permissions.is_collection_admin(collection, request.user):
             raise PermissionDenied('User is not an admin of this collection')
 
