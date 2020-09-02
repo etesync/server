@@ -462,7 +462,6 @@ class AuthenticationSignupSerializer(BetterErrorsMixin, serializers.Serializer):
                 instance.clean_fields()
             except django_exceptions.ValidationError as e:
                 self.transform_validation_error("user", e)
-            # FIXME: send email verification
 
             models.UserInfo.objects.create(**validated_data, owner=instance)
 

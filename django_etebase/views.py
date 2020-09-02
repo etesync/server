@@ -74,6 +74,7 @@ from .serializers import (
 from .utils import get_user_queryset
 from .exceptions import EtebaseValidationError
 from .parsers import ChunkUploadParser
+from .signals import user_signed_up
 
 User = get_user_model()
 
@@ -645,6 +646,8 @@ class AuthenticationViewSet(viewsets.ViewSet):
         serializer = AuthenticationSignupSerializer(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+
+        user_signed_up.send(sender=user.__class__, request=request, user=user)
 
         data = self.login_response_data(user)
         return Response(data, status=status.HTTP_201_CREATED)
