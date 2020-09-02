@@ -137,7 +137,7 @@ class BetterErrorsMixin:
                 )
         if nice:
             return {'code': 'field_errors',
-                    'message': 'Field validations failed.',
+                    'detail': 'Field validations failed.',
                     'errors': nice}
         return {}
 
@@ -158,7 +158,7 @@ class BetterErrorsMixin:
                 ret.append({
                     'field': field_name,
                     'code': error.code,
-                    'message': message,
+                    'detail': message,
                 })
         return ret
 
@@ -172,7 +172,7 @@ class BetterErrorsMixin:
 
         raise serializers.ValidationError({
             'code': 'field_errors',
-            'message': 'Field validations failed.',
+            'detail': 'Field validations failed.',
             'errors': errors,
         })
 
