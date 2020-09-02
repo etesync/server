@@ -121,13 +121,69 @@ class ChunksField(serializers.RelatedField):
         return (data[0], b64decode_or_bytes(data[1]))
 
 
-class CollectionItemChunkSerializer(serializers.ModelSerializer):
+class BetterErrorsMixin:
+    @property
+    def errors(self):
+        nice = []
+        errors = super().errors
+        for error_type in errors:
+            if error_type == 'non_field_errors':
+                nice.extend(
+                    self.flatten_errors(None, errors[error_type])
+                )
+            else:
+                nice.extend(
+                    self.flatten_errors(error_type, errors[error_type])
+                )
+        if nice:
+            return {'code': 'field_errors',
+                    'message': 'Field validations failed.',
+                    'errors': nice}
+        return {}
+
+    def flatten_errors(self, field_name, errors):
+        ret = []
+        if isinstance(errors, dict):
+            for error_key in errors:
+                error = errors[error_key]
+                ret.extend(self.flatten_errors("{}.{}".format(field_name, error_key), error))
+        else:
+            for error in errors:
+                if hasattr(error, 'detail'):
+                    message = error.detail[0]
+                elif hasattr(error, 'message'):
+                    message = error.message
+                else:
+                    message = str(error)
+                ret.append({
+                    'field': field_name,
+                    'code': error.code,
+                    'message': message,
+                })
+        return ret
+
+    def transform_validation_error(self, prefix, err):
+        if hasattr(err, 'error_dict'):
+            errors = self.flatten_errors(prefix, err.error_dict)
+        elif not hasattr(err, 'message'):
+            errors = self.flatten_errors(prefix, err.error_list)
+        else:
+            raise EtebaseValidationError(err.code, err.message)
+
+        raise serializers.ValidationError({
+            'code': 'field_errors',
+            'message': 'Field validations failed.',
+            'errors': errors,
+        })
+
+
+class CollectionItemChunkSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     class Meta:
         model = models.CollectionItemChunk
         fields = ('uid', 'chunkFile')
 
 
-class CollectionItemRevisionSerializer(serializers.ModelSerializer):
+class CollectionItemRevisionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     chunks = ChunksField(
         source='chunks_relation',
         queryset=models.RevisionChunkRelation.objects.all(),
@@ -140,7 +196,7 @@ class CollectionItemRevisionSerializer(serializers.ModelSerializer):
         fields = ('chunks', 'meta', 'uid', 'deleted')
 
 
-class CollectionItemSerializer(serializers.ModelSerializer):
+class CollectionItemSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     encryptionKey = BinaryBase64Field(required=False, default=None, allow_null=True)
     etag = serializers.CharField(allow_null=True, write_only=True)
     content = CollectionItemRevisionSerializer(many=False)
@@ -181,7 +237,7 @@ class CollectionItemSerializer(serializers.ModelSerializer):
         raise NotImplementedError()
 
 
-class CollectionItemDepSerializer(serializers.ModelSerializer):
+class CollectionItemDepSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     etag = serializers.CharField()
 
     class Meta:
@@ -197,7 +253,7 @@ class CollectionItemDepSerializer(serializers.ModelSerializer):
         return data
 
 
-class CollectionItemBulkGetSerializer(serializers.ModelSerializer):
+class CollectionItemBulkGetSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     etag = serializers.CharField(required=False)
 
     class Meta:
@@ -205,7 +261,7 @@ class CollectionItemBulkGetSerializer(serializers.ModelSerializer):
         fields = ('uid', 'etag')
 
 
-class CollectionSerializer(serializers.ModelSerializer):
+class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     collectionKey = CollectionEncryptionKeyField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
     stoken = serializers.CharField(read_only=True)
@@ -257,7 +313,7 @@ class CollectionSerializer(serializers.ModelSerializer):
         raise NotImplementedError()
 
 
-class CollectionMemberSerializer(serializers.ModelSerializer):
+class CollectionMemberSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     username = UserSlugRelatedField(
         source='user',
         read_only=True,
@@ -282,7 +338,7 @@ class CollectionMemberSerializer(serializers.ModelSerializer):
         return instance
 
 
-class CollectionInvitationSerializer(serializers.ModelSerializer):
+class CollectionInvitationSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     username = UserSlugRelatedField(
         source='user',
         queryset=User.objects
@@ -320,7 +376,7 @@ class CollectionInvitationSerializer(serializers.ModelSerializer):
         return instance
 
 
-class InvitationAcceptSerializer(serializers.Serializer):
+class InvitationAcceptSerializer(BetterErrorsMixin, serializers.Serializer):
     encryptionKey = BinaryBase64Field()
 
     def create(self, validated_data):
@@ -348,7 +404,7 @@ class InvitationAcceptSerializer(serializers.Serializer):
         raise NotImplementedError()
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     pubkey = BinaryBase64Field(source='userinfo.pubkey')
     encryptedContent = BinaryBase64Field(source='userinfo.encryptedContent')
 
@@ -357,7 +413,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (User.USERNAME_FIELD, User.EMAIL_FIELD, 'pubkey', 'encryptedContent')
 
 
-class UserInfoPubkeySerializer(serializers.ModelSerializer):
+class UserInfoPubkeySerializer(BetterErrorsMixin, serializers.ModelSerializer):
     pubkey = BinaryBase64Field()
 
     class Meta:
@@ -365,7 +421,7 @@ class UserInfoPubkeySerializer(serializers.ModelSerializer):
         fields = ('pubkey', )
 
 
-class UserSignupSerializer(serializers.ModelSerializer):
+class UserSignupSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (User.USERNAME_FIELD, User.EMAIL_FIELD)
@@ -374,7 +430,7 @@ class UserSignupSerializer(serializers.ModelSerializer):
         }
 
 
-class AuthenticationSignupSerializer(serializers.Serializer):
+class AuthenticationSignupSerializer(BetterErrorsMixin, serializers.Serializer):
     user = UserSignupSerializer(many=False)
     salt = BinaryBase64Field()
     loginPubkey = BinaryBase64Field()
@@ -403,7 +459,7 @@ class AuthenticationSignupSerializer(serializers.Serializer):
             try:
                 instance.clean_fields()
             except django_exceptions.ValidationError as e:
-                raise EtebaseValidationError('generic', str(e))
+                self.transform_validation_error("user", e)
             # FIXME: send email verification
 
             models.UserInfo.objects.create(**validated_data, owner=instance)
@@ -414,7 +470,7 @@ class AuthenticationSignupSerializer(serializers.Serializer):
         raise NotImplementedError()
 
 
-class AuthenticationLoginChallengeSerializer(serializers.Serializer):
+class AuthenticationLoginChallengeSerializer(BetterErrorsMixin, serializers.Serializer):
     username = serializers.CharField(required=True)
 
     def create(self, validated_data):
@@ -424,7 +480,7 @@ class AuthenticationLoginChallengeSerializer(serializers.Serializer):
         raise NotImplementedError()
 
 
-class AuthenticationLoginSerializer(serializers.Serializer):
+class AuthenticationLoginSerializer(BetterErrorsMixin, serializers.Serializer):
     response = BinaryBase64Field()
     signature = BinaryBase64Field()
 
