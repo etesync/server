@@ -138,10 +138,10 @@ class RevisionChunkRelation(models.Model):
         ordering = ('id', )
 
 
-class AccessLevels(models.TextChoices):
-    ADMIN = 'adm'
-    READ_WRITE = 'rw'
-    READ_ONLY = 'ro'
+class AccessLevels(models.IntegerChoices):
+    READ_ONLY = 0
+    ADMIN = 1
+    READ_WRITE = 2
 
 
 class CollectionMember(models.Model):
@@ -149,8 +149,7 @@ class CollectionMember(models.Model):
     collection = models.ForeignKey(Collection, related_name='members', on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     encryptionKey = models.BinaryField(editable=True, blank=False, null=False)
-    accessLevel = models.CharField(
-        max_length=3,
+    accessLevel = models.IntegerField(
         choices=AccessLevels.choices,
         default=AccessLevels.READ_ONLY,
     )
@@ -195,8 +194,7 @@ class CollectionInvitation(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='incoming_invitations', on_delete=models.CASCADE)
     signedEncryptionKey = models.BinaryField(editable=False, blank=False, null=False)
-    accessLevel = models.CharField(
-        max_length=3,
+    accessLevel = models.IntegerField(
         choices=AccessLevels.choices,
         default=AccessLevels.READ_ONLY,
     )
