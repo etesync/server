@@ -30,6 +30,7 @@ from rest_framework.decorators import action as action_decorator
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from rest_framework.renderers import BrowsableAPIRenderer
+from rest_framework.exceptions import AuthenticationFailed
 
 import nacl.encoding
 import nacl.signing
@@ -654,7 +655,11 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
     def get_login_user(self, username):
         kwargs = {User.USERNAME_FIELD: username.lower()}
-        return get_object_or_404(self.get_queryset(), **kwargs)
+        try:
+            return self.get_queryset().get(**kwargs)
+        except User.DoesNotExist:
+            raise AuthenticationFailed({'code': 'user_not_found', 'detail': 'User not found'})
+
 
     def validate_login_request(self, request, validated_data, response_raw, signature, expected_action):
         from datetime import datetime
