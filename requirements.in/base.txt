@@ -1,7 +1,5 @@
 django
-django-anymail
 django-cors-headers
-django-fullurl
 djangorestframework
 drf-nested-routers
 msgpack

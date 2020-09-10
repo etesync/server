@@ -56,7 +56,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
-    'fullurl',
     'myauth.apps.MyauthConfig',
     'django_etebase.apps.DjangoEtebaseConfig',
     'django_etebase.token_auth.apps.TokenAuthConfig',
