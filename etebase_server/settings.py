@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import configparser
+from .utils import get_secret_from_file
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,13 +23,26 @@ AUTH_USER_MODEL = 'myauth.User'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
-# Should be set in the site specific settings
-# SECRET_KEY =
+# SECURITY WARNING: keep the secret key used in production secret!
+# See secret.py for how this is generated; uses a file 'secret.txt' in the root
+# directory
+SECRET_FILE = os.path.join(BASE_DIR, "secret.txt")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
 ALLOWED_HOSTS = []
+
+# Database
+# https://docs.djangoproject.com/en/2.0/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.environ.get('ETEBASE_DB_PATH',
+                               os.path.join(BASE_DIR, 'db.sqlite3')),
+    }
+}
 
 
 # Application definition
@@ -81,18 +96,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'etebase_server.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.environ.get('ETEBASE_DB_PATH',
-                               os.path.join(BASE_DIR, 'db.sqlite3')),
-    }
-}
-
-
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
@@ -131,17 +134,46 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_ROOT = os.environ.get('DJANGO_STATIC_ROOT', os.path.join(BASE_DIR, 'assets'))
 STATIC_URL = '/static/'
+STATIC_ROOT = os.environ.get('DJANGO_STATIC_ROOT', os.path.join(BASE_DIR, 'static'))
 
 MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
 MEDIA_URL = '/user-media/'
+
+
+# Define where to find configuration files
+config_locations = ['etebase-server.ini', '/etc/etebase-server/etebase-server.ini']
+# Use config file if present
+if any(os.path.isfile(x) for x in config_locations):
+    config = configparser.ConfigParser()
+    config.read(config_locations)
+
+    section = config['global']
+
+    SECRET_FILE   = section.get('secret_file', SECRET_FILE)
+    STATIC_ROOT   = section.get('static_root', STATIC_ROOT)
+    STATIC_URL    = section.get('static_url', STATIC_URL)
+    MEDIA_ROOT    = section.get('media_root', MEDIA_ROOT)
+    MEDIA_URL     = section.get('media_url', MEDIA_URL)
+    LANGUAGE_CODE = section.get('language_code', LANGUAGE_CODE)
+    TIME_ZONE     = section.get('time_zone', TIME_ZONE)
+    DEBUG         = section.getboolean('debug', DEBUG)
+
+    if 'allowed_hosts' in config:
+        ALLOWED_HOSTS = [y for x, y in config.items('allowed_hosts')]
+
+    if 'database' in config:
+        DATABASES = { 'default': { x.upper(): y for x, y in config.items('database') } }
 
 ETEBASE_API_PERMISSIONS = ('rest_framework.permissions.IsAuthenticated', )
 ETEBASE_API_AUTHENTICATORS = ('django_etebase.token_auth.authentication.TokenAuthentication',
                               'rest_framework.authentication.SessionAuthentication')
 
+# Make an `etebase_server_settings` module available to override settings.
 try:
     from etebase_server_settings import *
 except ImportError:
     pass
+
+if 'SECRET_KEY' not in locals():
+    SECRET_KEY = get_secret_from_file(SECRET_FILE)
