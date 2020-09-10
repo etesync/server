@@ -656,7 +656,10 @@ class AuthenticationViewSet(viewsets.ViewSet):
     def get_login_user(self, username):
         kwargs = {User.USERNAME_FIELD: username.lower()}
         try:
-            return self.get_queryset().get(**kwargs)
+            user = self.get_queryset().get(**kwargs)
+            if not hasattr(user, 'userinfo'):
+                raise AuthenticationFailed({'code': 'user_not_init', 'detail': 'User not properly init'})
+            return user
         except User.DoesNotExist:
             raise AuthenticationFailed({'code': 'user_not_found', 'detail': 'User not found'})
 
