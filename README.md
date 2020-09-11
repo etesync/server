@@ -119,4 +119,4 @@ You can now restart the server.
 
 # Supporting EteSync
 
-Please consider registering an account even if you self-host in order to support the development of EteSync, or help by spreading the word.
+Please consider registering an account even if you self-host in order to support the development of EteSync, or visit the [contribution](https://www.etesync.com/contribute/) for more information on how to support the service.
