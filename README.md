@@ -110,4 +110,4 @@ You can now restart the server.
 
 # Supporting Etebase
 
-Please consider registering an account even if you self-host in order to support the development of Etebase, or help by spreading the word.
+Please consider registering an account even if you self-host in order to support the development of Etebase, or visit the [contribution](https://www.etesync.com/contribute/) for more information on how to support the service.
