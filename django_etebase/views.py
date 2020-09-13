@@ -91,7 +91,7 @@ def msgpack_decode(content):
 class BaseViewSet(viewsets.ModelViewSet):
     authentication_classes = tuple(app_settings.API_AUTHENTICATORS)
     permission_classes = tuple(app_settings.API_PERMISSIONS)
-    renderer_classes = [JSONRenderer, MessagePackRenderer] + [BrowsableAPIRenderer] if settings.DEBUG else []
+    renderer_classes = [JSONRenderer, MessagePackRenderer] + ([BrowsableAPIRenderer] if settings.DEBUG else [])
     parser_classes = [JSONParser, MessagePackParser, FormParser, MultiPartParser]
     stoken_id_fields = None
 
