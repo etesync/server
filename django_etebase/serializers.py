@@ -187,6 +187,7 @@ class CollectionItemRevisionSerializer(BetterErrorsMixin, serializers.ModelSeria
     chunks = ChunksField(
         source='chunks_relation',
         queryset=models.RevisionChunkRelation.objects.all(),
+        style={'base_template': 'input.html'},
         many=True
     )
     meta = BinaryBase64Field()
@@ -317,6 +318,7 @@ class CollectionMemberSerializer(BetterErrorsMixin, serializers.ModelSerializer)
     username = UserSlugRelatedField(
         source='user',
         read_only=True,
+        style={'base_template': 'input.html'},
     )
 
     class Meta:
@@ -341,7 +343,8 @@ class CollectionMemberSerializer(BetterErrorsMixin, serializers.ModelSerializer)
 class CollectionInvitationSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     username = UserSlugRelatedField(
         source='user',
-        queryset=User.objects
+        queryset=User.objects,
+        style={'base_template': 'input.html'},
     )
     collection = serializers.CharField(source='collection.uid')
     fromPubkey = BinaryBase64Field(source='fromMember.user.userinfo.pubkey', read_only=True)
