@@ -17,7 +17,7 @@ import base64
 from django.core.files.base import ContentFile
 from django.core import exceptions as django_exceptions
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from rest_framework import serializers, status
 from . import models
 from .utils import get_user_queryset, create_user
@@ -368,7 +368,10 @@ class CollectionInvitationSerializer(BetterErrorsMixin, serializers.ModelSeriali
         member = collection.members.get(user=request.user)
 
         with transaction.atomic():
-            return type(self).Meta.model.objects.create(**validated_data, fromMember=member)
+            try:
+                return type(self).Meta.model.objects.create(**validated_data, fromMember=member)
+            except IntegrityError:
+                raise EtebaseValidationError('invitation_exists', 'Invitation already exists')
 
     def update(self, instance, validated_data):
         with transaction.atomic():
