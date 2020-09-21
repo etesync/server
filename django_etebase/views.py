@@ -654,7 +654,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
         return Response(data, status=status.HTTP_201_CREATED)
 
     def get_login_user(self, username):
-        kwargs = {User.USERNAME_FIELD: username.lower()}
+        kwargs = {User.USERNAME_FIELD + '__iexact': username.lower()}
         try:
             user = self.get_queryset().get(**kwargs)
             if not hasattr(user, 'userinfo'):
