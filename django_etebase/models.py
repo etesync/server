@@ -28,7 +28,7 @@ UidValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{20,}$', message='Not a val
 
 
 class Collection(models.Model):
-    main_item = models.ForeignKey('CollectionItem', related_name='parent', null=True, on_delete=models.SET_NULL)
+    main_item = models.OneToOneField('CollectionItem', related_name='parent', null=True, on_delete=models.SET_NULL)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     def __str__(self):
