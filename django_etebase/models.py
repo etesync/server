@@ -21,7 +21,10 @@ from django.db.models import Q
 from django.utils.functional import cached_property
 from django.utils.crypto import get_random_string
 
+from rest_framework import status
+
 from . import app_settings
+from .exceptions import EtebaseValidationError
 
 
 UidValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{20,}$', message='Not a valid UID')
@@ -56,6 +59,16 @@ class Collection(models.Model):
             raise Exception('stoken is None. Should never happen')
 
         return stoken.uid
+
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if exclude is None or 'main_item' in exclude:
+            return
+
+        if self.__class__.objects.filter(owner=self.owner, main_item__uid=self.main_item.uid) \
+                .exclude(id=self.id).exists():
+            raise EtebaseValidationError('unique_uid', 'Collection with this uid already exists',
+                                         status_code=status.HTTP_409_CONFLICT)
 
 
 class CollectionItem(models.Model):
