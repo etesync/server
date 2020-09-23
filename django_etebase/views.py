@@ -13,13 +13,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import msgpack
-from functools import reduce
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, user_logged_in, user_logged_out
 from django.core.exceptions import PermissionDenied
 from django.db import transaction, IntegrityError
-from django.db.models import Max, Q, F, Value as V
+from django.db.models import Max, Value as V
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
@@ -663,7 +662,6 @@ class AuthenticationViewSet(viewsets.ViewSet):
         except User.DoesNotExist:
             raise AuthenticationFailed({'code': 'user_not_found', 'detail': 'User not found'})
 
-
     def validate_login_request(self, request, validated_data, response_raw, signature, expected_action):
         from datetime import datetime
 
@@ -698,7 +696,8 @@ class AuthenticationViewSet(viewsets.ViewSet):
         try:
             verify_key.verify(response_raw, signature)
         except nacl.exceptions.BadSignatureError:
-            return Response({'code': 'login_bad_signature', 'detail': 'Wrong password for user.'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'code': 'login_bad_signature', 'detail': 'Wrong password for user.'},
+                            status=status.HTTP_401_UNAUTHORIZED)
 
         return None
 

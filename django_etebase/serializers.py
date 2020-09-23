@@ -220,7 +220,8 @@ class CollectionItemSerializer(BetterErrorsMixin, serializers.ModelSerializer):
             cur_etag = instance.etag if not created else None
 
             if validate_etag and cur_etag != etag:
-                raise EtebaseValidationError('wrong_etag', 'Wrong etag. Expected {} got {}'.format(cur_etag, etag), status_code=status.HTTP_409_CONFLICT)
+                raise EtebaseValidationError('wrong_etag', 'Wrong etag. Expected {} got {}'.format(cur_etag, etag),
+                                             status_code=status.HTTP_409_CONFLICT)
 
             if not created:
                 # We don't have to use select_for_update here because the unique constraint on current guards against
@@ -249,7 +250,8 @@ class CollectionItemDepSerializer(BetterErrorsMixin, serializers.ModelSerializer
         item = self.__class__.Meta.model.objects.get(uid=data['uid'])
         etag = data['etag']
         if item.etag != etag:
-            raise EtebaseValidationError('wrong_etag', 'Wrong etag. Expected {} got {}'.format(item.etag, etag), status_code=status.HTTP_409_CONFLICT)
+            raise EtebaseValidationError('wrong_etag', 'Wrong etag. Expected {} got {}'.format(item.etag, etag),
+                                         status_code=status.HTTP_409_CONFLICT)
 
         return data
 
