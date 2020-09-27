@@ -79,12 +79,12 @@ Create yourself an admin user:
 ./manage.py createsuperuser
 ```
 
-At this stage you can either just use the admin user, or better yet, go to: ```www.your-etesync-install.com/admin```
-and create a non-privileged user that you can use.
+At this stage you need to create accounts to be used with the EteSync apps. To do that, please go to:
+`www.your-etesync-install.com/admin` and create a new user to be used with the service.
 
-That's it!
-
-Now all that's left is to open the EteSync app, add an account, and set your custom server address under the "advance" section.
+After this user has been created, you can use any of the EteSync apps to signup (not login!) with the same username and
+email in order to set up the account. Please make sure to click "advance" and set your customer server address when you
+do.
 
 # `SECRET_KEY` and `secret.txt`
 
