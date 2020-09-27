@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
+
 from . import app_settings
 
 
@@ -18,3 +20,7 @@ def create_user(*args, **kwargs):
         return custom_func(*args, **kwargs)
     _ = kwargs.pop('view')
     return User.objects.create_user(*args, **kwargs)
+
+
+def create_user_blocked(*args, **kwargs):
+    raise PermissionDenied('Signup is disabled for this server. Please refer to the README for more information.')

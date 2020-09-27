@@ -29,7 +29,7 @@ AUTH_USER_MODEL = 'myauth.User'
 SECRET_FILE = os.path.join(BASE_DIR, "secret.txt")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -167,6 +167,7 @@ if any(os.path.isfile(x) for x in config_locations):
 ETEBASE_API_PERMISSIONS = ('rest_framework.permissions.IsAuthenticated', )
 ETEBASE_API_AUTHENTICATORS = ('django_etebase.token_auth.authentication.TokenAuthentication',
                               'rest_framework.authentication.SessionAuthentication')
+ETEBASE_CREATE_USER_FUNC = 'django_etebase.utils.create_user_blocked'
 
 # Make an `etebase_server_settings` module available to override settings.
 try:
