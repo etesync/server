@@ -351,12 +351,14 @@ class CollectionInvitationSerializer(BetterErrorsMixin, serializers.ModelSeriali
         style={'base_template': 'input.html'},
     )
     collection = serializers.CharField(source='collection.uid')
+    fromUsername = BinaryBase64Field(source='fromMember.user.username', read_only=True)
     fromPubkey = BinaryBase64Field(source='fromMember.user.userinfo.pubkey', read_only=True)
     signedEncryptionKey = BinaryBase64Field()
 
     class Meta:
         model = models.CollectionInvitation
-        fields = ('username', 'uid', 'collection', 'signedEncryptionKey', 'accessLevel', 'fromPubkey', 'version')
+        fields = ('username', 'uid', 'collection', 'signedEncryptionKey', 'accessLevel',
+                  'fromUsername', 'fromPubkey', 'version')
 
     def validate_user(self, value):
         request = self.context['request']
