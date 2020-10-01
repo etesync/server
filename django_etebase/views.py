@@ -574,7 +574,8 @@ class InvitationOutgoingViewSet(InvitationBaseViewSet):
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
         if not permissions.is_collection_admin(collection, request.user):
-            raise PermissionDenied('User is not an admin of this collection')
+            raise PermissionDenied({'code': 'admin_access_required',
+                                    'detail': 'User is not an admin of this collection'})
 
         serializer.save(collection=collection)
 
