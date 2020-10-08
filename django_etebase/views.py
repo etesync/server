@@ -116,11 +116,7 @@ class BaseViewSet(viewsets.ModelViewSet):
             try:
                 return Stoken.objects.get(uid=stoken)
             except Stoken.DoesNotExist:
-                raise EtebaseValidationError({
-                        'code': 'bad_stoken',
-                        'detail': 'Invalid stoken.',
-                    },
-                    status_code=status.HTTP_400_BAD_REQUEST)
+                raise EtebaseValidationError('bad_stoken', 'Invalid stoken.', status_code=status.HTTP_400_BAD_REQUEST)
 
         return None
 
