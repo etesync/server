@@ -62,6 +62,13 @@ class AppSettings:
         return None
 
     @cached_property
+    def DASHBOARD_URL_FUNC(self):  # pylint: disable=invalid-name
+        func = self._setting("DASHBOARD_URL_FUNC", None)
+        if func is not None:
+            return self.import_from_str(func)
+        return None
+
+    @cached_property
     def CHUNK_PATH_FUNC(self):  # pylint: disable=invalid-name
         func = self._setting("CHUNK_PATH_FUNC", None)
         if func is not None:

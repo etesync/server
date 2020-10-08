@@ -783,6 +783,18 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
         return Response({}, status=status.HTTP_200_OK)
 
+    @action_decorator(detail=False, methods=['POST'], permission_classes=BaseViewSet.permission_classes)
+    def dashboard_url(self, request, *args, **kwargs):
+        get_dashboard_url = app_settings.DASHBOARD_URL_FUNC
+        if get_dashboard_url is None:
+            raise EtebaseValidationError('not_supported', 'This server doesn\'t have a user dashboard.',
+                                         status_code=status.HTTP_400_BAD_REQUEST)
+
+        ret = {
+            'url': get_dashboard_url(request, *args, **kwargs),
+        }
+        return Response(ret)
+
 
 class TestAuthenticationViewSet(viewsets.ViewSet):
     allowed_methods = ['POST']
