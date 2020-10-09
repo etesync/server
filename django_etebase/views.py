@@ -30,6 +30,7 @@ from rest_framework.response import Response
 from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
 from rest_framework.renderers import BrowsableAPIRenderer
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.permissions import IsAuthenticated
 
 import nacl.encoding
 import nacl.signing
@@ -783,7 +784,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
         return Response({}, status=status.HTTP_200_OK)
 
-    @action_decorator(detail=False, methods=['POST'], permission_classes=BaseViewSet.permission_classes)
+    @action_decorator(detail=False, methods=['POST'], permission_classes=[IsAuthenticated])
     def dashboard_url(self, request, *args, **kwargs):
         get_dashboard_url = app_settings.DASHBOARD_URL_FUNC
         if get_dashboard_url is None:
