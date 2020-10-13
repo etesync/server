@@ -30,6 +30,11 @@ from .exceptions import EtebaseValidationError
 UidValidator = RegexValidator(regex=r'^[a-zA-Z0-9\-_]{20,}$', message='Not a valid UID')
 
 
+class CollectionType(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    uid = models.BinaryField(editable=True, blank=False, null=False, db_index=True, unique=True)
+
+
 class Collection(models.Model):
     main_item = models.OneToOneField('CollectionItem', related_name='parent', null=True, on_delete=models.SET_NULL)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -162,6 +167,7 @@ class CollectionMember(models.Model):
     collection = models.ForeignKey(Collection, related_name='members', on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     encryptionKey = models.BinaryField(editable=True, blank=False, null=False)
+    collectionType = models.ForeignKey(CollectionType, on_delete=models.PROTECT, null=True)
     accessLevel = models.IntegerField(
         choices=AccessLevels.choices,
         default=AccessLevels.READ_ONLY,

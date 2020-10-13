@@ -86,6 +86,15 @@ class CollectionEncryptionKeyField(BinaryBase64Field):
         return None
 
 
+class CollectionTypeField(BinaryBase64Field):
+    def get_attribute(self, instance):
+        request = self.context.get('request', None)
+        if request is not None:
+            collection_type = instance.members.get(user=request.user).collectionType
+            return collection_type and collection_type.uid
+        return None
+
+
 class UserSlugRelatedField(serializers.SlugRelatedField):
     def get_queryset(self):
         view = self.context.get('view', None)
@@ -256,8 +265,15 @@ class CollectionItemBulkGetSerializer(BetterErrorsMixin, serializers.ModelSerial
         fields = ('uid', 'etag')
 
 
+class CollectionListMultiSerializer(BetterErrorsMixin, serializers.Serializer):
+    collectionTypes = serializers.ListField(
+        child=BinaryBase64Field()
+    )
+
+
 class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     collectionKey = CollectionEncryptionKeyField()
+    collectionType = CollectionTypeField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
     stoken = serializers.CharField(read_only=True)
 
@@ -265,7 +281,7 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = models.Collection
-        fields = ('item', 'accessLevel', 'collectionKey', 'stoken')
+        fields = ('item', 'accessLevel', 'collectionKey', 'collectionType', 'stoken')
 
     def get_access_level_from_context(self, obj):
         request = self.context.get('request', None)
@@ -276,6 +292,7 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
         collection_key = validated_data.pop('collectionKey')
+        collection_type = validated_data.pop('collectionType')
 
         main_item_data = validated_data.pop('main_item')
         etag = main_item_data.pop('etag')
@@ -297,11 +314,16 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
 
             process_revisions_for_item(main_item, revision_data)
 
+            user = validated_data.get('owner')
+
+            collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=collection_type, owner=user)
+
             models.CollectionMember(collection=instance,
                                     stoken=models.Stoken.objects.create(),
-                                    user=validated_data.get('owner'),
+                                    user=user,
                                     accessLevel=models.AccessLevels.ADMIN,
                                     encryptionKey=collection_key,
+                                    collectionType=collection_type_obj,
                                     ).save()
 
         return instance
@@ -381,6 +403,7 @@ class CollectionInvitationSerializer(BetterErrorsMixin, serializers.ModelSeriali
 
 
 class InvitationAcceptSerializer(BetterErrorsMixin, serializers.Serializer):
+    collectionType = BinaryBase64Field()
     encryptionKey = BinaryBase64Field()
 
     def create(self, validated_data):
@@ -388,13 +411,18 @@ class InvitationAcceptSerializer(BetterErrorsMixin, serializers.Serializer):
         with transaction.atomic():
             invitation = self.context['invitation']
             encryption_key = validated_data.get('encryptionKey')
+            collection_type = validated_data.pop('collectionType')
+
+            user = invitation.user
+            collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=collection_type, owner=user)
 
             member = models.CollectionMember.objects.create(
                 collection=invitation.collection,
                 stoken=models.Stoken.objects.create(),
-                user=invitation.user,
+                user=user,
                 accessLevel=invitation.accessLevel,
                 encryptionKey=encryption_key,
+                collectionType=collection_type_obj,
                 )
 
             models.CollectionMemberRemoved.objects.filter(

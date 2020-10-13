@@ -66,6 +66,7 @@ from .serializers import (
         CollectionItemDepSerializer,
         CollectionItemRevisionSerializer,
         CollectionItemChunkSerializer,
+        CollectionListMultiSerializer,
         CollectionMemberSerializer,
         CollectionInvitationSerializer,
         InvitationAcceptSerializer,
@@ -210,6 +211,21 @@ class CollectionViewSet(BaseViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
+        return self.list_common(request, queryset, *args, **kwargs)
+
+    @action_decorator(detail=False, methods=['POST'])
+    def list_multi(self, request, *args, **kwargs):
+        serializer = CollectionListMultiSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        collection_types = serializer.validated_data['collectionTypes']
+
+        queryset = self.get_queryset()
+        queryset = queryset.filter(members__collectionType__uid__in=collection_types)
+
+        return self.list_common(request, queryset, *args, **kwargs)
+
+    def list_common(self, request, queryset, *args, **kwargs):
         result, new_stoken_obj, done = self.filter_by_stoken_and_limit(request, queryset)
         new_stoken = new_stoken_obj and new_stoken_obj.uid
 
