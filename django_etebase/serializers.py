@@ -443,6 +443,9 @@ class UserSignupSerializer(BetterErrorsMixin, serializers.ModelSerializer):
 
 
 class AuthenticationSignupSerializer(BetterErrorsMixin, serializers.Serializer):
+    """Used both for creating new accounts and setting up existing ones for the first time.
+    When setting up existing ones the email is ignored."
+    """
     user = UserSignupSerializer(many=False)
     salt = BinaryBase64Field()
     loginPubkey = BinaryBase64Field()
