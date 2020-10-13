@@ -462,18 +462,16 @@ class AuthenticationSignupSerializer(BetterErrorsMixin, serializers.Serializer):
                 # Create the user and save the casing the user chose as the first name
                 try:
                     instance = create_user(**user_data, password=None, first_name=user_data['username'], view=view)
+                    instance.clean_fields()
                 except EtebaseValidationError as e:
                     raise e
+                except django_exceptions.ValidationError as e:
+                    self.transform_validation_error("user", e)
                 except Exception as e:
                     raise EtebaseValidationError('generic', str(e))
 
             if hasattr(instance, 'userinfo'):
                 raise EtebaseValidationError('user_exists', 'User already exists', status_code=status.HTTP_409_CONFLICT)
-
-            try:
-                instance.clean_fields()
-            except django_exceptions.ValidationError as e:
-                self.transform_validation_error("user", e)
 
             models.UserInfo.objects.create(**validated_data, owner=instance)
 
