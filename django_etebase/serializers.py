@@ -86,14 +86,6 @@ class CollectionEncryptionKeyField(BinaryBase64Field):
         return None
 
 
-class CollectionContentField(BinaryBase64Field):
-    def get_attribute(self, instance):
-        request = self.context.get('request', None)
-        if request is not None:
-            return instance.members.get(user=request.user).encryptionKey
-        return None
-
-
 class UserSlugRelatedField(serializers.SlugRelatedField):
     def get_queryset(self):
         view = self.context.get('view', None)
