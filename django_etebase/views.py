@@ -756,7 +756,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
 
         return Response(data, status=status.HTTP_200_OK)
 
-    @action_decorator(detail=False, methods=['POST'], permission_classes=BaseViewSet.permission_classes)
+    @action_decorator(detail=False, methods=['POST'], permission_classes=[IsAuthenticated])
     def logout(self, request, *args, **kwargs):
         request.auth.delete()
         user_logged_out.send(sender=request.user.__class__, request=request, user=request.user)
