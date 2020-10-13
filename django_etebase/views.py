@@ -224,8 +224,13 @@ class CollectionViewSet(BaseViewSet):
         stoken_obj = self.get_stoken_obj(request)
         if stoken_obj is not None:
             # FIXME: honour limit? (the limit should be combined for data and this because of stoken)
-            remed = CollectionMemberRemoved.objects.filter(user=request.user, stoken__id__gt=stoken_obj.id) \
-                .values_list('collection__main_item__uid', flat=True)
+            remed_qs = CollectionMemberRemoved.objects.filter(user=request.user, stoken__id__gt=stoken_obj.id)
+            if not ret['done']:
+                # We only filter by the new_stoken if we are not done. This is because if we are done, the new stoken
+                # can point to the most recent collection change rather than most recent removed membership.
+                remed_qs = remed_qs.filter(stoken__id__lte=new_stoken_obj.id)
+
+            remed = remed_qs.values_list('collection__main_item__uid', flat=True)
             if len(remed) > 0:
                 ret['removedMemberships'] = [{'uid': x} for x in remed]
 
