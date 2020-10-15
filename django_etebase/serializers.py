@@ -293,7 +293,8 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
         collection_key = validated_data.pop('collectionKey')
-        collection_type = validated_data.pop('collectionType')
+        # FIXME: remove the None fallback once "collection-type-migration" is done
+        collection_type = validated_data.pop('collectionType', None)
 
         main_item_data = validated_data.pop('main_item')
         etag = main_item_data.pop('etag')
@@ -317,7 +318,11 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
 
             user = validated_data.get('owner')
 
-            collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=collection_type, owner=user)
+            # FIXME: remove the if statement (and else branch) once "collection-type-migration" is done
+            if collection_type is not None:
+                collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=collection_type, owner=user)
+            else:
+                collection_type_obj = None
 
             models.CollectionMember(collection=instance,
                                     stoken=models.Stoken.objects.create(),
