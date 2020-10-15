@@ -273,7 +273,8 @@ class CollectionListMultiSerializer(BetterErrorsMixin, serializers.Serializer):
 
 class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     collectionKey = CollectionEncryptionKeyField()
-    collectionType = CollectionTypeField()
+    # FIXME: make required once "collection-type-migration" is done
+    collectionType = CollectionTypeField(required=False)
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
     stoken = serializers.CharField(read_only=True)
 

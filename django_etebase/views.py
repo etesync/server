@@ -18,7 +18,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, user_logged_in, user_logged_out
 from django.core.exceptions import PermissionDenied
 from django.db import transaction, IntegrityError
-from django.db.models import Max, Value as V
+from django.db.models import Max, Value as V, Q
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
@@ -221,7 +221,9 @@ class CollectionViewSet(BaseViewSet):
         collection_types = serializer.validated_data['collectionTypes']
 
         queryset = self.get_queryset()
-        queryset = queryset.filter(members__collectionType__uid__in=collection_types)
+        # FIXME: Remove the isnull part once "collection-type-migration" is done
+        queryset = queryset.filter(
+            Q(members__collectionType__uid__in=collection_types) | Q(members__collectionType__isnull=True))
 
         return self.list_common(request, queryset, *args, **kwargs)
 
