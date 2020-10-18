@@ -1,20 +1,15 @@
 <p align="center">
   <img width="120" src="icon.svg" />
-  <h1 align="center">EteSync - Secure Data Sync</h1>
+  <h1 align="center">Etebase - Encrypt Everything</h1>
 </p>
 
-A skeleton app for running your own [EteSync](https://www.etesync.com) server
+A skeleton app for running your own [Etebase](https://www.etebase.com) server
 
 # Installation
 
-## Using pre-built packages
-
-* Arch Linux : [AUR](https://aur.archlinux.org/packages/etesync-server)
-* Fedora     : [COPR](https://copr.fedorainfracloud.org/coprs/daftaupe/etesync)
-
 ## From source
 
-Before installing the EteSync server make sure you install `virtualenv` (for **Python 3**):
+Before installing the Etebase server make sure you install `virtualenv` (for **Python 3**):
 
 * Arch Linux: `pacman -S python-virtualenv`
 * Debian/Ubuntu: `apt-get install python3-virtualenv`
@@ -23,9 +18,10 @@ Before installing the EteSync server make sure you install `virtualenv` (for **P
 Then just clone the git repo and set up this app:
 
 ```
-git clone https://github.com/etesync/server-skeleton.git
+git clone https://github.com/etesync/server.git etebase
 
-cd server-skeleton
+cd etebase
+git checkout etebase
 
 # Set up the environment and deps
 virtualenv -p python3 venv  # If doesn't work, try: virtualenv3 venv
@@ -37,11 +33,11 @@ pip install -r requirements.txt
 # Configuration
 
 If you are familiar with Django you can just edit the [settings file](etesync_server/settings.py)
-according to the [Django deployment checklist](https://docs.djangoproject.com/en/dev/howto/deployment/checklist/)
-if you are not, we also provide a simple [configuration file](etesync-server.ini.example)
-for easy deployment which you can use.
+according to the [Django deployment checklist](https://docs.djangoproject.com/en/dev/howto/deployment/checklist/).
+If you are not, we also provide a simple [configuration file](https://github.com/etesync/server/blob/etebase/etebase-server.ini.example) for easy deployment which you can use.
+To use the easy configuration file rename it to `etebase-server.ini` and place it either at the root of this repository or in `/etc/etebase-server`.
 
-To use the easy configuration file rename it to `etesync-server.ini` and place it either at the root of this repository or in `/etc/etesync-server`.
+There is also a [wikipage](https://github.com/etesync/server/wiki/Basic-Setup-Etebase-(EteSync-v2)) detailing this basic setup.
 
 Some particular settings that should be edited are:
   * [`ALLOWED_HOSTS`](https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-ALLOWED_HOSTS)
@@ -54,7 +50,7 @@ will be served
 generation purposes. See below for how default configuration of
 `SECRET_KEY` works for this project.
 
-Now you can initialise our django app
+Now you can initialise our django app.
 
 ```
 ./manage.py migrate
@@ -70,16 +66,15 @@ Using the debug server in production is not recommended, so please read the foll
 
 # Production deployment
 
-EteSync is based on Django so you should refer to one of the following
+There are more details about a proper production setup using Daphne and Nginx in the [wiki](https://github.com/etesync/server/wiki/Production-setup-using-Daphne-and-Nginx).
+
+Etebase is based on Django so you should refer to one of the following
   * The instructions of the Django project [here](https://docs.djangoproject.com/en/2.2/howto/deployment/wsgi/).
   * Instructions from uwsgi [here](http://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html).
-  * The [example configurations](example-configs) in this repo.
 
-There are more details about a proper production setup using uWSGI and Nginx in the [wiki](https://github.com/etesync/server/wiki/Production-setup-using-uWSGI-and-Nginx).
+The webserver should also be configured to serve Etebase using TLS.
+A guide for doing so can be found in the [wiki](https://github.com/etesync/server/wiki/Setup-HTTPS-for-Etebase) as well.
 
-The webserver should also be configured to serve EteSync using TLS.
-A guide for doing so can be found in the [wiki](https://github.com/etesync/server/wiki/Setup-HTTPS-for-EteSync) as well.
-  
 # Usage
 
 Create yourself an admin user:
@@ -88,12 +83,12 @@ Create yourself an admin user:
 ./manage.py createsuperuser
 ```
 
-At this stage you can either just use the admin user, or better yet, go to: ```www.your-etesync-install.com/admin```
-and create a non-privileged user that you can use.
+At this stage you need to create accounts to be used with the EteSync apps. To do that, please go to:
+`www.your-etesync-install.com/admin` and create a new user to be used with the service.
 
-That's it!
-
-Now all that's left is to open the EteSync app, add an account, and set your custom server address under the "advance" section.
+After this user has been created, you can use any of the EteSync apps to signup (not login!) with the same username and
+email in order to set up the account. Please make sure to click "advance" and set your customer server address when you
+do.
 
 # `SECRET_KEY` and `secret.txt`
 
@@ -117,6 +112,6 @@ Then, inside the virtualenv:
 
 You can now restart the server.
 
-# Supporting EteSync
+# Supporting Etebase
 
-Please consider registering an account even if you self-host in order to support the development of EteSync, or visit the [contribution](https://www.etesync.com/contribute/) for more information on how to support the service.
+Please consider registering an account even if you self-host in order to support the development of Etebase, or visit the [contribution](https://www.etesync.com/contribute/) for more information on how to support the service.

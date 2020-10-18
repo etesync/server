@@ -1,0 +1,7 @@
+django
+django-cors-headers
+djangorestframework
+drf-nested-routers
+msgpack
+psycopg2-binary
+pynacl

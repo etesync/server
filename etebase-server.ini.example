@@ -1,0 +1,17 @@
+[global]
+secret_file = secret.txt
+debug = false
+;Advanced options, only uncomment if you know what you're doing:
+;static_root = /path/to/static
+;static_url = /static/
+;media_root = /path/to/media
+;media_url = /user-media/
+;language_code = en-us
+;time_zone = UTC
+
+[allowed_hosts]
+allowed_host1 = example.com
+
+[database]
+engine = django.db.backends.sqlite3
+name = db.sqlite3

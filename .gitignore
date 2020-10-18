@@ -1,11 +1,15 @@
-/db.sqlite3
+/journal
+/db.sqlite3*
 Session.vim
-/local_settings.py
 /.venv
+/assets
+/logs
 /.coverage
-/htmlcov
-/secret.txt
-/static
+/tmp
+/media
 
 __pycache__
 .*.swp
+
+
+/etebase_server_settings.py
