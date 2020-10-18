@@ -3,7 +3,7 @@
   <h1 align="center">Etebase - Encrypt Everything</h1>
 </p>
 
-A skeleton app for running your own [Etebase](https://www.etebase.com) server
+A skeleton app for running your own [Etebase](https://www.etebase.com) (EteSync 2.0) server.
 
 # Installation
 
