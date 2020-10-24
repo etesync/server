@@ -106,12 +106,25 @@ for more information about the `SECRET_KEY` and its uses.
 
 # Updating
 
+## Updating from version 0.5.0 onwards
+
 First, run `git pull --rebase` to update this repository.
 Then, inside the virtualenv:
 1. Run `pip install -U -r requirements.txt` to update the dependencies.
 2. Run `python manage.py migrate` to perform database migrations.
 
 You can now restart the server.
+
+## Updating from version 0.5.0 or before
+
+The 0.5.0 release marks the change to the EteSync 2.0 protocol. EteSync 2.0 accounts are substantially different to 1.0 accounts, and require additional upgrade steps. In addition, the servers are incompatible, so 0.5.0 requires a fresh installation.
+
+Here are the update steps:
+1. Chose any of the [the migration tools](https://www.etesync.com/user-guide/migrate-v2/) and make sure the underlying apps are up to date with all of your data. So for example, if you are using the Android client, make sure to sync before commencing.
+2. Install the 0.5.0 version to a new path (you can't reuse the same database).
+3. Run the 0.5.0 account and create the appropriate users as described in the installation/upgrade steps above.
+4. Run the migration tool to migrate all of your data.
+5. Add your new EteSync 2.0 accounst to all of your devices.
 
 # Supporting Etebase
 
