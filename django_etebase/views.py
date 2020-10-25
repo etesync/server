@@ -861,6 +861,7 @@ class TestAuthenticationViewSet(viewsets.ViewSet):
 
             # Delete all of the journal data for this user for a clear test env
             user.collection_set.all().delete()
+            user.collectionmember_set.all().delete()
             user.incoming_invitations.all().delete()
 
             # FIXME: also delete chunk files!!!
