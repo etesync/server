@@ -84,8 +84,10 @@ Create yourself an admin user:
 ```
 
 At this stage you need to create accounts to be used with the EteSync apps. To do that, please go to:
-`www.your-etesync-install.com/admin` and create a new user to be used with the service. Do *not* set
-a password for the user, as Etebase uses a zero-knowledge proof for authentication.
+`www.your-etesync-install.com/admin` and create a new user to be used with the service. Set a random
+password for the user such as `j3PmCRftyQMtM3eWvi8f`. No need to remember it, as it won't be used.
+Etebase uses a zero-knowledge proof for authentication, so the user will just create a password when
+creating the account from the apps.
 
 After this user has been created, you can use any of the EteSync apps to signup (or login) with the same username and
 email in order to set up the account. The password used at that point will be used to setup the account.
@@ -124,7 +126,7 @@ Here are the update steps:
 2. Install the 0.5.0 version to a new path (you can't reuse the same database).
 3. Run the 0.5.0 account and create the appropriate users as described in the installation/upgrade steps above.
 4. Run the migration tool to migrate all of your data.
-5. Add your new EteSync 2.0 accounst to all of your devices.
+5. Add your new EteSync 2.0 accounts to all of your devices.
 
 # Supporting Etebase
 
