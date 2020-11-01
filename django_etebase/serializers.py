@@ -296,6 +296,7 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
         # FIXME: remove the None fallback once "collection-type-migration" is done
         collection_type = validated_data.pop('collectionType', None)
 
+        user = validated_data.get('owner')
         main_item_data = validated_data.pop('main_item')
         etag = main_item_data.pop('etag')
         revision_data = main_item_data.pop('content')
@@ -303,6 +304,7 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
         instance = self.__class__.Meta.model(**validated_data)
 
         with transaction.atomic():
+            _ = self.__class__.Meta.model.objects.select_for_update().filter(owner=user)
             if etag is not None:
                 raise EtebaseValidationError('bad_etag', 'etag is not null')
 
@@ -315,8 +317,6 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
             instance.save()
 
             process_revisions_for_item(main_item, revision_data)
-
-            user = validated_data.get('owner')
 
             # FIXME: remove the if statement (and else branch) once "collection-type-migration" is done
             if collection_type is not None:
