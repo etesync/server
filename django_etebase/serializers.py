@@ -273,8 +273,7 @@ class CollectionListMultiSerializer(BetterErrorsMixin, serializers.Serializer):
 
 class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     collectionKey = CollectionEncryptionKeyField()
-    # FIXME: make required once "collection-type-migration" is done
-    collectionType = CollectionTypeField(required=False)
+    collectionType = CollectionTypeField()
     accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
     stoken = serializers.CharField(read_only=True)
 
@@ -293,8 +292,7 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
         collection_key = validated_data.pop('collectionKey')
-        # FIXME: remove the None fallback once "collection-type-migration" is done
-        collection_type = validated_data.pop('collectionType', None)
+        collection_type = validated_data.pop('collectionType')
 
         user = validated_data.get('owner')
         main_item_data = validated_data.pop('main_item')
@@ -318,11 +316,7 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
 
             process_revisions_for_item(main_item, revision_data)
 
-            # FIXME: remove the if statement (and else branch) once "collection-type-migration" is done
-            if collection_type is not None:
-                collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=collection_type, owner=user)
-            else:
-                collection_type_obj = None
+            collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=collection_type, owner=user)
 
             models.CollectionMember(collection=instance,
                                     stoken=models.Stoken.objects.create(),

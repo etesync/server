@@ -221,7 +221,7 @@ class CollectionViewSet(BaseViewSet):
         collection_types = serializer.validated_data['collectionTypes']
 
         queryset = self.get_queryset()
-        # FIXME: Remove the isnull part once "collection-type-migration" is done
+        # FIXME: Remove the isnull part once we attach collection types to all objects ("collection-type-migration")
         queryset = queryset.filter(
             Q(members__collectionType__uid__in=collection_types) | Q(members__collectionType__isnull=True))
 
