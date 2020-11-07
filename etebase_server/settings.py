@@ -141,7 +141,12 @@ MEDIA_URL = '/user-media/'
 
 
 # Define where to find configuration files
-config_locations = ['etebase-server.ini', '/etc/etebase-server/etebase-server.ini']
+config_locations = [
+    os.environ.get('ETEBASE_EASY_CONFIG_PATH', ''),
+    'etebase-server.ini',
+    '/etc/etebase-server/etebase-server.ini',
+]
+
 # Use config file if present
 if any(os.path.isfile(x) for x in config_locations):
     config = configparser.ConfigParser()
