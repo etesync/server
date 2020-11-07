@@ -84,10 +84,9 @@ Create yourself an admin user:
 ```
 
 At this stage you need to create accounts to be used with the EteSync apps. To do that, please go to:
-`www.your-etesync-install.com/admin` and create a new user to be used with the service. Set a random
-password for the user such as `j3PmCRftyQMtM3eWvi8f`. No need to remember it, as it won't be used.
-Etebase uses a zero-knowledge proof for authentication, so the user will just create a password when
-creating the account from the apps.
+`www.your-etesync-install.com/admin` and create a new user to be used with the service. No need to set
+a password, as Etebase uses a zero-knowledge proof for authentication, so the user will just create
+a password when creating the account from the apps.
 
 After this user has been created, you can use any of the EteSync apps to signup (or login) with the same username and
 email in order to set up the account. The password used at that point will be used to setup the account.
