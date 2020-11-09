@@ -30,6 +30,10 @@ User = get_user_model()
 def process_revisions_for_item(item, revision_data):
     chunks_objs = []
     chunks = revision_data.pop('chunks_relation')
+
+    revision = models.CollectionItemRevision(**revision_data, item=item)
+    revision.validate_unique()  # Verify there aren't any validation issues
+
     for chunk in chunks:
         uid = chunk[0]
         chunk_obj = models.CollectionItemChunk.objects.filter(uid=uid).first()
@@ -47,8 +51,9 @@ def process_revisions_for_item(item, revision_data):
         chunks_objs.append(chunk_obj)
 
     stoken = models.Stoken.objects.create()
+    revision.stoken = stoken
+    revision.save()
 
-    revision = models.CollectionItemRevision.objects.create(**revision_data, item=item, stoken=stoken)
     for chunk in chunks_objs:
         models.RevisionChunkRelation.objects.create(chunk=chunk, revision=revision)
     return revision
@@ -196,6 +201,9 @@ class CollectionItemRevisionSerializer(BetterErrorsMixin, serializers.ModelSeria
     class Meta:
         model = models.CollectionItemRevision
         fields = ('chunks', 'meta', 'uid', 'deleted')
+        extra_kwargs = {
+            'uid': {'validators': []},  # We deal with it in the serializers
+        }
 
 
 class CollectionItemSerializer(BetterErrorsMixin, serializers.ModelSerializer):
@@ -220,6 +228,10 @@ class CollectionItemSerializer(BetterErrorsMixin, serializers.ModelSerializer):
             instance, created = Model.objects.get_or_create(uid=uid, defaults=validated_data)
             cur_etag = instance.etag if not created else None
 
+            # If we are trying to update an up to date item, abort early and consider it a success
+            if cur_etag == revision_data.get('uid'):
+                return instance
+
             if validate_etag and cur_etag != etag:
                 raise EtebaseValidationError('wrong_etag', 'Wrong etag. Expected {} got {}'.format(cur_etag, etag),
                                              status_code=status.HTTP_409_CONFLICT)
@@ -231,7 +243,10 @@ class CollectionItemSerializer(BetterErrorsMixin, serializers.ModelSerializer):
                 current_revision.current = None
                 current_revision.save()
 
-            process_revisions_for_item(instance, revision_data)
+            try:
+                process_revisions_for_item(instance, revision_data)
+            except django_exceptions.ValidationError as e:
+                self.transform_validation_error("content", e)
 
         return instance
 
