@@ -3,7 +3,9 @@
   <h1 align="center">Etebase - Encrypt Everything</h1>
 </p>
 
-A skeleton app for running your own [Etebase](https://www.etebase.com) (EteSync 2.0) server.
+An [Etebase](https://www.etebase.com) (EteSync 2.0) server so you can run your own.
+
+[![Chat with us](https://img.shields.io/badge/chat-IRC%20|%20Matrix%20|%20Web-blue.svg)](https://www.etebase.com/community-chat/)
 
 # Installation
 
