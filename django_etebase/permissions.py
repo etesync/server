@@ -25,13 +25,14 @@ class IsCollectionAdmin(permissions.BasePermission):
     """
     Custom permission to only allow owners of a collection to view it
     """
+
     message = {
-        'detail': 'Only collection admins can perform this operation.',
-        'code': 'admin_access_required',
+        "detail": "Only collection admins can perform this operation.",
+        "code": "admin_access_required",
     }
 
     def has_permission(self, request, view):
-        collection_uid = view.kwargs['collection_uid']
+        collection_uid = view.kwargs["collection_uid"]
         try:
             collection = view.get_collection_queryset().get(main_item__uid=collection_uid)
             return is_collection_admin(collection, request.user)
@@ -44,13 +45,14 @@ class IsCollectionAdminOrReadOnly(permissions.BasePermission):
     """
     Custom permission to only allow owners of a collection to edit it
     """
+
     message = {
-        'detail': 'Only collection admins can edit collections.',
-        'code': 'admin_access_required',
+        "detail": "Only collection admins can edit collections.",
+        "code": "admin_access_required",
     }
 
     def has_permission(self, request, view):
-        collection_uid = view.kwargs.get('collection_uid', None)
+        collection_uid = view.kwargs.get("collection_uid", None)
 
         # Allow creating new collections
         if collection_uid is None:
@@ -71,13 +73,14 @@ class HasWriteAccessOrReadOnly(permissions.BasePermission):
     """
     Custom permission to restrict write
     """
+
     message = {
-        'detail': 'You need write access to write to this collection',
-        'code': 'no_write_access',
+        "detail": "You need write access to write to this collection",
+        "code": "no_write_access",
     }
 
     def has_permission(self, request, view):
-        collection_uid = view.kwargs['collection_uid']
+        collection_uid = view.kwargs["collection_uid"]
         try:
             collection = view.get_collection_queryset().get(main_item__uid=collection_uid)
             if request.method in permissions.SAFE_METHODS:

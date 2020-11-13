@@ -6,13 +6,11 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0014_auto_20200602_1558'),
+        ("django_etebase", "0014_auto_20200602_1558"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='collectionitemrevision',
-            name='salt',
-            field=models.BinaryField(default=b'', editable=True),
+            model_name="collectionitemrevision", name="salt", field=models.BinaryField(default=b"", editable=True),
         ),
     ]

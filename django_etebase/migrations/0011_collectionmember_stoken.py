@@ -7,13 +7,15 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0010_auto_20200526_1539'),
+        ("django_etebase", "0010_auto_20200526_1539"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='collectionmember',
-            name='stoken',
-            field=models.OneToOneField(null=True, on_delete=django.db.models.deletion.PROTECT, to='django_etebase.Stoken'),
+            model_name="collectionmember",
+            name="stoken",
+            field=models.OneToOneField(
+                null=True, on_delete=django.db.models.deletion.PROTECT, to="django_etebase.Stoken"
+            ),
         ),
     ]

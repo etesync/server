@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0031_auto_20201013_1336'),
+        ("django_etebase", "0031_auto_20201013_1336"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='collectiontype',
-            name='uid',
+            model_name="collectiontype",
+            name="uid",
             field=models.BinaryField(db_index=True, editable=True, unique=True),
         ),
     ]

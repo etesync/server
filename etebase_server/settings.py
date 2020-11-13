@@ -17,7 +17,7 @@ from .utils import get_secret_from_file
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-AUTH_USER_MODEL = 'myauth.User'
+AUTH_USER_MODEL = "myauth.User"
 
 
 # Quick-start development settings - unsuitable for production
@@ -37,10 +37,9 @@ ALLOWED_HOSTS = []
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.environ.get('ETEBASE_DB_PATH',
-                               os.path.join(BASE_DIR, 'db.sqlite3')),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": os.environ.get("ETEBASE_DB_PATH", os.path.join(BASE_DIR, "db.sqlite3")),
     }
 }
 
@@ -48,78 +47,68 @@ DATABASES = {
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'corsheaders',
-    'rest_framework',
-    'myauth.apps.MyauthConfig',
-    'django_etebase.apps.DjangoEtebaseConfig',
-    'django_etebase.token_auth.apps.TokenAuthConfig',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "corsheaders",
+    "rest_framework",
+    "myauth.apps.MyauthConfig",
+    "django_etebase.apps.DjangoEtebaseConfig",
+    "django_etebase.token_auth.apps.TokenAuthConfig",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'etebase_server.urls'
+ROOT_URLCONF = "etebase_server.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(BASE_DIR, 'templates')
-        ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'etebase_server.wsgi.application'
+WSGI_APPLICATION = "etebase_server.wsgi.application"
 
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
 ]
 
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -133,18 +122,18 @@ CORS_ORIGIN_ALLOW_ALL = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.environ.get('DJANGO_STATIC_ROOT', os.path.join(BASE_DIR, 'static'))
+STATIC_URL = "/static/"
+STATIC_ROOT = os.environ.get("DJANGO_STATIC_ROOT", os.path.join(BASE_DIR, "static"))
 
-MEDIA_ROOT = os.environ.get('DJANGO_MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
-MEDIA_URL = '/user-media/'
+MEDIA_ROOT = os.environ.get("DJANGO_MEDIA_ROOT", os.path.join(BASE_DIR, "media"))
+MEDIA_URL = "/user-media/"
 
 
 # Define where to find configuration files
 config_locations = [
-    os.environ.get('ETEBASE_EASY_CONFIG_PATH', ''),
-    'etebase-server.ini',
-    '/etc/etebase-server/etebase-server.ini',
+    os.environ.get("ETEBASE_EASY_CONFIG_PATH", ""),
+    "etebase-server.ini",
+    "/etc/etebase-server/etebase-server.ini",
 ]
 
 # Use config file if present
@@ -152,27 +141,29 @@ if any(os.path.isfile(x) for x in config_locations):
     config = configparser.ConfigParser()
     config.read(config_locations)
 
-    section = config['global']
+    section = config["global"]
 
-    SECRET_FILE   = section.get('secret_file', SECRET_FILE)
-    STATIC_ROOT   = section.get('static_root', STATIC_ROOT)
-    STATIC_URL    = section.get('static_url', STATIC_URL)
-    MEDIA_ROOT    = section.get('media_root', MEDIA_ROOT)
-    MEDIA_URL     = section.get('media_url', MEDIA_URL)
-    LANGUAGE_CODE = section.get('language_code', LANGUAGE_CODE)
-    TIME_ZONE     = section.get('time_zone', TIME_ZONE)
-    DEBUG         = section.getboolean('debug', DEBUG)
+    SECRET_FILE = section.get("secret_file", SECRET_FILE)
+    STATIC_ROOT = section.get("static_root", STATIC_ROOT)
+    STATIC_URL = section.get("static_url", STATIC_URL)
+    MEDIA_ROOT = section.get("media_root", MEDIA_ROOT)
+    MEDIA_URL = section.get("media_url", MEDIA_URL)
+    LANGUAGE_CODE = section.get("language_code", LANGUAGE_CODE)
+    TIME_ZONE = section.get("time_zone", TIME_ZONE)
+    DEBUG = section.getboolean("debug", DEBUG)
 
-    if 'allowed_hosts' in config:
-        ALLOWED_HOSTS = [y for x, y in config.items('allowed_hosts')]
+    if "allowed_hosts" in config:
+        ALLOWED_HOSTS = [y for x, y in config.items("allowed_hosts")]
 
-    if 'database' in config:
-        DATABASES = { 'default': { x.upper(): y for x, y in config.items('database') } }
+    if "database" in config:
+        DATABASES = {"default": {x.upper(): y for x, y in config.items("database")}}
 
-ETEBASE_API_PERMISSIONS = ('rest_framework.permissions.IsAuthenticated', )
-ETEBASE_API_AUTHENTICATORS = ('django_etebase.token_auth.authentication.TokenAuthentication',
-                              'rest_framework.authentication.SessionAuthentication')
-ETEBASE_CREATE_USER_FUNC = 'django_etebase.utils.create_user_blocked'
+ETEBASE_API_PERMISSIONS = ("rest_framework.permissions.IsAuthenticated",)
+ETEBASE_API_AUTHENTICATORS = (
+    "django_etebase.token_auth.authentication.TokenAuthentication",
+    "rest_framework.authentication.SessionAuthentication",
+)
+ETEBASE_CREATE_USER_FUNC = "django_etebase.utils.create_user_blocked"
 
 # Make an `etebase_server_settings` module available to override settings.
 try:
@@ -180,5 +171,5 @@ try:
 except ImportError:
     pass
 
-if 'SECRET_KEY' not in locals():
+if "SECRET_KEY" not in locals():
     SECRET_KEY = get_secret_from_file(SECRET_FILE)

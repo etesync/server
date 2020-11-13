@@ -17,10 +17,9 @@ def get_default_expiry():
 class AuthToken(models.Model):
 
     key = models.CharField(max_length=40, unique=True, db_index=True, default=generate_key)
-    user = models.ForeignKey(User, null=False, blank=False,
-                             related_name='auth_token_set', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, null=False, blank=False, related_name="auth_token_set", on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     expiry = models.DateTimeField(null=True, blank=True, default=get_default_expiry)
 
     def __str__(self):
-        return '{}: {}'.format(self.key, self.user)
+        return "{}: {}".format(self.key, self.user)

@@ -8,18 +8,26 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('myauth', '0001_initial'),
-        ('django_etebase', '0001_initial'),
+        ("myauth", "0001_initial"),
+        ("django_etebase", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='UserInfo',
+            name="UserInfo",
             fields=[
-                ('owner', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to=settings.AUTH_USER_MODEL)),
-                ('version', models.PositiveSmallIntegerField(default=1)),
-                ('pubkey', models.BinaryField(editable=True)),
-                ('salt', models.BinaryField(editable=True)),
+                (
+                    "owner",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        primary_key=True,
+                        serialize=False,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                ("version", models.PositiveSmallIntegerField(default=1)),
+                ("pubkey", models.BinaryField(editable=True)),
+                ("salt", models.BinaryField(editable=True)),
             ],
         ),
     ]

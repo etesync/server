@@ -4,8 +4,8 @@ from django.db import migrations
 
 
 def create_stokens(apps, schema_editor):
-    Stoken = apps.get_model('django_etebase', 'Stoken')
-    CollectionMember = apps.get_model('django_etebase', 'CollectionMember')
+    Stoken = apps.get_model("django_etebase", "Stoken")
+    CollectionMember = apps.get_model("django_etebase", "CollectionMember")
 
     for member in CollectionMember.objects.all():
         member.stoken = Stoken.objects.create()
@@ -15,7 +15,7 @@ def create_stokens(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0011_collectionmember_stoken'),
+        ("django_etebase", "0011_collectionmember_stoken"),
     ]
 
     operations = [

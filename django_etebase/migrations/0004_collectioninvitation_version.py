@@ -6,13 +6,11 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0003_collectioninvitation'),
+        ("django_etebase", "0003_collectioninvitation"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='collectioninvitation',
-            name='version',
-            field=models.PositiveSmallIntegerField(default=1),
+            model_name="collectioninvitation", name="version", field=models.PositiveSmallIntegerField(default=1),
         ),
     ]

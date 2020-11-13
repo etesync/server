@@ -6,12 +6,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0019_auto_20200626_0748'),
+        ("django_etebase", "0019_auto_20200626_0748"),
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='collectionitemrevision',
-            name='salt',
-        ),
+        migrations.RemoveField(model_name="collectionitemrevision", name="salt",),
     ]

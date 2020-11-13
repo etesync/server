@@ -7,21 +7,17 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0024_auto_20200804_1209'),
+        ("django_etebase", "0024_auto_20200804_1209"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='collectionitemchunk',
-            name='collection',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='chunks', to='django_etebase.Collection'),
+            model_name="collectionitemchunk",
+            name="collection",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, related_name="chunks", to="django_etebase.Collection"
+            ),
         ),
-        migrations.AlterUniqueTogether(
-            name='collectionitemchunk',
-            unique_together={('collection', 'uid')},
-        ),
-        migrations.RemoveField(
-            model_name='collectionitemchunk',
-            name='item',
-        ),
+        migrations.AlterUniqueTogether(name="collectionitemchunk", unique_together={("collection", "uid")},),
+        migrations.RemoveField(model_name="collectionitemchunk", name="item",),
     ]
