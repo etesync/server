@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0026_auto_20200907_0752'),
+        ("django_etebase", "0026_auto_20200907_0752"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='collectioninvitation',
-            name='accessLevel',
-            field=models.IntegerField(choices=[(0, 'Read Only'), (1, 'Admin'), (2, 'Read Write')], default=0),
+            model_name="collectioninvitation",
+            name="accessLevel",
+            field=models.IntegerField(choices=[(0, "Read Only"), (1, "Admin"), (2, "Read Write")], default=0),
         ),
         migrations.AddField(
-            model_name='collectionmember',
-            name='accessLevel',
-            field=models.IntegerField(choices=[(0, 'Read Only'), (1, 'Admin'), (2, 'Read Write')], default=0),
+            model_name="collectionmember",
+            name="accessLevel",
+            field=models.IntegerField(choices=[(0, "Read Only"), (1, "Admin"), (2, "Read Write")], default=0),
         ),
     ]

@@ -6,13 +6,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0013_collectionmemberremoved'),
+        ("django_etebase", "0013_collectionmemberremoved"),
     ]
 
     operations = [
-        migrations.RenameField(
-            model_name='userinfo',
-            old_name='encryptedSeckey',
-            new_name='encryptedContent',
-        ),
+        migrations.RenameField(model_name="userinfo", old_name="encryptedSeckey", new_name="encryptedContent",),
     ]

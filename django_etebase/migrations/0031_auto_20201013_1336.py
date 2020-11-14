@@ -9,21 +9,23 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('django_etebase', '0030_auto_20200922_0832'),
+        ("django_etebase", "0030_auto_20200922_0832"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CollectionType',
+            name="CollectionType",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('uid', models.BinaryField(db_index=True, editable=True)),
-                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("uid", models.BinaryField(db_index=True, editable=True)),
+                ("owner", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
         ),
         migrations.AddField(
-            model_name='collectionmember',
-            name='collectionType',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.PROTECT, to='django_etebase.collectiontype'),
+            model_name="collectionmember",
+            name="collectionType",
+            field=models.ForeignKey(
+                null=True, on_delete=django.db.models.deletion.PROTECT, to="django_etebase.collectiontype"
+            ),
         ),
     ]

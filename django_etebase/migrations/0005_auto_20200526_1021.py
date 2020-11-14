@@ -6,13 +6,9 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0004_collectioninvitation_version'),
+        ("django_etebase", "0004_collectioninvitation_version"),
     ]
 
     operations = [
-        migrations.RenameField(
-            model_name='userinfo',
-            old_name='pubkey',
-            new_name='loginPubkey',
-        ),
+        migrations.RenameField(model_name="userinfo", old_name="pubkey", new_name="loginPubkey",),
     ]

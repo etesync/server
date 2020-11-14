@@ -4,7 +4,7 @@ from django.db import migrations
 
 
 def change_chunk_to_collections(apps, schema_editor):
-    CollectionItemChunk = apps.get_model('django_etebase', 'CollectionItemChunk')
+    CollectionItemChunk = apps.get_model("django_etebase", "CollectionItemChunk")
 
     for chunk in CollectionItemChunk.objects.all():
         chunk.collection = chunk.item.collection
@@ -14,7 +14,7 @@ def change_chunk_to_collections(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0023_collectionitemchunk_collection'),
+        ("django_etebase", "0023_collectionitemchunk_collection"),
     ]
 
     operations = [

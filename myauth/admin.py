@@ -6,11 +6,7 @@ from .forms import AdminUserCreationForm
 
 class UserAdmin(DjangoUserAdmin):
     add_form = AdminUserCreationForm
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('username', ),
-        }),
-    )
+    add_fieldsets = ((None, {"classes": ("wide",), "fields": ("username",),}),)
+
 
 admin.site.register(User, UserAdmin)

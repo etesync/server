@@ -29,7 +29,7 @@ User = get_user_model()
 
 def process_revisions_for_item(item, revision_data):
     chunks_objs = []
-    chunks = revision_data.pop('chunks_relation')
+    chunks = revision_data.pop("chunks_relation")
 
     revision = models.CollectionItemRevision(**revision_data, item=item)
     revision.validate_unique()  # Verify there aren't any validation issues
@@ -42,11 +42,11 @@ def process_revisions_for_item(item, revision_data):
             # If the chunk already exists we assume it's fine. Otherwise, we upload it.
             if chunk_obj is None:
                 chunk_obj = models.CollectionItemChunk(uid=uid, collection=item.collection)
-                chunk_obj.chunkFile.save('IGNORED', ContentFile(content))
+                chunk_obj.chunkFile.save("IGNORED", ContentFile(content))
                 chunk_obj.save()
         else:
             if chunk_obj is None:
-                raise EtebaseValidationError('chunk_no_content', 'Tried to create a new chunk without content')
+                raise EtebaseValidationError("chunk_no_content", "Tried to create a new chunk without content")
 
         chunks_objs.append(chunk_obj)
 
@@ -60,7 +60,7 @@ def process_revisions_for_item(item, revision_data):
 
 
 def b64encode(value):
-    return base64.urlsafe_b64encode(value).decode('ascii').strip('=')
+    return base64.urlsafe_b64encode(value).decode("ascii").strip("=")
 
 
 def b64decode(data):
@@ -85,7 +85,7 @@ class BinaryBase64Field(serializers.Field):
 
 class CollectionEncryptionKeyField(BinaryBase64Field):
     def get_attribute(self, instance):
-        request = self.context.get('request', None)
+        request = self.context.get("request", None)
         if request is not None:
             return instance.members.get(user=request.user).encryptionKey
         return None
@@ -93,7 +93,7 @@ class CollectionEncryptionKeyField(BinaryBase64Field):
 
 class CollectionTypeField(BinaryBase64Field):
     def get_attribute(self, instance):
-        request = self.context.get('request', None)
+        request = self.context.get("request", None)
         if request is not None:
             collection_type = instance.members.get(user=request.user).collectionType
             return collection_type and collection_type.uid
@@ -102,7 +102,7 @@ class CollectionTypeField(BinaryBase64Field):
 
 class UserSlugRelatedField(serializers.SlugRelatedField):
     def get_queryset(self):
-        view = self.context.get('view', None)
+        view = self.context.get("view", None)
         return get_user_queryset(super().get_queryset(), view)
 
     def __init__(self, **kwargs):
@@ -115,15 +115,15 @@ class UserSlugRelatedField(serializers.SlugRelatedField):
 class ChunksField(serializers.RelatedField):
     def to_representation(self, obj):
         obj = obj.chunk
-        if self.context.get('prefetch') == 'auto':
-            with open(obj.chunkFile.path, 'rb') as f:
+        if self.context.get("prefetch") == "auto":
+            with open(obj.chunkFile.path, "rb") as f:
                 return (obj.uid, f.read())
         else:
-            return (obj.uid, )
+            return (obj.uid,)
 
     def to_internal_value(self, data):
         if data[0] is None or data[1] is None:
-            raise EtebaseValidationError('no_null', 'null is not allowed')
+            raise EtebaseValidationError("no_null", "null is not allowed")
         return (data[0], b64decode_or_bytes(data[1]))
 
 
@@ -133,18 +133,12 @@ class BetterErrorsMixin:
         nice = []
         errors = super().errors
         for error_type in errors:
-            if error_type == 'non_field_errors':
-                nice.extend(
-                    self.flatten_errors(None, errors[error_type])
-                )
+            if error_type == "non_field_errors":
+                nice.extend(self.flatten_errors(None, errors[error_type]))
             else:
-                nice.extend(
-                    self.flatten_errors(error_type, errors[error_type])
-                )
+                nice.extend(self.flatten_errors(error_type, errors[error_type]))
         if nice:
-            return {'code': 'field_errors',
-                    'detail': 'Field validations failed.',
-                    'errors': nice}
+            return {"code": "field_errors", "detail": "Field validations failed.", "errors": nice}
         return {}
 
     def flatten_errors(self, field_name, errors):
@@ -155,54 +149,50 @@ class BetterErrorsMixin:
                 ret.extend(self.flatten_errors("{}.{}".format(field_name, error_key), error))
         else:
             for error in errors:
-                if hasattr(error, 'detail'):
+                if hasattr(error, "detail"):
                     message = error.detail[0]
-                elif hasattr(error, 'message'):
+                elif hasattr(error, "message"):
                     message = error.message
                 else:
                     message = str(error)
-                ret.append({
-                    'field': field_name,
-                    'code': error.code,
-                    'detail': message,
-                })
+                ret.append(
+                    {"field": field_name, "code": error.code, "detail": message,}
+                )
         return ret
 
     def transform_validation_error(self, prefix, err):
-        if hasattr(err, 'error_dict'):
+        if hasattr(err, "error_dict"):
             errors = self.flatten_errors(prefix, err.error_dict)
-        elif not hasattr(err, 'message'):
+        elif not hasattr(err, "message"):
             errors = self.flatten_errors(prefix, err.error_list)
         else:
             raise EtebaseValidationError(err.code, err.message)
 
-        raise serializers.ValidationError({
-            'code': 'field_errors',
-            'detail': 'Field validations failed.',
-            'errors': errors,
-        })
+        raise serializers.ValidationError(
+            {"code": "field_errors", "detail": "Field validations failed.", "errors": errors,}
+        )
 
 
 class CollectionItemChunkSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     class Meta:
         model = models.CollectionItemChunk
-        fields = ('uid', 'chunkFile')
+        fields = ("uid", "chunkFile")
 
 
 class CollectionItemRevisionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     chunks = ChunksField(
-        source='chunks_relation',
+        source="chunks_relation",
         queryset=models.RevisionChunkRelation.objects.all(),
-        style={'base_template': 'input.html'},
-        many=True
+        style={"base_template": "input.html"},
+        many=True,
     )
     meta = BinaryBase64Field()
 
     class Meta:
         model = models.CollectionItemRevision
-        fields = ('chunks', 'meta', 'uid', 'deleted')
+        fields = ("chunks", "meta", "uid", "deleted")
         extra_kwargs = {
-            'uid': {'validators': []},  # We deal with it in the serializers
+            "uid": {"validators": []},  # We deal with it in the serializers
         }
 
 
@@ -213,14 +203,14 @@ class CollectionItemSerializer(BetterErrorsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = models.CollectionItem
-        fields = ('uid', 'version', 'encryptionKey', 'content', 'etag')
+        fields = ("uid", "version", "encryptionKey", "content", "etag")
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
-        validate_etag = self.context.get('validate_etag', False)
-        etag = validated_data.pop('etag')
-        revision_data = validated_data.pop('content')
-        uid = validated_data.pop('uid')
+        validate_etag = self.context.get("validate_etag", False)
+        etag = validated_data.pop("etag")
+        revision_data = validated_data.pop("content")
+        uid = validated_data.pop("uid")
 
         Model = self.__class__.Meta.model
 
@@ -229,12 +219,15 @@ class CollectionItemSerializer(BetterErrorsMixin, serializers.ModelSerializer):
             cur_etag = instance.etag if not created else None
 
             # If we are trying to update an up to date item, abort early and consider it a success
-            if cur_etag == revision_data.get('uid'):
+            if cur_etag == revision_data.get("uid"):
                 return instance
 
             if validate_etag and cur_etag != etag:
-                raise EtebaseValidationError('wrong_etag', 'Wrong etag. Expected {} got {}'.format(cur_etag, etag),
-                                             status_code=status.HTTP_409_CONFLICT)
+                raise EtebaseValidationError(
+                    "wrong_etag",
+                    "Wrong etag. Expected {} got {}".format(cur_etag, etag),
+                    status_code=status.HTTP_409_CONFLICT,
+                )
 
             if not created:
                 # We don't have to use select_for_update here because the unique constraint on current guards against
@@ -260,14 +253,17 @@ class CollectionItemDepSerializer(BetterErrorsMixin, serializers.ModelSerializer
 
     class Meta:
         model = models.CollectionItem
-        fields = ('uid', 'etag')
+        fields = ("uid", "etag")
 
     def validate(self, data):
-        item = self.__class__.Meta.model.objects.get(uid=data['uid'])
-        etag = data['etag']
+        item = self.__class__.Meta.model.objects.get(uid=data["uid"])
+        etag = data["etag"]
         if item.etag != etag:
-            raise EtebaseValidationError('wrong_etag', 'Wrong etag. Expected {} got {}'.format(item.etag, etag),
-                                         status_code=status.HTTP_409_CONFLICT)
+            raise EtebaseValidationError(
+                "wrong_etag",
+                "Wrong etag. Expected {} got {}".format(item.etag, etag),
+                status_code=status.HTTP_409_CONFLICT,
+            )
 
         return data
 
@@ -277,49 +273,47 @@ class CollectionItemBulkGetSerializer(BetterErrorsMixin, serializers.ModelSerial
 
     class Meta:
         model = models.CollectionItem
-        fields = ('uid', 'etag')
+        fields = ("uid", "etag")
 
 
 class CollectionListMultiSerializer(BetterErrorsMixin, serializers.Serializer):
-    collectionTypes = serializers.ListField(
-        child=BinaryBase64Field()
-    )
+    collectionTypes = serializers.ListField(child=BinaryBase64Field())
 
 
 class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
     collectionKey = CollectionEncryptionKeyField()
     collectionType = CollectionTypeField()
-    accessLevel = serializers.SerializerMethodField('get_access_level_from_context')
+    accessLevel = serializers.SerializerMethodField("get_access_level_from_context")
     stoken = serializers.CharField(read_only=True)
 
-    item = CollectionItemSerializer(many=False, source='main_item')
+    item = CollectionItemSerializer(many=False, source="main_item")
 
     class Meta:
         model = models.Collection
-        fields = ('item', 'accessLevel', 'collectionKey', 'collectionType', 'stoken')
+        fields = ("item", "accessLevel", "collectionKey", "collectionType", "stoken")
 
     def get_access_level_from_context(self, obj):
-        request = self.context.get('request', None)
+        request = self.context.get("request", None)
         if request is not None:
             return obj.members.get(user=request.user).accessLevel
         return None
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
-        collection_key = validated_data.pop('collectionKey')
-        collection_type = validated_data.pop('collectionType')
+        collection_key = validated_data.pop("collectionKey")
+        collection_type = validated_data.pop("collectionType")
 
-        user = validated_data.get('owner')
-        main_item_data = validated_data.pop('main_item')
-        etag = main_item_data.pop('etag')
-        revision_data = main_item_data.pop('content')
+        user = validated_data.get("owner")
+        main_item_data = validated_data.pop("main_item")
+        etag = main_item_data.pop("etag")
+        revision_data = main_item_data.pop("content")
 
         instance = self.__class__.Meta.model(**validated_data)
 
         with transaction.atomic():
             _ = self.__class__.Meta.model.objects.select_for_update().filter(owner=user)
             if etag is not None:
-                raise EtebaseValidationError('bad_etag', 'etag is not null')
+                raise EtebaseValidationError("bad_etag", "etag is not null")
 
             instance.save()
             main_item = models.CollectionItem.objects.create(**main_item_data, collection=instance)
@@ -333,13 +327,14 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
 
             collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=collection_type, owner=user)
 
-            models.CollectionMember(collection=instance,
-                                    stoken=models.Stoken.objects.create(),
-                                    user=user,
-                                    accessLevel=models.AccessLevels.ADMIN,
-                                    encryptionKey=collection_key,
-                                    collectionType=collection_type_obj,
-                                    ).save()
+            models.CollectionMember(
+                collection=instance,
+                stoken=models.Stoken.objects.create(),
+                user=user,
+                accessLevel=models.AccessLevels.ADMIN,
+                encryptionKey=collection_key,
+                collectionType=collection_type_obj,
+            ).save()
 
         return instance
 
@@ -348,15 +343,11 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
 
 
 class CollectionMemberSerializer(BetterErrorsMixin, serializers.ModelSerializer):
-    username = UserSlugRelatedField(
-        source='user',
-        read_only=True,
-        style={'base_template': 'input.html'},
-    )
+    username = UserSlugRelatedField(source="user", read_only=True, style={"base_template": "input.html"},)
 
     class Meta:
         model = models.CollectionMember
-        fields = ('username', 'accessLevel')
+        fields = ("username", "accessLevel")
 
     def create(self, validated_data):
         raise NotImplementedError()
@@ -364,7 +355,7 @@ class CollectionMemberSerializer(BetterErrorsMixin, serializers.ModelSerializer)
     def update(self, instance, validated_data):
         with transaction.atomic():
             # We only allow updating accessLevel
-            access_level = validated_data.pop('accessLevel')
+            access_level = validated_data.pop("accessLevel")
             if instance.accessLevel != access_level:
                 instance.stoken = models.Stoken.objects.create()
                 instance.accessLevel = access_level
@@ -374,31 +365,35 @@ class CollectionMemberSerializer(BetterErrorsMixin, serializers.ModelSerializer)
 
 
 class CollectionInvitationSerializer(BetterErrorsMixin, serializers.ModelSerializer):
-    username = UserSlugRelatedField(
-        source='user',
-        queryset=User.objects,
-        style={'base_template': 'input.html'},
-    )
-    collection = serializers.CharField(source='collection.uid')
-    fromUsername = BinaryBase64Field(source='fromMember.user.username', read_only=True)
-    fromPubkey = BinaryBase64Field(source='fromMember.user.userinfo.pubkey', read_only=True)
+    username = UserSlugRelatedField(source="user", queryset=User.objects, style={"base_template": "input.html"},)
+    collection = serializers.CharField(source="collection.uid")
+    fromUsername = BinaryBase64Field(source="fromMember.user.username", read_only=True)
+    fromPubkey = BinaryBase64Field(source="fromMember.user.userinfo.pubkey", read_only=True)
     signedEncryptionKey = BinaryBase64Field()
 
     class Meta:
         model = models.CollectionInvitation
-        fields = ('username', 'uid', 'collection', 'signedEncryptionKey', 'accessLevel',
-                  'fromUsername', 'fromPubkey', 'version')
+        fields = (
+            "username",
+            "uid",
+            "collection",
+            "signedEncryptionKey",
+            "accessLevel",
+            "fromUsername",
+            "fromPubkey",
+            "version",
+        )
 
     def validate_user(self, value):
-        request = self.context['request']
+        request = self.context["request"]
 
         if request.user.username == value.lower():
-            raise EtebaseValidationError('no_self_invite', 'Inviting yourself is not allowed')
+            raise EtebaseValidationError("no_self_invite", "Inviting yourself is not allowed")
         return value
 
     def create(self, validated_data):
-        request = self.context['request']
-        collection = validated_data.pop('collection')
+        request = self.context["request"]
+        collection = validated_data.pop("collection")
 
         member = collection.members.get(user=request.user)
 
@@ -406,12 +401,12 @@ class CollectionInvitationSerializer(BetterErrorsMixin, serializers.ModelSeriali
             try:
                 return type(self).Meta.model.objects.create(**validated_data, fromMember=member)
             except IntegrityError:
-                raise EtebaseValidationError('invitation_exists', 'Invitation already exists')
+                raise EtebaseValidationError("invitation_exists", "Invitation already exists")
 
     def update(self, instance, validated_data):
         with transaction.atomic():
-            instance.accessLevel = validated_data.pop('accessLevel')
-            instance.signedEncryptionKey = validated_data.pop('signedEncryptionKey')
+            instance.accessLevel = validated_data.pop("accessLevel")
+            instance.signedEncryptionKey = validated_data.pop("signedEncryptionKey")
             instance.save()
 
         return instance
@@ -424,9 +419,9 @@ class InvitationAcceptSerializer(BetterErrorsMixin, serializers.Serializer):
     def create(self, validated_data):
 
         with transaction.atomic():
-            invitation = self.context['invitation']
-            encryption_key = validated_data.get('encryptionKey')
-            collection_type = validated_data.pop('collectionType')
+            invitation = self.context["invitation"]
+            encryption_key = validated_data.get("encryptionKey")
+            collection_type = validated_data.pop("collectionType")
 
             user = invitation.user
             collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=collection_type, owner=user)
@@ -438,10 +433,11 @@ class InvitationAcceptSerializer(BetterErrorsMixin, serializers.Serializer):
                 accessLevel=invitation.accessLevel,
                 encryptionKey=encryption_key,
                 collectionType=collection_type_obj,
-                )
+            )
 
             models.CollectionMemberRemoved.objects.filter(
-                user=invitation.user, collection=invitation.collection).delete()
+                user=invitation.user, collection=invitation.collection
+            ).delete()
 
             invitation.delete()
 
@@ -452,12 +448,12 @@ class InvitationAcceptSerializer(BetterErrorsMixin, serializers.Serializer):
 
 
 class UserSerializer(BetterErrorsMixin, serializers.ModelSerializer):
-    pubkey = BinaryBase64Field(source='userinfo.pubkey')
-    encryptedContent = BinaryBase64Field(source='userinfo.encryptedContent')
+    pubkey = BinaryBase64Field(source="userinfo.pubkey")
+    encryptedContent = BinaryBase64Field(source="userinfo.encryptedContent")
 
     class Meta:
         model = User
-        fields = (User.USERNAME_FIELD, User.EMAIL_FIELD, 'pubkey', 'encryptedContent')
+        fields = (User.USERNAME_FIELD, User.EMAIL_FIELD, "pubkey", "encryptedContent")
 
 
 class UserInfoPubkeySerializer(BetterErrorsMixin, serializers.ModelSerializer):
@@ -465,7 +461,7 @@ class UserInfoPubkeySerializer(BetterErrorsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = models.UserInfo
-        fields = ('pubkey', )
+        fields = ("pubkey",)
 
 
 class UserSignupSerializer(BetterErrorsMixin, serializers.ModelSerializer):
@@ -473,7 +469,7 @@ class UserSignupSerializer(BetterErrorsMixin, serializers.ModelSerializer):
         model = User
         fields = (User.USERNAME_FIELD, User.EMAIL_FIELD)
         extra_kwargs = {
-            'username': {'validators': []},  # We specifically validate in SignupSerializer
+            "username": {"validators": []},  # We specifically validate in SignupSerializer
         }
 
 
@@ -481,6 +477,7 @@ class AuthenticationSignupSerializer(BetterErrorsMixin, serializers.Serializer):
     """Used both for creating new accounts and setting up existing ones for the first time.
     When setting up existing ones the email is ignored."
     """
+
     user = UserSignupSerializer(many=False)
     salt = BinaryBase64Field()
     loginPubkey = BinaryBase64Field()
@@ -489,27 +486,27 @@ class AuthenticationSignupSerializer(BetterErrorsMixin, serializers.Serializer):
 
     def create(self, validated_data):
         """Function that's called when this serializer creates an item"""
-        user_data = validated_data.pop('user')
+        user_data = validated_data.pop("user")
 
         with transaction.atomic():
             try:
-                view = self.context.get('view', None)
+                view = self.context.get("view", None)
                 user_queryset = get_user_queryset(User.objects.all(), view)
-                instance = user_queryset.get(**{User.USERNAME_FIELD: user_data['username'].lower()})
+                instance = user_queryset.get(**{User.USERNAME_FIELD: user_data["username"].lower()})
             except User.DoesNotExist:
                 # Create the user and save the casing the user chose as the first name
                 try:
-                    instance = create_user(**user_data, password=None, first_name=user_data['username'], view=view)
+                    instance = create_user(**user_data, password=None, first_name=user_data["username"], view=view)
                     instance.clean_fields()
                 except EtebaseValidationError as e:
                     raise e
                 except django_exceptions.ValidationError as e:
                     self.transform_validation_error("user", e)
                 except Exception as e:
-                    raise EtebaseValidationError('generic', str(e))
+                    raise EtebaseValidationError("generic", str(e))
 
-            if hasattr(instance, 'userinfo'):
-                raise EtebaseValidationError('user_exists', 'User already exists', status_code=status.HTTP_409_CONFLICT)
+            if hasattr(instance, "userinfo"):
+                raise EtebaseValidationError("user_exists", "User already exists", status_code=status.HTTP_409_CONFLICT)
 
             models.UserInfo.objects.create(**validated_data, owner=instance)
 
@@ -558,15 +555,15 @@ class AuthenticationChangePasswordInnerSerializer(AuthenticationLoginInnerSerial
 
     class Meta:
         model = models.UserInfo
-        fields = ('loginPubkey', 'encryptedContent')
+        fields = ("loginPubkey", "encryptedContent")
 
     def create(self, validated_data):
         raise NotImplementedError()
 
     def update(self, instance, validated_data):
         with transaction.atomic():
-            instance.loginPubkey = validated_data.pop('loginPubkey')
-            instance.encryptedContent = validated_data.pop('encryptedContent')
+            instance.loginPubkey = validated_data.pop("loginPubkey")
+            instance.encryptedContent = validated_data.pop("encryptedContent")
             instance.save()
 
         return instance

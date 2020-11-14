@@ -14,6 +14,7 @@
 
 from django.core.management import utils
 
+
 def get_secret_from_file(path):
     try:
         with open(path, "r") as f:

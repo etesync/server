@@ -15,4 +15,5 @@ class JSONRenderer(DRFJSONRenderer):
     """
     Renderer which serializes to JSON with support for our base64
     """
+
     encoder_class = JSONEncoder

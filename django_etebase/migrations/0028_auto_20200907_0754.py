@@ -6,24 +6,24 @@ from django_etebase.models import AccessLevels
 
 
 def change_access_level_to_int(apps, schema_editor):
-    CollectionMember = apps.get_model('django_etebase', 'CollectionMember')
-    CollectionInvitation = apps.get_model('django_etebase', 'CollectionInvitation')
+    CollectionMember = apps.get_model("django_etebase", "CollectionMember")
+    CollectionInvitation = apps.get_model("django_etebase", "CollectionInvitation")
 
     for member in CollectionMember.objects.all():
-        if member.accessLevelOld == 'adm':
+        if member.accessLevelOld == "adm":
             member.accessLevel = AccessLevels.ADMIN
-        elif member.accessLevelOld == 'rw':
+        elif member.accessLevelOld == "rw":
             member.accessLevel = AccessLevels.READ_WRITE
-        elif member.accessLevelOld == 'ro':
+        elif member.accessLevelOld == "ro":
             member.accessLevel = AccessLevels.READ_ONLY
         member.save()
 
     for invitation in CollectionInvitation.objects.all():
-        if invitation.accessLevelOld == 'adm':
+        if invitation.accessLevelOld == "adm":
             invitation.accessLevel = AccessLevels.ADMIN
-        elif invitation.accessLevelOld == 'rw':
+        elif invitation.accessLevelOld == "rw":
             invitation.accessLevel = AccessLevels.READ_WRITE
-        elif invitation.accessLevelOld == 'ro':
+        elif invitation.accessLevelOld == "ro":
             invitation.accessLevel = AccessLevels.READ_ONLY
         invitation.save()
 
@@ -31,7 +31,7 @@ def change_access_level_to_int(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0027_auto_20200907_0752'),
+        ("django_etebase", "0027_auto_20200907_0752"),
     ]
 
     operations = [

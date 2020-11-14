@@ -18,9 +18,9 @@ def create_user(*args, **kwargs):
     custom_func = app_settings.CREATE_USER_FUNC
     if custom_func is not None:
         return custom_func(*args, **kwargs)
-    _ = kwargs.pop('view')
+    _ = kwargs.pop("view")
     return User.objects.create_user(*args, **kwargs)
 
 
 def create_user_blocked(*args, **kwargs):
-    raise PermissionDenied('Signup is disabled for this server. Please refer to the README for more information.')
+    raise PermissionDenied("Signup is disabled for this server. Please refer to the README for more information.")

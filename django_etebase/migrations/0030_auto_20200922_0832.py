@@ -7,13 +7,18 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0029_auto_20200907_0801'),
+        ("django_etebase", "0029_auto_20200907_0801"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='collection',
-            name='main_item',
-            field=models.OneToOneField(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='parent', to='django_etebase.collectionitem'),
+            model_name="collection",
+            name="main_item",
+            field=models.OneToOneField(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="parent",
+                to="django_etebase.collectionitem",
+            ),
         ),
     ]

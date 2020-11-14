@@ -7,13 +7,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0018_auto_20200624_0748'),
+        ("django_etebase", "0018_auto_20200624_0748"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='collectionitemchunk',
-            name='uid',
-            field=models.CharField(db_index=True, max_length=60, validators=[django.core.validators.RegexValidator(message='Not a valid UID', regex='^[a-zA-Z0-9\\-_]*$')]),
+            model_name="collectionitemchunk",
+            name="uid",
+            field=models.CharField(
+                db_index=True,
+                max_length=60,
+                validators=[
+                    django.core.validators.RegexValidator(message="Not a valid UID", regex="^[a-zA-Z0-9\\-_]*$")
+                ],
+            ),
         ),
     ]

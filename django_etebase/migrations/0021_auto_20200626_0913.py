@@ -8,33 +8,66 @@ import django_etebase.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0020_remove_collectionitemrevision_salt'),
+        ("django_etebase", "0020_remove_collectionitemrevision_salt"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='collectioninvitation',
-            name='uid',
-            field=models.CharField(db_index=True, max_length=43, validators=[django.core.validators.RegexValidator(message='Not a valid UID', regex='^[a-zA-Z0-9\\-_]{20,}$')]),
+            model_name="collectioninvitation",
+            name="uid",
+            field=models.CharField(
+                db_index=True,
+                max_length=43,
+                validators=[
+                    django.core.validators.RegexValidator(message="Not a valid UID", regex="^[a-zA-Z0-9\\-_]{20,}$")
+                ],
+            ),
         ),
         migrations.AlterField(
-            model_name='collectionitem',
-            name='uid',
-            field=models.CharField(db_index=True, max_length=43, validators=[django.core.validators.RegexValidator(message='Not a valid UID', regex='^[a-zA-Z0-9\\-_]{20,}$')]),
+            model_name="collectionitem",
+            name="uid",
+            field=models.CharField(
+                db_index=True,
+                max_length=43,
+                validators=[
+                    django.core.validators.RegexValidator(message="Not a valid UID", regex="^[a-zA-Z0-9\\-_]{20,}$")
+                ],
+            ),
         ),
         migrations.AlterField(
-            model_name='collectionitemchunk',
-            name='uid',
-            field=models.CharField(db_index=True, max_length=60, validators=[django.core.validators.RegexValidator(message='Not a valid UID', regex='^[a-zA-Z0-9\\-_]{20,}$')]),
+            model_name="collectionitemchunk",
+            name="uid",
+            field=models.CharField(
+                db_index=True,
+                max_length=60,
+                validators=[
+                    django.core.validators.RegexValidator(message="Not a valid UID", regex="^[a-zA-Z0-9\\-_]{20,}$")
+                ],
+            ),
         ),
         migrations.AlterField(
-            model_name='collectionitemrevision',
-            name='uid',
-            field=models.CharField(db_index=True, max_length=43, unique=True, validators=[django.core.validators.RegexValidator(message='Not a valid UID', regex='^[a-zA-Z0-9\\-_]{20,}$')]),
+            model_name="collectionitemrevision",
+            name="uid",
+            field=models.CharField(
+                db_index=True,
+                max_length=43,
+                unique=True,
+                validators=[
+                    django.core.validators.RegexValidator(message="Not a valid UID", regex="^[a-zA-Z0-9\\-_]{20,}$")
+                ],
+            ),
         ),
         migrations.AlterField(
-            model_name='stoken',
-            name='uid',
-            field=models.CharField(db_index=True, default=django_etebase.models.generate_stoken_uid, max_length=43, unique=True, validators=[django.core.validators.RegexValidator(message='Not a valid UID', regex='^[a-zA-Z0-9\\-_]{20,}$')]),
+            model_name="stoken",
+            name="uid",
+            field=models.CharField(
+                db_index=True,
+                default=django_etebase.models.generate_stoken_uid,
+                max_length=43,
+                unique=True,
+                validators=[
+                    django.core.validators.RegexValidator(message="Not a valid UID", regex="^[a-zA-Z0-9\\-_]{20,}$")
+                ],
+            ),
         ),
     ]

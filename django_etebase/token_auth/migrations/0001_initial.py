@@ -16,13 +16,23 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='AuthToken',
+            name="AuthToken",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('key', models.CharField(db_index=True, default=token_auth_models.generate_key, max_length=40, unique=True)),
-                ('created', models.DateTimeField(auto_now_add=True)),
-                ('expiry', models.DateTimeField(blank=True, default=token_auth_models.get_default_expiry, null=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='auth_token_set', to=settings.AUTH_USER_MODEL)),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "key",
+                    models.CharField(db_index=True, default=token_auth_models.generate_key, max_length=40, unique=True),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("expiry", models.DateTimeField(blank=True, default=token_auth_models.get_default_expiry, null=True)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="auth_token_set",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]

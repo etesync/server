@@ -10,22 +10,50 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('django_etebase', '0002_userinfo'),
+        ("django_etebase", "0002_userinfo"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CollectionInvitation',
+            name="CollectionInvitation",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('uid', models.CharField(db_index=True, max_length=44, validators=[django.core.validators.RegexValidator(message='Expected a 256bit base64url.', regex='^[a-zA-Z0-9\\-_]{43}$')])),
-                ('signedEncryptionKey', models.BinaryField()),
-                ('accessLevel', models.CharField(choices=[('adm', 'Admin'), ('rw', 'Read Write'), ('ro', 'Read Only')], default='ro', max_length=3)),
-                ('fromMember', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='django_etebase.CollectionMember')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='incoming_invitations', to=settings.AUTH_USER_MODEL)),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "uid",
+                    models.CharField(
+                        db_index=True,
+                        max_length=44,
+                        validators=[
+                            django.core.validators.RegexValidator(
+                                message="Expected a 256bit base64url.", regex="^[a-zA-Z0-9\\-_]{43}$"
+                            )
+                        ],
+                    ),
+                ),
+                ("signedEncryptionKey", models.BinaryField()),
+                (
+                    "accessLevel",
+                    models.CharField(
+                        choices=[("adm", "Admin"), ("rw", "Read Write"), ("ro", "Read Only")],
+                        default="ro",
+                        max_length=3,
+                    ),
+                ),
+                (
+                    "fromMember",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="django_etebase.CollectionMember"
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="incoming_invitations",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
-            options={
-                'unique_together': {('user', 'fromMember')},
-            },
+            options={"unique_together": {("user", "fromMember")},},
         ),
     ]

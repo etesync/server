@@ -12,19 +12,19 @@ MIN_REFRESH_INTERVAL = 60
 
 
 class TokenAuthentication(DRFTokenAuthentication):
-    keyword = 'Token'
+    keyword = "Token"
     model = AuthToken
 
     def authenticate_credentials(self, key):
-        msg = _('Invalid token.')
+        msg = _("Invalid token.")
         model = self.get_model()
         try:
-            token = model.objects.select_related('user').get(key=key)
+            token = model.objects.select_related("user").get(key=key)
         except model.DoesNotExist:
             raise exceptions.AuthenticationFailed(msg)
 
         if not token.user.is_active:
-            raise exceptions.AuthenticationFailed(_('User inactive or deleted.'))
+            raise exceptions.AuthenticationFailed(_("User inactive or deleted."))
 
         if token.expiry is not None:
             if token.expiry < timezone.now():
@@ -43,4 +43,4 @@ class TokenAuthentication(DRFTokenAuthentication):
         delta = (new_expiry - current_expiry).total_seconds()
         if delta > MIN_REFRESH_INTERVAL:
             auth_token.expiry = new_expiry
-            auth_token.save(update_fields=('expiry',))
+            auth_token.save(update_fields=("expiry",))

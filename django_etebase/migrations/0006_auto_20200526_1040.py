@@ -6,20 +6,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0005_auto_20200526_1021'),
+        ("django_etebase", "0005_auto_20200526_1021"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userinfo',
-            name='encryptedSeckey',
-            field=models.BinaryField(default=b'', editable=True),
+            model_name="userinfo",
+            name="encryptedSeckey",
+            field=models.BinaryField(default=b"", editable=True),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='userinfo',
-            name='pubkey',
-            field=models.BinaryField(default=b'', editable=True),
+            model_name="userinfo",
+            name="pubkey",
+            field=models.BinaryField(default=b"", editable=True),
             preserve_default=False,
         ),
     ]

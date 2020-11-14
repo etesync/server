@@ -7,13 +7,18 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('django_etebase', '0022_auto_20200804_1059'),
+        ("django_etebase", "0022_auto_20200804_1059"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='collectionitemchunk',
-            name='collection',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='chunks', to='django_etebase.Collection'),
+            model_name="collectionitemchunk",
+            name="collection",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="chunks",
+                to="django_etebase.Collection",
+            ),
         ),
     ]
