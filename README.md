@@ -23,7 +23,6 @@ Then just clone the git repo and set up this app:
 git clone https://github.com/etesync/server.git etebase
 
 cd etebase
-git checkout etebase
 
 # Set up the environment and deps
 virtualenv -p python3 venv  # If doesn't work, try: virtualenv3 venv
