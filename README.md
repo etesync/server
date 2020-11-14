@@ -34,9 +34,9 @@ pip install -r requirements.txt
 
 # Configuration
 
-If you are familiar with Django you can just edit the [settings file](etesync_server/settings.py)
+If you are familiar with Django you can just edit the [settings file](etebase_server/settings.py)
 according to the [Django deployment checklist](https://docs.djangoproject.com/en/dev/howto/deployment/checklist/).
-If you are not, we also provide a simple [configuration file](https://github.com/etesync/server/blob/etebase/etebase-server.ini.example) for easy deployment which you can use.
+If you are not, we also provide a simple [configuration file](etebase-server.ini.example) for easy deployment which you can use.
 To use the easy configuration file rename it to `etebase-server.ini` and place it either at the root of this repository or in `/etc/etebase-server`.
 
 There is also a [wikipage](https://github.com/etesync/server/wiki/Basic-Setup-Etebase-(EteSync-v2)) detailing this basic setup.
