@@ -7,9 +7,10 @@ Session.vim
 /.coverage
 /tmp
 /media
+/.idea
 
 __pycache__
 .*.swp
 
-
 /etebase_server_settings.py
+/secret.txt
