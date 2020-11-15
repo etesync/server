@@ -26,7 +26,7 @@ cd etebase
 
 # Set up the environment and deps
 virtualenv -p python3 .venv  # If doesn't work, try: virtualenv3 .venv
-source venv/bin/activate
+source .venv/bin/activate
 
 pip install -r requirements.txt
 ```
