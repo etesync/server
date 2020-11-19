@@ -41,12 +41,14 @@ To use the easy configuration file rename it to `etebase-server.ini` and place i
 There is also a [wikipage](https://github.com/etesync/server/wiki/Basic-Setup-Etebase-(EteSync-v2)) detailing this basic setup.
 
 Some particular settings that should be edited are:
-  * [`ALLOWED_HOSTS`](https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-ALLOWED_HOSTS)
+  * [`ALLOWED_HOSTS`](https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-ALLOWED_HOSTS)
     -- this is the list of host/domain names or addresses on which the app
 will be served
-  * [`DEBUG`](https://docs.djangoproject.com/en/1.11/ref/settings/#debug)
+  * [`DEBUG`](https://docs.djangoproject.com/en/dev/ref/settings/#debug)
     -- handy for debugging, set to `False` for production
-  * [`SECRET_KEY`](https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-SECRET_KEY)
+  * [`MEDIA_ROOT`](https://docs.djangoproject.com/en/dev/ref/settings/#media-root)
+    -- the path to the directory that will hold user data.
+  * [`SECRET_KEY`](https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-SECRET_KEY)
     -- an ephemeral secret used for various cryptographic signing and token
 generation purposes. See below for how default configuration of
 `SECRET_KEY` works for this project.
@@ -75,6 +77,12 @@ Etebase is based on Django so you should refer to one of the following
 
 The webserver should also be configured to serve Etebase using TLS.
 A guide for doing so can be found in the [wiki](https://github.com/etesync/server/wiki/Setup-HTTPS-for-Etebase) as well.
+
+# Data locations and backups
+
+The server stores user data in two different locations that need to be backed up:
+1. The database - how to backup depends on which database you use.
+2. The `MEDIA_ROOT` - the path where user data is stored.
 
 # Usage
 
