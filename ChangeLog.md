@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.5.3
+* Add missing migration
+
 ## Version 0.5.2
 * Fix issues with host verification failing with a custom port
 * Add env variable to change configuration file path.
