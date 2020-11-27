@@ -136,6 +136,16 @@ Here are the update steps:
 4. Run the migration tool to migrate all of your data.
 5. Add your new EteSync 2.0 accounts to all of your devices.
 
+# License
+
+Etebase is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License version 3 as published by the Free Software Foundation. See the [LICENSE](./LICENSE) for more information.
+
+A quick summary can be found [on tldrlegal](https://tldrlegal.com/license/gnu-affero-general-public-license-v3-(agpl-3.0)). Though in even simpler terms (not part of the license, and not legal advice): you can use it in however way you want, including self-hosting and commercial offerings as long as you release the code to any modifications you have made to the server software (clients are not affected).
+
+## Commercial licensing
+
+For commercial licensing options, contact license@etebase.com 
+
 # Supporting Etebase
 
 Please consider registering an account even if you self-host in order to support the development of Etebase, or visit the [contribution](https://www.etesync.com/contribute/) for more information on how to support the service.
