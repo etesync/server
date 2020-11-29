@@ -43,7 +43,7 @@ There is also a [wikipage](https://github.com/etesync/server/wiki/Basic-Setup-Et
 Some particular settings that should be edited are:
   * [`ALLOWED_HOSTS`](https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-ALLOWED_HOSTS)
     -- this is the list of host/domain names or addresses on which the app
-will be served
+will be served. For example: `etebase.example.com`
   * [`DEBUG`](https://docs.djangoproject.com/en/dev/ref/settings/#debug)
     -- handy for debugging, set to `False` for production
   * [`MEDIA_ROOT`](https://docs.djangoproject.com/en/dev/ref/settings/#media-root)
@@ -77,6 +77,8 @@ Etebase is based on Django so you should refer to one of the following
 
 The webserver should also be configured to serve Etebase using TLS.
 A guide for doing so can be found in the [wiki](https://github.com/etesync/server/wiki/Setup-HTTPS-for-Etebase) as well.
+
+The Etebase server needs to be aware of the URL it's been served as, so make sure to forward the `Host` header to the server if using a reverse proxy. For example, you would need to use the following directive in nginx: `proxy_set_header Host $host;`.
 
 # Data locations and backups
 
