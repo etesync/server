@@ -11,6 +11,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="collectioninvitation", name="version", field=models.PositiveSmallIntegerField(default=1),
+            model_name="collectioninvitation",
+            name="version",
+            field=models.PositiveSmallIntegerField(default=1),
         ),
     ]

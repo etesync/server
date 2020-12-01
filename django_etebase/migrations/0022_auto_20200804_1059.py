@@ -10,5 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterUniqueTogether(name="collectionitemchunk", unique_together={("item", "uid")},),
+        migrations.AlterUniqueTogether(
+            name="collectionitemchunk",
+            unique_together={("item", "uid")},
+        ),
     ]

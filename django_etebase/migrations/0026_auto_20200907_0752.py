@@ -10,6 +10,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(model_name="collectioninvitation", old_name="accessLevel", new_name="accessLevelOld",),
-        migrations.RenameField(model_name="collectionmember", old_name="accessLevel", new_name="accessLevelOld",),
+        migrations.RenameField(
+            model_name="collectioninvitation",
+            old_name="accessLevel",
+            new_name="accessLevelOld",
+        ),
+        migrations.RenameField(
+            model_name="collectionmember",
+            old_name="accessLevel",
+            new_name="accessLevelOld",
+        ),
     ]

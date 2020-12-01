@@ -21,7 +21,16 @@ class Migration(migrations.Migration):
                 to="django_etebase.CollectionItem",
             ),
         ),
-        migrations.AlterUniqueTogether(name="collection", unique_together=set(),),
-        migrations.RemoveField(model_name="collection", name="uid",),
-        migrations.RemoveField(model_name="collection", name="version",),
+        migrations.AlterUniqueTogether(
+            name="collection",
+            unique_together=set(),
+        ),
+        migrations.RemoveField(
+            model_name="collection",
+            name="uid",
+        ),
+        migrations.RemoveField(
+            model_name="collection",
+            name="version",
+        ),
     ]

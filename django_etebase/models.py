@@ -182,7 +182,10 @@ class CollectionMember(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     encryptionKey = models.BinaryField(editable=True, blank=False, null=False)
     collectionType = models.ForeignKey(CollectionType, on_delete=models.PROTECT, null=True)
-    accessLevel = models.IntegerField(choices=AccessLevels.choices, default=AccessLevels.READ_ONLY,)
+    accessLevel = models.IntegerField(
+        choices=AccessLevels.choices,
+        default=AccessLevels.READ_ONLY,
+    )
 
     class Meta:
         unique_together = ("user", "collection")
@@ -193,7 +196,11 @@ class CollectionMember(models.Model):
     def revoke(self):
         with transaction.atomic():
             CollectionMemberRemoved.objects.update_or_create(
-                collection=self.collection, user=self.user, defaults={"stoken": Stoken.objects.create(),},
+                collection=self.collection,
+                user=self.user,
+                defaults={
+                    "stoken": Stoken.objects.create(),
+                },
             )
 
             self.delete()
@@ -220,7 +227,10 @@ class CollectionInvitation(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="incoming_invitations", on_delete=models.CASCADE)
     signedEncryptionKey = models.BinaryField(editable=False, blank=False, null=False)
-    accessLevel = models.IntegerField(choices=AccessLevels.choices, default=AccessLevels.READ_ONLY,)
+    accessLevel = models.IntegerField(
+        choices=AccessLevels.choices,
+        default=AccessLevels.READ_ONLY,
+    )
 
     class Meta:
         unique_together = ("user", "fromMember")

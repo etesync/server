@@ -10,5 +10,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(model_name="userinfo", old_name="encryptedSeckey", new_name="encryptedContent",),
+        migrations.RenameField(
+            model_name="userinfo",
+            old_name="encryptedSeckey",
+            new_name="encryptedContent",
+        ),
     ]

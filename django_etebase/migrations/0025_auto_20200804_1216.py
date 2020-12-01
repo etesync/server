@@ -18,6 +18,12 @@ class Migration(migrations.Migration):
                 on_delete=django.db.models.deletion.CASCADE, related_name="chunks", to="django_etebase.Collection"
             ),
         ),
-        migrations.AlterUniqueTogether(name="collectionitemchunk", unique_together={("collection", "uid")},),
-        migrations.RemoveField(model_name="collectionitemchunk", name="item",),
+        migrations.AlterUniqueTogether(
+            name="collectionitemchunk",
+            unique_together={("collection", "uid")},
+        ),
+        migrations.RemoveField(
+            model_name="collectionitemchunk",
+            name="item",
+        ),
     ]

@@ -10,5 +10,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(model_name="userinfo", old_name="pubkey", new_name="loginPubkey",),
+        migrations.RenameField(
+            model_name="userinfo",
+            old_name="pubkey",
+            new_name="loginPubkey",
+        ),
     ]

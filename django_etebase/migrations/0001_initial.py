@@ -33,7 +33,9 @@ class Migration(migrations.Migration):
                 ("version", models.PositiveSmallIntegerField()),
                 ("owner", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
-            options={"unique_together": {("uid", "owner")},},
+            options={
+                "unique_together": {("uid", "owner")},
+            },
         ),
         migrations.CreateModel(
             name="CollectionItem",
@@ -61,7 +63,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"unique_together": {("uid", "collection")},},
+            options={
+                "unique_together": {("uid", "collection")},
+            },
         ),
         migrations.CreateModel(
             name="CollectionItemChunk",
@@ -122,7 +126,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"unique_together": {("item", "current")},},
+            options={
+                "unique_together": {("item", "current")},
+            },
         ),
         migrations.CreateModel(
             name="RevisionChunkRelation",
@@ -145,7 +151,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ("id",),},
+            options={
+                "ordering": ("id",),
+            },
         ),
         migrations.CreateModel(
             name="CollectionMember",
@@ -170,6 +178,8 @@ class Migration(migrations.Migration):
                 ),
                 ("user", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
             ],
-            options={"unique_together": {("user", "collection")},},
+            options={
+                "unique_together": {("user", "collection")},
+            },
         ),
     ]

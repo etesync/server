@@ -10,6 +10,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(model_name="collectioninvitation", name="accessLevelOld",),
-        migrations.RemoveField(model_name="collectionmember", name="accessLevelOld",),
+        migrations.RemoveField(
+            model_name="collectioninvitation",
+            name="accessLevelOld",
+        ),
+        migrations.RemoveField(
+            model_name="collectionmember",
+            name="accessLevelOld",
+        ),
     ]

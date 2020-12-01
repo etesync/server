@@ -156,7 +156,11 @@ class BetterErrorsMixin:
                 else:
                     message = str(error)
                 ret.append(
-                    {"field": field_name, "code": error.code, "detail": message,}
+                    {
+                        "field": field_name,
+                        "code": error.code,
+                        "detail": message,
+                    }
                 )
         return ret
 
@@ -169,7 +173,11 @@ class BetterErrorsMixin:
             raise EtebaseValidationError(err.code, err.message)
 
         raise serializers.ValidationError(
-            {"code": "field_errors", "detail": "Field validations failed.", "errors": errors,}
+            {
+                "code": "field_errors",
+                "detail": "Field validations failed.",
+                "errors": errors,
+            }
         )
 
 
@@ -343,7 +351,11 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
 
 
 class CollectionMemberSerializer(BetterErrorsMixin, serializers.ModelSerializer):
-    username = UserSlugRelatedField(source="user", read_only=True, style={"base_template": "input.html"},)
+    username = UserSlugRelatedField(
+        source="user",
+        read_only=True,
+        style={"base_template": "input.html"},
+    )
 
     class Meta:
         model = models.CollectionMember
@@ -365,7 +377,11 @@ class CollectionMemberSerializer(BetterErrorsMixin, serializers.ModelSerializer)
 
 
 class CollectionInvitationSerializer(BetterErrorsMixin, serializers.ModelSerializer):
-    username = UserSlugRelatedField(source="user", queryset=User.objects, style={"base_template": "input.html"},)
+    username = UserSlugRelatedField(
+        source="user",
+        queryset=User.objects,
+        style={"base_template": "input.html"},
+    )
     collection = serializers.CharField(source="collection.uid")
     fromUsername = BinaryBase64Field(source="fromMember.user.username", read_only=True)
     fromPubkey = BinaryBase64Field(source="fromMember.user.userinfo.pubkey", read_only=True)

@@ -413,7 +413,10 @@ class CollectionItemViewSet(BaseViewSet):
                 return Response(ret, status=status.HTTP_200_OK)
 
             return Response(
-                {"items": serializer.errors, "deps": deps_serializer.errors if deps is not None else [],},
+                {
+                    "items": serializer.errors,
+                    "deps": deps_serializer.errors if deps is not None else [],
+                },
                 status=status.HTTP_409_CONFLICT,
             )
 
@@ -708,7 +711,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
         elif challenge_data["userId"] != user.id:
             content = {"code": "wrong_user", "detail": "This challenge is for the wrong user"}
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
-        elif not settings.DEBUG and host.split(':', 1)[0] != request.get_host().split(':', 1)[0]:
+        elif not settings.DEBUG and host.split(":", 1)[0] != request.get_host().split(":", 1)[0]:
             detail = 'Found wrong host name. Got: "{}" expected: "{}"'.format(host, request.get_host())
             content = {"code": "wrong_host", "detail": detail}
             return Response(content, status=status.HTTP_400_BAD_REQUEST)
