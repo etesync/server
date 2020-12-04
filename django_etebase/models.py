@@ -17,7 +17,8 @@ from pathlib import Path
 from django.db import models, transaction
 from django.conf import settings
 from django.core.validators import RegexValidator
-from django.db.models import Max
+from django.db.models import Max, Value as V
+from django.db.models.functions import Coalesce, Greatest
 from django.utils.functional import cached_property
 from django.utils.crypto import get_random_string
 
@@ -39,6 +40,8 @@ class Collection(models.Model):
     main_item = models.OneToOneField("CollectionItem", related_name="parent", null=True, on_delete=models.SET_NULL)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
+    stoken_id_fields = ["items__revisions__stoken", "members__stoken"]
+
     def __str__(self):
         return self.uid
 
@@ -56,9 +59,15 @@ class Collection(models.Model):
 
     @cached_property
     def stoken(self):
-        stoken1 = self.items.aggregate(stoken=Max("revisions__stoken"))["stoken"] or 0
-        stoken2 = self.members.aggregate(stoken=Max("stoken"))["stoken"] or 0
-        stoken_id = max(stoken1, stoken2)
+        aggr_fields = [Coalesce(Max(field), V(0)) for field in self.stoken_id_fields]
+        max_stoken = Greatest(*aggr_fields) if len(aggr_fields) > 1 else aggr_fields[0]
+        stoken_id = (
+            self.__class__.objects.filter(main_item=self.main_item)
+            .annotate(max_stoken=max_stoken)
+            .values("max_stoken")
+            .first()["max_stoken"]
+        )
+
         if stoken_id == 0:
             raise Exception("stoken is None. Should never happen")
 
