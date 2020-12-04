@@ -31,6 +31,11 @@ from .exceptions import EtebaseValidationError
 UidValidator = RegexValidator(regex=r"^[a-zA-Z0-9\-_]{20,}$", message="Not a valid UID")
 
 
+def stoken_annotation_builder(stoken_id_fields):
+    aggr_fields = [Coalesce(Max(field), V(0)) for field in stoken_id_fields]
+    return Greatest(*aggr_fields) if len(aggr_fields) > 1 else aggr_fields[0]
+
+
 class CollectionType(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     uid = models.BinaryField(editable=True, blank=False, null=False, db_index=True, unique=True)
@@ -40,7 +45,7 @@ class Collection(models.Model):
     main_item = models.OneToOneField("CollectionItem", related_name="parent", null=True, on_delete=models.SET_NULL)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
-    stoken_id_fields = ["items__revisions__stoken", "members__stoken"]
+    stoken_annotation = stoken_annotation_builder(["items__revisions__stoken", "members__stoken"])
 
     def __str__(self):
         return self.uid
@@ -59,11 +64,9 @@ class Collection(models.Model):
 
     @cached_property
     def stoken(self):
-        aggr_fields = [Coalesce(Max(field), V(0)) for field in self.stoken_id_fields]
-        max_stoken = Greatest(*aggr_fields) if len(aggr_fields) > 1 else aggr_fields[0]
         stoken_id = (
             self.__class__.objects.filter(main_item=self.main_item)
-            .annotate(max_stoken=max_stoken)
+            .annotate(max_stoken=self.stoken_annotation)
             .values("max_stoken")
             .first()["max_stoken"]
         )
@@ -93,6 +96,8 @@ class CollectionItem(models.Model):
     collection = models.ForeignKey(Collection, related_name="items", on_delete=models.CASCADE)
     version = models.PositiveSmallIntegerField()
     encryptionKey = models.BinaryField(editable=True, blank=False, null=True)
+
+    stoken_annotation = stoken_annotation_builder(["revisions__stoken"])
 
     class Meta:
         unique_together = ("uid", "collection")
@@ -190,6 +195,8 @@ class CollectionMember(models.Model):
         choices=AccessLevels.choices,
         default=AccessLevels.READ_ONLY,
     )
+
+    stoken_annotation = stoken_annotation_builder(["stoken"])
 
     class Meta:
         unique_together = ("user", "collection")

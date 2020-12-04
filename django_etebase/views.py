@@ -18,8 +18,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, user_logged_in, user_logged_out
 from django.core.exceptions import PermissionDenied
 from django.db import transaction, IntegrityError
-from django.db.models import Max, Value as V, Q
-from django.db.models.functions import Coalesce, Greatest
+from django.db.models import Q
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 
@@ -94,7 +93,7 @@ class BaseViewSet(viewsets.ModelViewSet):
     permission_classes = tuple(app_settings.API_PERMISSIONS)
     renderer_classes = [JSONRenderer, MessagePackRenderer] + ([BrowsableAPIRenderer] if settings.DEBUG else [])
     parser_classes = [JSONParser, MessagePackParser, FormParser, MultiPartParser]
-    stoken_id_fields = None
+    stoken_annotation = None
 
     def get_serializer_class(self):
         serializer_class = self.serializer_class
@@ -125,9 +124,7 @@ class BaseViewSet(viewsets.ModelViewSet):
     def filter_by_stoken(self, request, queryset):
         stoken_rev = self.get_stoken_obj(request)
 
-        aggr_fields = [Coalesce(Max(field), V(0)) for field in self.stoken_id_fields]
-        max_stoken = Greatest(*aggr_fields) if len(aggr_fields) > 1 else aggr_fields[0]
-        queryset = queryset.annotate(max_stoken=max_stoken).order_by("max_stoken")
+        queryset = queryset.annotate(max_stoken=self.stoken_annotation).order_by("max_stoken")
 
         if stoken_rev is not None:
             queryset = queryset.filter(max_stoken__gt=stoken_rev.id)
@@ -179,7 +176,7 @@ class CollectionViewSet(BaseViewSet):
     serializer_class = CollectionSerializer
     lookup_field = "main_item__uid"
     lookup_url_kwarg = "uid"
-    stoken_id_fields = ["items__revisions__stoken__id", "members__stoken__id"]
+    stoken_annotation = Collection.stoken_annotation
 
     def get_queryset(self, queryset=None):
         if queryset is None:
@@ -262,7 +259,7 @@ class CollectionItemViewSet(BaseViewSet):
     queryset = CollectionItem.objects.all()
     serializer_class = CollectionItemSerializer
     lookup_field = "uid"
-    stoken_id_fields = ["revisions__stoken__id"]
+    stoken_annotation = CollectionItem.stoken_annotation
 
     def get_queryset(self):
         collection_uid = self.kwargs["collection_uid"]
@@ -482,7 +479,7 @@ class CollectionMemberViewSet(BaseViewSet):
     serializer_class = CollectionMemberSerializer
     lookup_field = f"user__{User.USERNAME_FIELD}__iexact"
     lookup_url_kwarg = "username"
-    stoken_id_fields = ["stoken__id"]
+    stoken_annotation = CollectionMember.stoken_annotation
 
     # FIXME: need to make sure that there's always an admin, and maybe also don't let an owner remove adm access
     # (if we want to transfer, we need to do that specifically)
