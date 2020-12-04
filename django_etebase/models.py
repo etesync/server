@@ -17,7 +17,7 @@ from pathlib import Path
 from django.db import models, transaction
 from django.conf import settings
 from django.core.validators import RegexValidator
-from django.db.models import Q
+from django.db.models import Max
 from django.utils.functional import cached_property
 from django.utils.crypto import get_random_string
 
@@ -56,18 +56,13 @@ class Collection(models.Model):
 
     @cached_property
     def stoken(self):
-        stoken = (
-            Stoken.objects.filter(
-                Q(collectionitemrevision__item__collection=self) | Q(collectionmember__collection=self)
-            )
-            .order_by("id")
-            .last()
-        )
-
-        if stoken is None:
+        stoken1 = self.items.aggregate(stoken=Max("revisions__stoken"))["stoken"] or 0
+        stoken2 = self.members.aggregate(stoken=Max("stoken"))["stoken"] or 0
+        stoken_id = max(stoken1, stoken2)
+        if stoken_id == 0:
             raise Exception("stoken is None. Should never happen")
 
-        return stoken.uid
+        return Stoken.objects.get(id=stoken_id).uid
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
