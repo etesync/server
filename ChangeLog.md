@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.6.0
+* Fix stoken calculation performance - was VERY slow in some rare cases
+* Fix issues with host verification failing with a custom port - part 2
+
 ## Version 0.5.3
 * Add missing migration
 
