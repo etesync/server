@@ -22,10 +22,7 @@ from django.db.models.functions import Coalesce, Greatest
 from django.utils.functional import cached_property
 from django.utils.crypto import get_random_string
 
-from rest_framework import status
-
 from . import app_settings
-from .exceptions import EtebaseValidationError
 
 
 UidValidator = RegexValidator(regex=r"^[a-zA-Z0-9\-_]{20,}$", message="Not a valid UID")
