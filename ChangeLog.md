@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.6.1
+* Collection: save the UID on the model to use the db for enforcing uniqueness
+
 ## Version 0.6.0
 * Fix stoken calculation performance - was VERY slow in some rare cases
 * Fix issues with host verification failing with a custom port - part 2
