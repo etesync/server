@@ -173,6 +173,10 @@ ETEBASE_API_AUTHENTICATORS = (
 )
 ETEBASE_CREATE_USER_FUNC = "django_etebase.utils.create_user_blocked"
 
+# Efficient file streaming (for large files)
+SENDFILE_BACKEND = "django_etebase.sendfile.backends.simple"
+SENDFILE_ROOT = MEDIA_URL
+
 # Make an `etebase_server_settings` module available to override settings.
 try:
     from etebase_server_settings import *

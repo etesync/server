@@ -36,6 +36,7 @@ import nacl.signing
 import nacl.secret
 import nacl.hash
 
+from .sendfile import sendfile
 from .token_auth.models import AuthToken
 
 from .drf_msgpack.parsers import MessagePackParser
@@ -456,19 +457,11 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
 
     @action_decorator(detail=True, methods=["GET"])
     def download(self, request, collection_uid=None, collection_item_uid=None, uid=None, *args, **kwargs):
-        import os
-        from django.views.static import serve
-
         col = get_object_or_404(self.get_collection_queryset(), uid=collection_uid)
-        # IGNORED FOR NOW: col_it = get_object_or_404(col.items, uid=collection_item_uid)
         chunk = get_object_or_404(col.chunks, uid=uid)
 
         filename = chunk.chunkFile.path
-        dirname = os.path.dirname(filename)
-        basename = os.path.basename(filename)
-
-        # FIXME: DO NOT USE! Use django-send file or etc instead.
-        return serve(request, basename, dirname)
+        return sendfile(request, filename)
 
 
 class CollectionMemberViewSet(BaseViewSet):
