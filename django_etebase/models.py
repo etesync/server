@@ -43,16 +43,14 @@ class CollectionType(models.Model):
 
 class Collection(models.Model):
     main_item = models.OneToOneField("CollectionItem", related_name="parent", null=True, on_delete=models.SET_NULL)
+    # The same as main_item.uid, we just also save it here so we have DB constraints for uniqueness (and efficiency)
+    uid = models.CharField(db_index=True, unique=True, blank=False, max_length=43, validators=[UidValidator])
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     stoken_annotation = stoken_annotation_builder(["items__revisions__stoken", "members__stoken"])
 
     def __str__(self):
         return self.uid
-
-    @cached_property
-    def uid(self):
-        return self.main_item.uid
 
     @property
     def content(self):
@@ -75,20 +73,6 @@ class Collection(models.Model):
             raise Exception("stoken is None. Should never happen")
 
         return Stoken.objects.get(id=stoken_id).uid
-
-    def validate_unique(self, exclude=None):
-        super().validate_unique(exclude=exclude)
-        if exclude is None or "main_item" in exclude:
-            return
-
-        if (
-            self.__class__.objects.filter(owner=self.owner, main_item__uid=self.main_item.uid)
-            .exclude(id=self.id)
-            .exists()
-        ):
-            raise EtebaseValidationError(
-                "unique_uid", "Collection with this uid already exists", status_code=status.HTTP_409_CONFLICT
-            )
 
 
 class CollectionItem(models.Model):

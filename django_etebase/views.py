@@ -174,7 +174,7 @@ class CollectionViewSet(BaseViewSet):
     permission_classes = BaseViewSet.permission_classes + (permissions.IsCollectionAdminOrReadOnly,)
     queryset = Collection.objects.all()
     serializer_class = CollectionSerializer
-    lookup_field = "main_item__uid"
+    lookup_field = "uid"
     lookup_url_kwarg = "uid"
     stoken_annotation = Collection.stoken_annotation
 
@@ -246,7 +246,7 @@ class CollectionViewSet(BaseViewSet):
                 # can point to the most recent collection change rather than most recent removed membership.
                 remed_qs = remed_qs.filter(stoken__id__lte=new_stoken_obj.id)
 
-            remed = remed_qs.values_list("collection__main_item__uid", flat=True)
+            remed = remed_qs.values_list("collection__uid", flat=True)
             if len(remed) > 0:
                 ret["removedMemberships"] = [{"uid": x} for x in remed]
 
@@ -264,7 +264,7 @@ class CollectionItemViewSet(BaseViewSet):
     def get_queryset(self):
         collection_uid = self.kwargs["collection_uid"]
         try:
-            collection = self.get_collection_queryset(Collection.objects).get(main_item__uid=collection_uid)
+            collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
         except Collection.DoesNotExist:
             raise Http404("Collection does not exist")
         # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
@@ -312,7 +312,7 @@ class CollectionItemViewSet(BaseViewSet):
 
     @action_decorator(detail=True, methods=["GET"])
     def revision(self, request, collection_uid=None, uid=None, *args, **kwargs):
-        col = get_object_or_404(self.get_collection_queryset(Collection.objects), main_item__uid=collection_uid)
+        col = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
         item = get_object_or_404(col.items, uid=uid)
 
         limit = int(request.GET.get("limit", 50))
@@ -386,7 +386,7 @@ class CollectionItemViewSet(BaseViewSet):
         with transaction.atomic():  # We need this for locking on the collection object
             collection_object = get_object_or_404(
                 self.get_collection_queryset(Collection.objects).select_for_update(),  # Lock writes on the collection
-                main_item__uid=collection_uid,
+                uid=collection_uid,
             )
 
             if stoken is not None and stoken != collection_object.stoken:
@@ -435,7 +435,7 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         return queryset.filter(members__user=user)
 
     def update(self, request, *args, collection_uid=None, collection_item_uid=None, uid=None, **kwargs):
-        col = get_object_or_404(self.get_collection_queryset(), main_item__uid=collection_uid)
+        col = get_object_or_404(self.get_collection_queryset(), uid=collection_uid)
         # IGNORED FOR NOW: col_it = get_object_or_404(col.items, uid=collection_item_uid)
 
         data = {
@@ -459,7 +459,7 @@ class CollectionItemChunkViewSet(viewsets.ViewSet):
         import os
         from django.views.static import serve
 
-        col = get_object_or_404(self.get_collection_queryset(), main_item__uid=collection_uid)
+        col = get_object_or_404(self.get_collection_queryset(), uid=collection_uid)
         # IGNORED FOR NOW: col_it = get_object_or_404(col.items, uid=collection_item_uid)
         chunk = get_object_or_404(col.chunks, uid=uid)
 
@@ -487,7 +487,7 @@ class CollectionMemberViewSet(BaseViewSet):
     def get_queryset(self, queryset=None):
         collection_uid = self.kwargs["collection_uid"]
         try:
-            collection = self.get_collection_queryset(Collection.objects).get(main_item__uid=collection_uid)
+            collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
         except Collection.DoesNotExist:
             raise Http404("Collection does not exist")
 
@@ -525,7 +525,7 @@ class CollectionMemberViewSet(BaseViewSet):
     @action_decorator(detail=False, methods=["POST"], permission_classes=our_base_permission_classes)
     def leave(self, request, collection_uid=None, *args, **kwargs):
         collection_uid = self.kwargs["collection_uid"]
-        col = get_object_or_404(self.get_collection_queryset(Collection.objects), main_item__uid=collection_uid)
+        col = get_object_or_404(self.get_collection_queryset(Collection.objects), uid=collection_uid)
 
         member = col.members.get(user=request.user)
         self.perform_destroy(member)
@@ -584,7 +584,7 @@ class InvitationOutgoingViewSet(InvitationBaseViewSet):
         collection_uid = serializer.validated_data.get("collection", {}).get("uid")
 
         try:
-            collection = self.get_collection_queryset(Collection.objects).get(main_item__uid=collection_uid)
+            collection = self.get_collection_queryset(Collection.objects).get(uid=collection_uid)
         except Collection.DoesNotExist:
             raise Http404("Collection does not exist")
 

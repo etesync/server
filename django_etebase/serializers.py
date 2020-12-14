@@ -313,13 +313,13 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
 
         user = validated_data.get("owner")
         main_item_data = validated_data.pop("main_item")
+        uid = main_item_data.get("uid")
         etag = main_item_data.pop("etag")
         revision_data = main_item_data.pop("content")
 
-        instance = self.__class__.Meta.model(**validated_data)
+        instance = self.__class__.Meta.model(uid=uid, **validated_data)
 
         with transaction.atomic():
-            _ = self.__class__.Meta.model.objects.select_for_update().filter(owner=user)
             if etag is not None:
                 raise EtebaseValidationError("bad_etag", "etag is not null")
 
