@@ -323,12 +323,17 @@ class CollectionSerializer(BetterErrorsMixin, serializers.ModelSerializer):
             if etag is not None:
                 raise EtebaseValidationError("bad_etag", "etag is not null")
 
+            try:
+                instance.validate_unique()
+            except django_exceptions.ValidationError:
+                raise EtebaseValidationError(
+                    "unique_uid", "Collection with this uid already exists", status_code=status.HTTP_409_CONFLICT
+                )
             instance.save()
+
             main_item = models.CollectionItem.objects.create(**main_item_data, collection=instance)
 
             instance.main_item = main_item
-
-            instance.full_clean()
             instance.save()
 
             process_revisions_for_item(main_item, revision_data)
