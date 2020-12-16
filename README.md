@@ -148,6 +148,13 @@ A quick summary can be found [on tldrlegal](https://tldrlegal.com/license/gnu-af
 
 For commercial licensing options, contact license@etebase.com 
 
-# Supporting Etebase
+# Financially Supporting Etebase
 
 Please consider registering an account even if you self-host in order to support the development of Etebase, or visit the [contribution](https://www.etesync.com/contribute/) for more information on how to support the service.
+
+Become a financial contributor and help us sustain our community!
+
+## Contributors ($10 / month)
+
+[![ilovept](https://github.com/ilovept.png?size=40)](https://github.com/ilovept)
+[![ryanleesipes](https://github.com/ryanleesipes.png?size=40)](https://github.com/ryanleesipes)
