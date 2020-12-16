@@ -37,15 +37,14 @@ def process_revisions_for_item(item, revision_data):
     for chunk in chunks:
         uid = chunk[0]
         chunk_obj = models.CollectionItemChunk.objects.filter(uid=uid).first()
-        if len(chunk) > 1:
-            content = chunk[1]
-            # If the chunk already exists we assume it's fine. Otherwise, we upload it.
-            if chunk_obj is None:
+        content = chunk[1] if len(chunk) > 1 else None
+        # If the chunk already exists we assume it's fine. Otherwise, we upload it.
+        if chunk_obj is None:
+            if content is not None:
                 chunk_obj = models.CollectionItemChunk(uid=uid, collection=item.collection)
                 chunk_obj.chunkFile.save("IGNORED", ContentFile(content))
                 chunk_obj.save()
-        else:
-            if chunk_obj is None:
+            else:
                 raise EtebaseValidationError("chunk_no_content", "Tried to create a new chunk without content")
 
         chunks_objs.append(chunk_obj)
@@ -122,9 +121,10 @@ class ChunksField(serializers.RelatedField):
             return (obj.uid,)
 
     def to_internal_value(self, data):
-        if data[0] is None or data[1] is None:
+        content = data[1] if len(data) > 1 else None
+        if data[0] is None:
             raise EtebaseValidationError("no_null", "null is not allowed")
-        return (data[0], b64decode_or_bytes(data[1]))
+        return (data[0], b64decode_or_bytes(content) if content is not None else None)
 
 
 class BetterErrorsMixin:
