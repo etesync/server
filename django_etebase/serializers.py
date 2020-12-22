@@ -386,7 +386,7 @@ class CollectionInvitationSerializer(BetterErrorsMixin, serializers.ModelSeriali
         style={"base_template": "input.html"},
     )
     collection = serializers.CharField(source="collection.uid")
-    fromUsername = BinaryBase64Field(source="fromMember.user.username", read_only=True)
+    fromUsername = serializers.CharField(source="fromMember.user.username", read_only=True)
     fromPubkey = BinaryBase64Field(source="fromMember.user.userinfo.pubkey", read_only=True)
     signedEncryptionKey = BinaryBase64Field()
 
