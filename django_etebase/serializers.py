@@ -518,7 +518,7 @@ class AuthenticationSignupSerializer(BetterErrorsMixin, serializers.Serializer):
                 # Create the user and save the casing the user chose as the first name
                 try:
                     instance = create_user(**user_data, password=None, first_name=user_data["username"], view=view)
-                    instance.clean_fields()
+                    instance.full_clean()
                 except EtebaseValidationError as e:
                     raise e
                 except django_exceptions.ValidationError as e:
