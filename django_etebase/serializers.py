@@ -149,10 +149,8 @@ class BetterErrorsMixin:
                 ret.extend(self.flatten_errors("{}.{}".format(field_name, error_key), error))
         else:
             for error in errors:
-                if hasattr(error, "detail"):
-                    message = error.detail[0]
-                elif hasattr(error, "message"):
-                    message = error.message
+                if error.messages:
+                    message = error.messages[0]
                 else:
                     message = str(error)
                 ret.append(
