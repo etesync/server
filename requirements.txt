@@ -4,16 +4,22 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in/base.txt
 #
-asgiref==3.2.10           # via django
-cffi==1.14.0              # via pynacl
-django-cors-headers==3.2.1  # via -r requirements.in/base.txt
-django==3.1.1             # via -r requirements.in/base.txt, django-cors-headers, djangorestframework, drf-nested-routers
-djangorestframework==3.11.0  # via -r requirements.in/base.txt, drf-nested-routers
-drf-nested-routers==0.91  # via -r requirements.in/base.txt
-msgpack==1.0.0            # via -r requirements.in/base.txt
-psycopg2-binary==2.8.4    # via -r requirements.in/base.txt
+asgiref==3.3.1            # via django
+cffi==1.14.4              # via pynacl
+click==7.1.2              # via uvicorn
+django-cors-headers==3.6.0  # via -r requirements.in/base.txt
+django==3.1.4             # via -r requirements.in/base.txt, django-cors-headers, djangorestframework, drf-nested-routers
+djangorestframework==3.12.2  # via -r requirements.in/base.txt, drf-nested-routers
+drf-nested-routers==0.92.5  # via -r requirements.in/base.txt
+fastapi==0.63.0           # via -r requirements.in/base.txt
+h11==0.11.0               # via uvicorn
+msgpack==1.0.2            # via -r requirements.in/base.txt
+psycopg2-binary==2.8.6    # via -r requirements.in/base.txt
 pycparser==2.20           # via cffi
-pynacl==1.3.0             # via -r requirements.in/base.txt
-pytz==2019.3              # via django
-six==1.14.0               # via pynacl
-sqlparse==0.3.0           # via django
+pydantic==1.7.3           # via fastapi
+pynacl==1.4.0             # via -r requirements.in/base.txt
+pytz==2020.4              # via django
+six==1.15.0               # via pynacl
+sqlparse==0.4.1           # via django
+starlette==0.13.6         # via fastapi
+uvicorn==0.13.2           # via -r requirements.in/base.txt
