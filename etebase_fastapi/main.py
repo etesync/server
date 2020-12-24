@@ -11,6 +11,7 @@ from .routers.authentication import authentication_router
 from .routers.collection import collection_router, item_router
 from .routers.member import member_router
 from .routers.invitation import invitation_incoming_router, invitation_outgoing_router
+from .routers.simplemessage import simplemessage_router
 
 
 def create_application(prefix="", middlewares=[]):
@@ -36,6 +37,7 @@ def create_application(prefix="", middlewares=[]):
     app.include_router(
         invitation_outgoing_router, prefix=f"{BASE_PATH}/invitation/outgoing", tags=["outgoing invitation"]
     )
+    app.include_router(simplemessage_router, prefix=f"{BASE_PATH}/simplemessage", tags=["simple message"])
 
     if settings.DEBUG:
         from etebase_fastapi.routers.test_reset_view import test_reset_view_router

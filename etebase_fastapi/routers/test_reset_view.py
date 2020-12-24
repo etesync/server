@@ -34,5 +34,6 @@ def reset(data: SignupIn, request: Request):
         user.collection_set.all().delete()
         user.collectionmember_set.all().delete()
         user.incoming_invitations.all().delete()
+        user.incoming_simple_messages.all().delete()
 
         # FIXME: also delete chunk files!!!

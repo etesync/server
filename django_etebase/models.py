@@ -236,6 +236,26 @@ class CollectionInvitation(models.Model):
         return self.fromMember.collection
 
 
+class SimpleMessage(models.Model):
+    uid = models.CharField(
+        db_index=True, unique=True, blank=False, null=False, max_length=43, validators=[UidValidator]
+    )
+    version = models.PositiveSmallIntegerField(default=1)
+
+    fromUser = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name="outgoing_simple_messages", on_delete=models.CASCADE
+    )
+    toUser = models.ForeignKey(
+        settings.AUTH_USER_MODEL, related_name="incoming_simple_messages", on_delete=models.CASCADE
+    )
+    content = models.BinaryField(editable=False, blank=False, null=False)
+
+    objects: models.BaseManager["SimpleMessage"]
+
+    def __str__(self):
+        return "{} {} -> {}".format(self.uid, self.fromUser, self.toUser)
+
+
 class UserInfo(models.Model):
     owner = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
     version = models.PositiveSmallIntegerField(default=1)
