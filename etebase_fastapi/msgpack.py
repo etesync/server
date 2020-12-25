@@ -1,6 +1,7 @@
 import typing as t
 import msgpack
 from fastapi.routing import APIRoute, get_request_handler
+from pydantic import BaseModel
 from starlette.requests import Request
 from starlette.responses import Response
 
@@ -19,6 +20,8 @@ class MsgpackResponse(Response):
     media_type = "application/msgpack"
 
     def render(self, content: t.Any) -> bytes:
+        if isinstance(content, BaseModel):
+            content = content.dict()
         return msgpack.packb(content, use_bin_type=True)
 
 
