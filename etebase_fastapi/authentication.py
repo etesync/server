@@ -18,15 +18,16 @@ from fastapi import APIRouter, Depends, status, Request, Response
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 
-from django_etebase import app_settings
+from django_etebase import app_settings, models
 from django_etebase.exceptions import EtebaseValidationError
 from django_etebase.models import UserInfo
 from django_etebase.serializers import UserSerializer
+from django_etebase.signals import user_signed_up
 from django_etebase.token_auth.models import AuthToken
 from django_etebase.token_auth.models import get_default_expiry
 from django_etebase.utils import create_user
 from django_etebase.views import msgpack_encode, msgpack_decode
-from .execptions import AuthenticationFailed
+from .execptions import AuthenticationFailed, transform_validation_error, ValidationError
 from .msgpack import MsgpackResponse, MsgpackRoute
 
 User = get_user_model()
@@ -272,7 +273,7 @@ async def change_password(data: ChangePassword, request: Request, user: User = D
 
 
 @sync_to_async
-def signup_save(data: SignupIn):
+def signup_save(data: SignupIn) -> User:
     user_data = data.user
     with transaction.atomic():
         try:
@@ -290,17 +291,26 @@ def signup_save(data: SignupIn):
             except EtebaseValidationError as e:
                 raise e
             except django_exceptions.ValidationError as e:
-                self.transform_validation_error("user", e)
+                transform_validation_error("user", e)
             except Exception as e:
                 raise EtebaseValidationError("generic", str(e))
 
         if hasattr(instance, "userinfo"):
-            raise EtebaseValidationError("user_exists", "User already exists", status_code=status.HTTP_409_CONFLICT)
+            raise ValidationError("user_exists", "User already exists", status_code=status.HTTP_409_CONFLICT)
 
-        models.UserInfo.objects.create(**validated_data, owner=instance)
+        models.UserInfo.objects.create(**data.dict(exclude={"user"}), owner=instance)
     return instance
+
+
+@sync_to_async
+def send_user_signed_up_async(user: User, request):
+    user_signed_up.send(sender=user.__class__, request=request, user=user)
 
 
 @authentication_router.post("/signup/")
 async def signup(data: SignupIn):
-    pass
+    user = await signup_save(data)
+    # XXX-TOM
+    data = await login_response_data(user)
+    await send_user_signed_up_async(user, None)
+    return MsgpackResponse(content=data, status_code=status.HTTP_201_CREATED)

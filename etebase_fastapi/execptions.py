@@ -1,6 +1,21 @@
 from fastapi import status
+import typing as t
+
+from pydantic import BaseModel
 
 from django_etebase.exceptions import EtebaseValidationError
+
+
+class ValidationErrorField(BaseModel):
+    field: str
+    code: str
+    detail: str
+
+
+class ValidationErrorOut(BaseModel):
+    code: str
+    detail: str
+    errors: t.Optional[t.List[ValidationErrorField]]
 
 
 class CustomHttpException(Exception):
@@ -44,12 +59,27 @@ class PermissionDenied(CustomHttpException):
         super().__init__(code=code, detail=detail, status_code=status_code)
 
 
+from django_etebase.exceptions import EtebaseValidationError
+
+
 class ValidationError(CustomHttpException):
-    def __init__(self, code: str, detail: str, status_code: int = status.HTTP_400_BAD_REQUEST):
+    def __init__(
+        self,
+        code: str,
+        detail: str,
+        status_code: int = status.HTTP_400_BAD_REQUEST,
+        field: t.Optional[str] = None,
+        errors: t.Optional[t.List["ValidationError"]] = None,
+    ):
+        self.errors = errors
         super().__init__(code=code, detail=detail, status_code=status_code)
 
+    @property
+    def as_dict(self) -> dict:
+        return ValidationErrorOut(code=self.code, errors=self.errors, detail=self.detail).dict()
 
-def flatten_errors(field_name, errors):
+
+def flatten_errors(field_name, errors) -> t.List[ValidationError]:
     ret = []
     if isinstance(errors, dict):
         for error_key in errors:
@@ -61,13 +91,7 @@ def flatten_errors(field_name, errors):
                 message = error.messages[0]
             else:
                 message = str(error)
-            ret.append(
-                {
-                    "field": field_name,
-                    "code": error.code,
-                    "detail": message,
-                }
-            )
+            ret.append(dict(code=error.code, detail=message, field=field_name))
     return ret
 
 
@@ -78,11 +102,4 @@ def transform_validation_error(prefix, err):
         errors = flatten_errors(prefix, err.error_list)
     else:
         raise EtebaseValidationError(err.code, err.message)
-    raise ValidationError(code="field_errors", detail="Field validations failed.")
-    raise serializers.ValidationError(
-        {
-            "code": "field_errors",
-            "detail": "Field validations failed.",
-            "errors": errors,
-        }
-    )
+    raise ValidationError(code="field_errors", detail="Field validations failed.", errors=errors)
