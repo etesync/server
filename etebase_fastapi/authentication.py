@@ -2,6 +2,7 @@ import dataclasses
 import typing as t
 from datetime import datetime
 from functools import cached_property
+from django.core import exceptions as django_exceptions
 
 import nacl
 import nacl.encoding
@@ -11,16 +12,19 @@ import nacl.signing
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.contrib.auth import get_user_model, user_logged_out, user_logged_in
+from django.db import transaction
 from django.utils import timezone
 from fastapi import APIRouter, Depends, status, Request, Response
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 
 from django_etebase import app_settings
+from django_etebase.exceptions import EtebaseValidationError
 from django_etebase.models import UserInfo
 from django_etebase.serializers import UserSerializer
 from django_etebase.token_auth.models import AuthToken
 from django_etebase.token_auth.models import get_default_expiry
+from django_etebase.utils import create_user
 from django_etebase.views import msgpack_encode, msgpack_decode
 from .execptions import AuthenticationFailed
 from .msgpack import MsgpackResponse, MsgpackRoute
@@ -72,6 +76,19 @@ class ChangePassword(Authentication):
     @cached_property
     def response_data(self) -> ChangePasswordResponse:
         return ChangePasswordResponse(**msgpack_decode(self.response))
+
+
+class UserSignup(BaseModel):
+    username: str
+    email: str
+
+
+class SignupIn(BaseModel):
+    user: UserSignup
+    salt: bytes
+    loginPubkey: bytes
+    pubkey: bytes
+    encryptedContent: bytes
 
 
 def __renew_token(auth_token: AuthToken):
@@ -252,3 +269,38 @@ async def change_password(data: ChangePassword, request: Request, user: User = D
         return bad_login_response
     await save_changed_password(data, user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@sync_to_async
+def signup_save(data: SignupIn):
+    user_data = data.user
+    with transaction.atomic():
+        try:
+            # XXX-TOM
+            # view = self.context.get("view", None)
+            # user_queryset = get_user_queryset(User.objects.all(), view)
+            user_queryset = User.objects.all()
+            instance = user_queryset.get(**{User.USERNAME_FIELD: user_data.username.lower()})
+        except User.DoesNotExist:
+            # Create the user and save the casing the user chose as the first name
+            try:
+                # XXX-TOM
+                instance = create_user(**user_data.dict(), password=None, first_name=user_data.username, view=None)
+                instance.full_clean()
+            except EtebaseValidationError as e:
+                raise e
+            except django_exceptions.ValidationError as e:
+                self.transform_validation_error("user", e)
+            except Exception as e:
+                raise EtebaseValidationError("generic", str(e))
+
+        if hasattr(instance, "userinfo"):
+            raise EtebaseValidationError("user_exists", "User already exists", status_code=status.HTTP_409_CONFLICT)
+
+        models.UserInfo.objects.create(**validated_data, owner=instance)
+    return instance
+
+
+@authentication_router.post("/signup/")
+async def signup(data: SignupIn):
+    pass
