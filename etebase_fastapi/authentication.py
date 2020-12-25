@@ -217,7 +217,6 @@ def validate_login_request(
         detail = 'Found wrong host name. Got: "{}" expected: "{}"'.format(validated_data.host, host_from_request)
         content = {"code": "wrong_host", "detail": detail}
         return MsgpackResponse(content, status_code=status.HTTP_400_BAD_REQUEST)
-
     verify_key = nacl.signing.VerifyKey(bytes(user.userinfo.loginPubkey), encoder=nacl.encoding.RawEncoder)
 
     try:
@@ -272,7 +271,6 @@ async def change_password(data: ChangePassword, request: Request, user: User = D
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@sync_to_async
 def signup_save(data: SignupIn) -> User:
     user_data = data.user
     with transaction.atomic():
@@ -309,7 +307,7 @@ def send_user_signed_up_async(user: User, request):
 
 @authentication_router.post("/signup/")
 async def signup(data: SignupIn):
-    user = await signup_save(data)
+    user = await sync_to_async(signup_save)(data)
     # XXX-TOM
     data = await login_response_data(user)
     await send_user_signed_up_async(user, None)
