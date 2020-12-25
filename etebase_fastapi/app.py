@@ -9,10 +9,14 @@ from fastapi import FastAPI, Request
 
 from .execptions import CustomHttpException
 from .authentication import authentication_router
+from .collection import collection_router
 from .msgpack import MsgpackResponse
 
 app = FastAPI()
-app.include_router(authentication_router, prefix="/api/v1/authentication")
+VERSION = "v1"
+BASE_PATH = f"/api/{VERSION}"
+app.include_router(authentication_router, prefix=f"{BASE_PATH}/authentication")
+app.include_router(collection_router, prefix=f"{BASE_PATH}/collection")
 app.add_middleware(
     CORSMiddleware, allow_origin_regex="https?://.*", allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
@@ -26,4 +30,4 @@ async def custom_exception_handler(request: Request, exc: CustomHttpException):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
