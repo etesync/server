@@ -2,10 +2,10 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from fastapi import APIRouter, Response, status, Depends
+from fastapi import APIRouter, Response, status
 
 from django_etebase.utils import get_user_queryset
-from etebase_fastapi.authentication import get_authenticated_user, SignupIn, signup_save
+from etebase_fastapi.authentication import SignupIn, signup_save
 from etebase_fastapi.msgpack import MsgpackRoute
 
 test_reset_view_router = APIRouter(route_class=MsgpackRoute)
