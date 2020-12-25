@@ -1,16 +1,16 @@
 import typing as t
 
+from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.db.models import QuerySet
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
-from asgiref.sync import sync_to_async
 
-from django_etebase.models import Collection, Stoken, AccessLevels, CollectionMember
+from django_etebase.models import Collection, AccessLevels, CollectionMember
 from .authentication import get_authenticated_user
 from .msgpack import MsgpackRoute, MsgpackResponse
-from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_queryset_stoken
+from .stoken_handler import filter_by_stoken_and_limit
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute)
@@ -75,3 +75,29 @@ async def list_multi(
     )
     response = await list_common(queryset, user, stoken, limit)
     return response
+
+
+class CollectionItemContent(BaseModel):
+    uid: str
+    meta: bytes
+    deleted: bool
+    chunks: t.List[t.List[t.Union[str, bytes]]]
+
+
+class Item(BaseModel):
+    uid: str
+    version: int
+    etag: t.Optional[str]
+    content: CollectionItemContent
+
+
+class CollectionItemIn(BaseModel):
+    collectionType: bytes
+    collectionKey: bytes
+    item: Item
+
+
+@collection_router.post("/")
+def create(data: CollectionItemIn):
+    # FIXME save actual item
+    return MsgpackResponse({}, status_code=status.HTTP_201_CREATED)
