@@ -31,9 +31,3 @@ app.add_middleware(
 @app.exception_handler(CustomHttpException)
 async def custom_exception_handler(request: Request, exc: CustomHttpException):
     return MsgpackResponse(status_code=exc.status_code, content=exc.as_dict)
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
