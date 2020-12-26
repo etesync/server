@@ -82,7 +82,7 @@ async def list_multi(
     return response
 
 
-class CollectionItemContent(BaseModel):
+class CollectionItemRevision(BaseModel):
     uid: str
     meta: bytes
     deleted: bool
@@ -94,7 +94,7 @@ class Item(BaseModel):
     version: int
     etag: t.Optional[str]
     encryptionKey: t.Optional[bytes]
-    content: CollectionItemContent
+    content: CollectionItemRevision
 
 
 class CollectionIn(BaseModel):
@@ -103,7 +103,7 @@ class CollectionIn(BaseModel):
     item: Item
 
 
-def process_revisions_for_item(item: models.CollectionItem, revision_data: CollectionItemContent):
+def process_revisions_for_item(item: models.CollectionItem, revision_data: CollectionItemRevision):
     chunks_objs = []
 
     revision = models.CollectionItemRevision(**revision_data.dict(exclude={"chunks"}), item=item)
