@@ -2,13 +2,18 @@ import typing as t
 
 from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
+from django.core import exceptions as django_exceptions
+from django.core.files.base import ContentFile
+from django.db import transaction
 from django.db.models import Q
 from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 
+from django_etebase import models
 from django_etebase.models import Collection, AccessLevels, CollectionMember
 from .authentication import get_authenticated_user
+from .execptions import ValidationError
 from .msgpack import MsgpackRoute, MsgpackResponse
 from .stoken_handler import filter_by_stoken_and_limit
 
@@ -88,6 +93,7 @@ class Item(BaseModel):
     uid: str
     version: int
     etag: t.Optional[str]
+    encryptionKey: t.Optional[bytes]
     content: CollectionItemContent
 
 
@@ -97,7 +103,72 @@ class CollectionItemIn(BaseModel):
     item: Item
 
 
+def process_revisions_for_item(item: models.CollectionItem, revision_data: CollectionItemContent):
+    chunks_objs = []
+
+    revision = models.CollectionItemRevision(**revision_data.dict(exclude={"chunks"}), item=item)
+    revision.validate_unique()  # Verify there aren't any validation issues
+
+    for chunk in revision_data.chunks:
+        uid = chunk[0]
+        chunk_obj = models.CollectionItemChunk.objects.filter(uid=uid).first()
+        content = chunk[1] if len(chunk) > 1 else None
+        # If the chunk already exists we assume it's fine. Otherwise, we upload it.
+        if chunk_obj is None:
+            if content is not None:
+                chunk_obj = models.CollectionItemChunk(uid=uid, collection=item.collection)
+                chunk_obj.chunkFile.save("IGNORED", ContentFile(content))
+                chunk_obj.save()
+            else:
+                raise ValidationError("chunk_no_content", "Tried to create a new chunk without content")
+
+        chunks_objs.append(chunk_obj)
+
+    stoken = models.Stoken.objects.create()
+    revision.stoken = stoken
+    revision.save()
+
+    for chunk in chunks_objs:
+        models.RevisionChunkRelation.objects.create(chunk=chunk, revision=revision)
+    return revision
+
+
+def _create(data: CollectionItemIn, user: User):
+    with transaction.atomic():
+        if data.item.etag is not None:
+            raise ValidationError("bad_etag", "etag is not null")
+        instance = models.Collection(uid=data.item.uid, owner=user)
+        try:
+            instance.validate_unique()
+        except django_exceptions.ValidationError:
+            raise ValidationError(
+                "unique_uid", "Collection with this uid already exists", status_code=status.HTTP_409_CONFLICT
+            )
+        instance.save()
+
+        main_item = models.CollectionItem.objects.create(
+            uid=data.item.uid, version=data.item.version, encryptionKey=data.item.encryptionKey, collection=instance
+        )
+
+        instance.main_item = main_item
+        instance.save()
+
+        # TODO
+        process_revisions_for_item(main_item, data.item.content)
+
+        collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=data.collectionType, owner=user)
+
+        models.CollectionMember(
+            collection=instance,
+            stoken=models.Stoken.objects.create(),
+            user=user,
+            accessLevel=models.AccessLevels.ADMIN,
+            encryptionKey=data.collectionKey,
+            collectionType=collection_type_obj,
+        ).save()
+
+
 @collection_router.post("/")
-def create(data: CollectionItemIn):
-    # FIXME save actual item
+async def create(data: CollectionItemIn, user: User = Depends(get_authenticated_user)):
+    await sync_to_async(_create)(data, user)
     return MsgpackResponse({}, status_code=status.HTTP_201_CREATED)
