@@ -97,7 +97,7 @@ class Item(BaseModel):
     content: CollectionItemContent
 
 
-class CollectionItemIn(BaseModel):
+class CollectionIn(BaseModel):
     collectionType: bytes
     collectionKey: bytes
     item: Item
@@ -133,7 +133,7 @@ def process_revisions_for_item(item: models.CollectionItem, revision_data: Colle
     return revision
 
 
-def _create(data: CollectionItemIn, user: User):
+def _create(data: CollectionIn, user: User):
     with transaction.atomic():
         if data.item.etag is not None:
             raise ValidationError("bad_etag", "etag is not null")
@@ -169,6 +169,6 @@ def _create(data: CollectionItemIn, user: User):
 
 
 @collection_router.post("/")
-async def create(data: CollectionItemIn, user: User = Depends(get_authenticated_user)):
+async def create(data: CollectionIn, user: User = Depends(get_authenticated_user)):
     await sync_to_async(_create)(data, user)
     return MsgpackResponse({}, status_code=status.HTTP_201_CREATED)
