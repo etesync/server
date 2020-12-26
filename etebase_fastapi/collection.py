@@ -86,7 +86,7 @@ class CollectionItemRevision(BaseModel):
     uid: str
     meta: bytes
     deleted: bool
-    chunks: t.List[t.List[t.Union[str, bytes]]]
+    chunks: t.List[t.Tuple[str, t.Optional[bytes]]]
 
 
 class Item(BaseModel):
