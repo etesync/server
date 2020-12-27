@@ -16,6 +16,7 @@ from .authentication import get_authenticated_user
 from .exceptions import ValidationError, transform_validation_error
 from .msgpack import MsgpackRoute, MsgpackResponse
 from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
+from .utils import get_object_or_404
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute)
@@ -205,10 +206,7 @@ def get_collection_queryset(user: User, queryset: QuerySet) -> QuerySet:
 def get_item_queryset(
     user: User, collection_uid: str, queryset: QuerySet = default_item_queryset
 ) -> t.Tuple[models.Collection, QuerySet]:
-    try:
-        collection = get_collection_queryset(user, models.Collection.objects).get(uid=collection_uid)
-    except models.Collection.DoesNotExist:
-        raise ValidationError("does_not_exist", "Collection does not exist", status_code=status.HTTP_404_NOT_FOUND)
+    collection = get_object_or_404(get_collection_queryset(user, models.Collection.objects), uid=collection_uid)
     # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
     queryset = queryset.filter(collection__pk=collection.pk, revisions__current=True)
 
