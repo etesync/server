@@ -194,14 +194,14 @@ def collection_list_common(
     return MsgpackResponse(content=ret)
 
 
-def get_collection_queryset(user: User, queryset: QuerySet) -> QuerySet:
-    return queryset.filter(members__user=user)
+def get_collection_queryset(user: User) -> QuerySet:
+    return default_queryset.filter(members__user=user)
 
 
 def get_item_queryset(
     user: User, collection_uid: str, queryset: QuerySet = default_item_queryset
 ) -> t.Tuple[models.Collection, QuerySet]:
-    collection = get_object_or_404(get_collection_queryset(user, models.Collection.objects), uid=collection_uid)
+    collection = get_object_or_404(get_collection_queryset(user), uid=collection_uid)
     # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
     queryset = queryset.filter(collection__pk=collection.pk, revisions__current=True)
 
@@ -216,7 +216,7 @@ async def list_multi(
     user: User = Depends(get_authenticated_user),
     prefetch: Prefetch = PrefetchQuery,
 ):
-    queryset = get_collection_queryset(user, default_queryset)
+    queryset = get_collection_queryset(user)
 
     # FIXME: Remove the isnull part once we attach collection types to all objects ("collection-type-migration")
     queryset = queryset.filter(
@@ -234,7 +234,7 @@ async def collection_list(
     prefetch: Prefetch = PrefetchQuery,
     user: User = Depends(get_authenticated_user),
 ):
-    queryset = get_collection_queryset(user, default_queryset)
+    queryset = get_collection_queryset(user)
     return await collection_list_common(queryset, user, stoken, limit, prefetch)
 
 
@@ -311,7 +311,7 @@ async def create(data: CollectionIn, user: User = Depends(get_authenticated_user
 
 @collection_router.get("/{uid}/")
 def collection_get(uid: str, user: User = Depends(get_authenticated_user), prefetch: Prefetch = PrefetchQuery):
-    obj = get_collection_queryset(user, default_queryset).get(uid=uid)
+    obj = get_collection_queryset(user).get(uid=uid)
     ret = CollectionOut.from_orm_context(obj, Context(user, prefetch))
     return MsgpackResponse(ret)
 
@@ -402,7 +402,7 @@ async def item_list(
 
 
 def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid: str, validate_etag: bool):
-    queryset = get_collection_queryset(user, default_queryset)
+    queryset = get_collection_queryset(user)
     with transaction.atomic():  # We need this for locking the collection object
         collection_object = queryset.select_for_update().get(uid=uid)
 

@@ -19,7 +19,7 @@ default_queryset: QuerySet = models.CollectionMember.objects.all()
 
 
 def get_queryset(user: User, collection_uid: str, queryset=default_queryset) -> t.Tuple[models.Collection, QuerySet]:
-    collection = get_object_or_404(get_collection_queryset(user, models.Collection.objects), uid=collection_uid)
+    collection = get_object_or_404(get_collection_queryset(user), uid=collection_uid)
     return collection, queryset.filter(collection=collection)
 
 
