@@ -137,8 +137,8 @@ class CollectionItemBulkGetIn(BaseModel):
 
 
 class ItemDepIn(BaseModel):
-    etag: str
     uid: str
+    etag: str
 
     def validate_db(self):
         item = models.CollectionItem.objects.get(uid=self.uid)
@@ -153,12 +153,12 @@ class ItemDepIn(BaseModel):
 
 class ItemBatchIn(BaseModel):
     items: t.List[CollectionItemIn]
-    deps: t.Optional[ItemDepIn]
+    deps: t.Optional[t.List[ItemDepIn]]
 
     def validate_db(self):
         if self.deps is not None:
-            for key, _value in self.deps:
-                getattr(self.deps, key).validate_db()
+            for dep in self.deps:
+                dep.validate_db()
 
 
 @sync_to_async
