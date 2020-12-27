@@ -50,13 +50,15 @@ class CollectionItemRevisionInOut(BaseModel):
     def from_orm_context(
         cls: t.Type["CollectionItemRevisionInOut"], obj: models.CollectionItemRevision, context: Context
     ) -> "CollectionItemRevisionInOut":
-        chunk_obj = obj.chunks_relation.get().chunk
-        if context.prefetch == "auto":
-            with open(chunk_obj.chunkFile.path, "rb") as f:
-                chunks = chunk_obj.uid, f.read()
-        else:
-            chunks = (chunk_obj.uid,)
-        return cls(uid=obj.uid, meta=obj.meta, deleted=obj.deleted, chunks=[chunks])
+        chunks = []
+        for chunk_relation in obj.chunks_relation.all():
+            chunk_obj = chunk_relation.chunk
+            if context.prefetch == "auto":
+                with open(chunk_obj.chunkFile.path, "rb") as f:
+                    chunks.append((chunk_obj.uid, f.read()))
+            else:
+                chunks.append((chunk_obj.uid,))
+        return cls(uid=obj.uid, meta=obj.meta, deleted=obj.deleted, chunks=chunks)
 
 
 class CollectionItemCommon(BaseModel):
