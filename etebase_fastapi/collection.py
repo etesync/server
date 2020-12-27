@@ -9,7 +9,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, status, Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from django_etebase import models
 from django_etebase.models import Collection, AccessLevels, CollectionMember
@@ -37,7 +37,7 @@ class ListMulti(BaseModel):
     collectionTypes: t.List[bytes]
 
 
-class CollectionItemRevisionOut(BaseModel):
+class CollectionItemRevision(BaseModel):
     uid: str
     meta: bytes
     deleted: bool
@@ -48,8 +48,8 @@ class CollectionItemRevisionOut(BaseModel):
 
     @classmethod
     def from_orm_context(
-        cls: t.Type["CollectionItemRevisionOut"], obj: models.CollectionItemRevision, context: Context
-    ) -> "CollectionItemRevisionOut":
+        cls: t.Type["CollectionItemRevision"], obj: models.CollectionItemRevision, context: Context
+    ) -> "CollectionItemRevision":
         chunk_obj = obj.chunks_relation.get().chunk
         if context.prefetch == "auto":
             with open(chunk_obj.chunkFile.path, "rb") as f:
@@ -59,13 +59,14 @@ class CollectionItemRevisionOut(BaseModel):
         return cls(uid=obj.uid, meta=obj.meta, deleted=obj.deleted, chunks=[chunks])
 
 
-class CollectionItemOut(BaseModel):
+class CollectionItemCommon(BaseModel):
     uid: str
     version: int
     encryptionKey: t.Optional[bytes]
-    etag: t.Optional[str]
-    content: CollectionItemRevisionOut
+    content: CollectionItemRevision
 
+
+class CollectionItemOut(CollectionItemCommon):
     class Config:
         orm_mode = True
 
@@ -82,9 +83,16 @@ class CollectionItemOut(BaseModel):
         )
 
 
-class CollectionOut(BaseModel):
-    collectionKey: bytes
+class CollectionItemIn(CollectionItemCommon):
+    etag: t.Optional[str]
+
+
+class CollectionCommon(BaseModel):
     collectionType: bytes
+    collectionKey: bytes
+
+
+class CollectionOut(CollectionCommon):
     accessLevel: AccessLevels
     stoken: str
     item: CollectionItemOut
@@ -103,35 +111,23 @@ class CollectionOut(BaseModel):
         return ret
 
 
+class CollectionIn(CollectionCommon):
+    item: CollectionItemIn
+
+
 class ListResponse(BaseModel):
     data: t.List[CollectionOut]
     stoken: t.Optional[str]
     done: bool
 
 
-class ItemIn(BaseModel):
-    uid: str
-    version: int
-    etag: t.Optional[str]
-    content: CollectionItemRevisionOut
-
-
-class CollectionIn(BaseModel):
-    collectionType: bytes
-    collectionKey: bytes
-    item: ItemIn
-
-
 class ItemDepIn(BaseModel):
     etag: str
     uid: str
 
-    class Config:
-        orm_mode = True
-
 
 class ItemBatchIn(BaseModel):
-    items: t.List[ItemIn]
+    items: t.List[CollectionItemIn]
     deps: t.Optional[ItemDepIn]
 
 
@@ -260,7 +256,6 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: str, uid: str, valid
         collection_object = queryset.select_for_update().get(uid=uid)
         if stoken is not None and stoken != collection_object.stoken:
             raise ValidationError("stale_stoken", "Stoken is too old", status_code=status.HTTP_409_CONFLICT)
-
 
 
 def item_create():
