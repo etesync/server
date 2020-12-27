@@ -129,7 +129,7 @@ def list_common(
     result, new_stoken_obj, done = filter_by_stoken_and_limit(stoken, limit, queryset, Collection.stoken_annotation)
     new_stoken = new_stoken_obj and new_stoken_obj.uid
     context = Context(user, prefetch)
-    data: t.List[CollectionOut] = [CollectionOut.from_orm_context(item, context) for item in queryset]
+    data: t.List[CollectionOut] = [CollectionOut.from_orm_context(item, context) for item in result]
     ret = ListResponse(data=data, stoken=new_stoken, done=done)
     return MsgpackResponse(content=ret)
 
