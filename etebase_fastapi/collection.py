@@ -285,7 +285,7 @@ async def create(data: CollectionIn, user: User = Depends(get_authenticated_user
 
 
 @collection_router.get("/{uid}/")
-def get_collection(uid: str, user: User = Depends(get_authenticated_user), prefetch: Prefetch = PrefetchQuery):
+def collection_get(uid: str, user: User = Depends(get_authenticated_user), prefetch: Prefetch = PrefetchQuery):
     obj = get_collection_queryset(user, default_queryset).get(uid=uid)
     ret = CollectionOut.from_orm_context(obj, Context(user, prefetch))
     return MsgpackResponse(ret)
