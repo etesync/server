@@ -268,6 +268,19 @@ async def change_password(data: ChangePassword, request: Request, user: User = D
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@authentication_router.post("/dashboard_url/")
+def dashboard_url(user: User = Depends(get_authenticated_user)):
+    # XXX-TOM
+    get_dashboard_url = app_settings.DASHBOARD_URL_FUNC
+    if get_dashboard_url is None:
+        raise ValidationError("not_supported", "This server doesn't have a user dashboard.")
+
+    ret = {
+        "url": get_dashboard_url(request, *args, **kwargs),
+    }
+    return MsgpackResponse(ret)
+
+
 def signup_save(data: SignupIn, request: Request) -> User:
     user_data = data.user
     with transaction.atomic():
