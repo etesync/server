@@ -166,7 +166,9 @@ def collection_list_common(
     limit: int,
     prefetch: Prefetch,
 ) -> MsgpackResponse:
-    result, new_stoken_obj, done = filter_by_stoken_and_limit(stoken, limit, queryset, models.Collection.stoken_annotation)
+    result, new_stoken_obj, done = filter_by_stoken_and_limit(
+        stoken, limit, queryset, models.Collection.stoken_annotation
+    )
     new_stoken = new_stoken_obj and new_stoken_obj.uid
     context = Context(user, prefetch)
     data: t.List[CollectionOut] = [CollectionOut.from_orm_context(item, context) for item in result]
@@ -227,9 +229,13 @@ async def list_multi(
 @collection_router.post("/list/")
 async def collection_list(
     req: Request,
+    stoken: t.Optional[str] = None,
+    limit: int = 50,
+    prefetch: Prefetch = PrefetchQuery,
     user: User = Depends(get_authenticated_user),
 ):
-    pass
+    queryset = get_collection_queryset(user, default_queryset)
+    return await collection_list_common(queryset, user, stoken, limit, prefetch)
 
 
 def process_revisions_for_item(item: models.CollectionItem, revision_data: CollectionItemRevisionInOut):
