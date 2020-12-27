@@ -116,7 +116,7 @@ class CollectionListResponse(BaseModel):
     stoken: t.Optional[str]
     done: bool
 
-    removedMemberships: t.Optional[RemovedMembershipOut]
+    removedMemberships: t.Optional[t.List[RemovedMembershipOut]]
 
 
 class CollectionItemListResponse(BaseModel):
