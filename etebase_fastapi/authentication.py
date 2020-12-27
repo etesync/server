@@ -223,6 +223,11 @@ def validate_login_request(
         raise ValidationError("login_bad_signature", "Wrong password for user.", status.HTTP_401_UNAUTHORIZED)
 
 
+@authentication_router.get("/is_etebase/")
+async def is_etebase():
+    return MsgpackResponse({})
+
+
 @authentication_router.post("/login_challenge/")
 async def login_challenge(user: User = Depends(get_login_user)):
     enc_key = get_encryption_key(user.userinfo.salt)
