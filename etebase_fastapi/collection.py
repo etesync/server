@@ -321,15 +321,15 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
         return MsgpackResponse({})
 
 
-@collection_router.post("/{uid}/item/transaction/")
+@collection_router.post("/{collection_uid}/item/transaction/")
 def item_transaction(
-    uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
+    collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):
-    item_bulk_common(data, user, stoken, uid, validate_etag=True)
+    item_bulk_common(data, user, stoken, collection_uid, validate_etag=True)
 
 
-@collection_router.post("/{uid}/item/batch/")
+@collection_router.post("/{collection_uid}/item/batch/")
 def item_batch(
-    uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
+    collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):
-    item_bulk_common(data, user, stoken, uid, validate_etag=False)
+    item_bulk_common(data, user, stoken, collection_uid, validate_etag=False)
