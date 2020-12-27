@@ -8,7 +8,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import Q
 from django.db.models import QuerySet
-from fastapi import APIRouter, Depends, status, Query
+from fastapi import APIRouter, Depends, status, Query, Request
 from pydantic import BaseModel, Field
 
 from django_etebase import models
@@ -20,7 +20,7 @@ from .stoken_handler import filter_by_stoken_and_limit
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute)
-default_queryset = Collection.objects.all()
+default_queryset: QuerySet = Collection.objects.all()
 
 
 Prefetch = t.Literal["auto", "medium"]
@@ -122,6 +122,19 @@ class CollectionIn(BaseModel):
     item: ItemIn
 
 
+class ItemDepIn(BaseModel):
+    etag: str
+    uid: str
+
+    class Config:
+        orm_mode = True
+
+
+class ItemBatchIn(BaseModel):
+    items: t.List[ItemIn]
+    deps: t.Optional[ItemDepIn]
+
+
 @sync_to_async
 def list_common(
     queryset: QuerySet, user: User, stoken: t.Optional[str], limit: int, prefetch: Prefetch
@@ -153,6 +166,14 @@ async def list_multi(
     )
     response = await list_common(queryset, user, stoken, limit, prefetch)
     return response
+
+
+@collection_router.post("/list/")
+async def collection_list(
+    req: Request,
+    user: User = Depends(get_authenticated_user),
+):
+    pass
 
 
 def process_revisions_for_item(item: models.CollectionItem, revision_data: CollectionItemRevisionOut):
@@ -231,3 +252,30 @@ def get_collection(uid: str, user: User = Depends(get_authenticated_user), prefe
     obj = get_collection_queryset(user, default_queryset).get(uid=uid)
     ret = CollectionOut.from_orm_context(obj, Context(user, prefetch))
     return MsgpackResponse(ret)
+
+
+def item_bulk_common(data: ItemBatchIn, user: User, stoken: str, uid: str, validate_etag: bool):
+    queryset = get_collection_queryset(user, default_queryset)
+    with transaction.atomic():  # We need this for locking the collection object
+        collection_object = queryset.select_for_update().get(uid=uid)
+        if stoken is not None and stoken != collection_object.stoken:
+            raise ValidationError("stale_stoken", "Stoken is too old", status_code=status.HTTP_409_CONFLICT)
+
+
+
+def item_create():
+    pass  #
+
+
+@collection_router.post("/{uid}/item/transaction/")
+def item_transaction(
+    uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
+):
+    item_bulk_common(data, user, stoken, uid, validate_etag=True)
+
+
+@collection_router.post("/{uid}/item/batch/")
+def item_batch(
+    uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
+):
+    item_bulk_common(data, user, stoken, uid, validate_etag=False)
