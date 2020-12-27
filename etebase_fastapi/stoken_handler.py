@@ -10,7 +10,7 @@ from django_etebase.models import Stoken
 StokenAnnotation = t.Any
 
 
-def get_stoken_obj(stoken: t.Optional[str]):
+def get_stoken_obj(stoken: t.Optional[str]) -> t.Optional[Stoken]:
     if stoken is not None:
         try:
             return Stoken.objects.get(uid=stoken)
@@ -22,7 +22,7 @@ def get_stoken_obj(stoken: t.Optional[str]):
 
 def filter_by_stoken(
     stoken: t.Optional[str], queryset: QuerySet, stoken_annotation: StokenAnnotation
-) -> t.Tuple[QuerySet, t.Optional[str]]:
+) -> t.Tuple[QuerySet, t.Optional[Stoken]]:
     stoken_rev = get_stoken_obj(stoken)
 
     queryset = queryset.annotate(max_stoken=stoken_annotation).order_by("max_stoken")
