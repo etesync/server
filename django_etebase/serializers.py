@@ -513,8 +513,8 @@ class AuthenticationSignupSerializer(BetterErrorsMixin, serializers.Serializer):
         user_data = validated_data.pop("user")
 
         with transaction.atomic():
+            view = self.context.get("view", None)
             try:
-                view = self.context.get("view", None)
                 user_queryset = get_user_queryset(User.objects.all(), context=CallbackContext(view.kwargs))
                 instance = user_queryset.get(**{User.USERNAME_FIELD: user_data["username"].lower()})
             except User.DoesNotExist:
