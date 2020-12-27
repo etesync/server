@@ -136,6 +136,12 @@ class CollectionItemListResponse(BaseModel):
     done: bool
 
 
+class CollectionItemRevisionListResponse(BaseModel):
+    data: t.List[CollectionItemRevisionInOut]
+    iterator: t.Optional[str]
+    done: bool
+
+
 class CollectionItemBulkGetIn(BaseModel):
     uid: str
     etag: t.Optional[str]
@@ -420,6 +426,43 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
             item_create(item, collection_object, validate_etag)
 
         return MsgpackResponse({})
+
+
+@collection_router.get("/{collection_uid}/item/{uid}/revision/")
+def item_revisions(
+    collection_uid: str,
+    uid: str,
+    limit: int = 50,
+    iterator: t.Optional[str] = None,
+    prefetch: Prefetch = PrefetchQuery,
+    user: User = Depends(get_authenticated_user),
+):
+    _, items = get_item_queryset(user, collection_uid)
+    item = get_object_or_404(items, uid=uid)
+
+    queryset = item.revisions.order_by("-id")
+
+    if iterator is not None:
+        iterator_obj = get_object_or_404(queryset, uid=iterator)
+        queryset = queryset.filter(id__lt=iterator_obj.id)
+
+    result = list(queryset[: limit + 1])
+    if len(result) < limit + 1:
+        done = True
+    else:
+        done = False
+        result = result[:-1]
+
+    context = Context(user, prefetch)
+    ret_data = [CollectionItemRevisionInOut.from_orm_context(revision, context) for revision in result]
+    iterator = ret_data[-1].uid if len(result) > 0 else None
+
+    ret = CollectionItemRevisionListResponse(
+        data=ret_data,
+        iterator=iterator,
+        done=done,
+    )
+    return MsgpackResponse(ret)
 
 
 @collection_router.post("/{collection_uid}/item/fetch_updates/")
