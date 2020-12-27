@@ -15,7 +15,7 @@ from django_etebase import models
 from .authentication import get_authenticated_user
 from .exceptions import ValidationError, transform_validation_error
 from .msgpack import MsgpackRoute, MsgpackResponse
-from .stoken_handler import filter_by_stoken_and_limit, get_stoken_obj
+from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute)
@@ -131,6 +131,11 @@ class CollectionItemListResponse(BaseModel):
     data: t.List[CollectionItemOut]
     stoken: t.Optional[str]
     done: bool
+
+
+class CollectionItemBulkGetIn(BaseModel):
+    uid: str
+    etag: t.Optional[str]
 
 
 class ItemDepIn(BaseModel):
@@ -415,6 +420,41 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
             item_create(item, collection_object, validate_etag)
 
         return MsgpackResponse({})
+
+
+@collection_router.post("/{collection_uid}/item/fetch_updates/")
+def fetch_updates(
+    collection_uid: str,
+    data: t.List[CollectionItemBulkGetIn],
+    stoken: t.Optional[str] = None,
+    prefetch: Prefetch = PrefetchQuery,
+    user: User = Depends(get_authenticated_user),
+):
+    _, queryset = get_item_queryset(user, collection_uid)
+    # FIXME: make configurable?
+    item_limit = 200
+
+    if len(data) > item_limit:
+        raise ValidationError("too_many_items", "Request has too many items.", status_code=status.HTTP_400_BAD_REQUEST)
+
+    queryset, stoken_rev = filter_by_stoken(stoken, queryset, models.CollectionItem.stoken_annotation)
+
+    uids, etags = zip(*[(item.uid, item.etag) for item in data])
+    revs = models.CollectionItemRevision.objects.filter(uid__in=etags, current=True)
+    queryset = queryset.filter(uid__in=uids).exclude(revisions__in=revs)
+
+    new_stoken_obj = get_queryset_stoken(queryset)
+    new_stoken = new_stoken_obj and new_stoken_obj.uid
+    stoken = stoken_rev and getattr(stoken_rev, "uid", None)
+    new_stoken = new_stoken or stoken
+
+    context = Context(user, prefetch)
+    ret = CollectionItemListResponse(
+        data=[CollectionItemOut.from_orm_context(item, context) for item in queryset],
+        stoken=new_stoken,
+        done=True,  # we always return all the items, so it's always done
+    )
+    return MsgpackResponse(ret)
 
 
 @collection_router.post("/{collection_uid}/item/transaction/")

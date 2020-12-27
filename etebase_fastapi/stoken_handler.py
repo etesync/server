@@ -33,7 +33,7 @@ def filter_by_stoken(
     return queryset, stoken_rev
 
 
-def get_queryset_stoken(queryset: list) -> t.Optional[Stoken]:
+def get_queryset_stoken(queryset: t.Iterable[t.Any]) -> t.Optional[Stoken]:
     maxid = -1
     for row in queryset:
         rowmaxid = getattr(row, "max_stoken") or -1
