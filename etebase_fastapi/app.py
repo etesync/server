@@ -14,6 +14,7 @@ from fastapi import FastAPI, Request
 from .exceptions import CustomHttpException
 from .authentication import authentication_router
 from .collection import collection_router
+from .invitation import invitation_incoming_router, invitation_outgoing_router
 from .msgpack import MsgpackResponse
 
 app = FastAPI()
@@ -21,6 +22,8 @@ VERSION = "v1"
 BASE_PATH = f"/api/{VERSION}"
 app.include_router(authentication_router, prefix=f"{BASE_PATH}/authentication")
 app.include_router(collection_router, prefix=f"{BASE_PATH}/collection")
+app.include_router(invitation_incoming_router, prefix=f"{BASE_PATH}/invitation/incoming")
+app.include_router(invitation_outgoing_router, prefix=f"{BASE_PATH}/invitation/outgoing")
 if settings.DEBUG:
     from .test_reset_view import test_reset_view_router
 
