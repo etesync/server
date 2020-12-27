@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Request, Response, status
 
 from django_etebase.utils import get_user_queryset
 from etebase_fastapi.authentication import SignupIn, signup_save
@@ -13,7 +13,7 @@ User = get_user_model()
 
 
 @test_reset_view_router.post("/reset/")
-def reset(data: SignupIn):
+def reset(data: SignupIn, request: Request):
     # Only run when in DEBUG mode! It's only used for tests
     if not settings.DEBUG:
         return Response("Only allowed in debug mode.", status_code=status.HTTP_400_BAD_REQUEST)
@@ -28,7 +28,7 @@ def reset(data: SignupIn):
 
         if hasattr(user, "userinfo"):
             user.userinfo.delete()
-        signup_save(data)
+        signup_save(data, request)
         # Delete all of the journal data for this user for a clear test env
         user.collection_set.all().delete()
         user.collectionmember_set.all().delete()

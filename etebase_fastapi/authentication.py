@@ -24,7 +24,7 @@ from django_etebase.models import UserInfo
 from django_etebase.signals import user_signed_up
 from django_etebase.token_auth.models import AuthToken
 from django_etebase.token_auth.models import get_default_expiry
-from django_etebase.utils import create_user
+from django_etebase.utils import create_user, get_user_queryset, CallbackContext
 from django_etebase.views import msgpack_encode, msgpack_decode
 from .exceptions import AuthenticationFailed, transform_validation_error, ValidationError
 from .msgpack import MsgpackResponse, MsgpackRoute
@@ -268,20 +268,21 @@ async def change_password(data: ChangePassword, request: Request, user: User = D
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-def signup_save(data: SignupIn) -> User:
+def signup_save(data: SignupIn, request: Request) -> User:
     user_data = data.user
     with transaction.atomic():
         try:
-            # XXX-TOM
-            # view = self.context.get("view", None)
-            # user_queryset = get_user_queryset(User.objects.all(), view)
-            user_queryset = User.objects.all()
+            user_queryset = get_user_queryset(User.objects.all(), CallbackContext(request.path_params))
             instance = user_queryset.get(**{User.USERNAME_FIELD: user_data.username.lower()})
         except User.DoesNotExist:
             # Create the user and save the casing the user chose as the first name
             try:
-                # XXX-TOM
-                instance = create_user(**user_data.dict(), password=None, first_name=user_data.username, view=None)
+                instance = create_user(
+                    **user_data.dict(),
+                    password=None,
+                    first_name=user_data.username,
+                    context=CallbackContext(request.path_params),
+                )
                 instance.full_clean()
             except EtebaseValidationError as e:
                 raise e
@@ -298,8 +299,8 @@ def signup_save(data: SignupIn) -> User:
 
 
 @authentication_router.post("/signup/")
-async def signup(data: SignupIn):
-    user = await sync_to_async(signup_save)(data)
+async def signup(data: SignupIn, request: Request):
+    user = await sync_to_async(signup_save)(data, request)
     # XXX-TOM
     data = await sync_to_async(LoginOut.from_orm)(user)
     await sync_to_async(user_signed_up.send)(sender=user.__class__, request=None, user=user)
