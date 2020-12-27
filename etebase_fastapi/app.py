@@ -14,6 +14,7 @@ from fastapi import FastAPI, Request
 from .exceptions import CustomHttpException
 from .authentication import authentication_router
 from .collection import collection_router
+from . import member  # noqa
 from .invitation import invitation_incoming_router, invitation_outgoing_router
 from .msgpack import MsgpackResponse
 
