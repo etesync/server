@@ -1,6 +1,7 @@
 import typing as t
 
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import QuerySet
 from fastapi import Depends, status
 from pydantic import BaseModel
@@ -20,6 +21,10 @@ default_queryset: QuerySet = models.CollectionMember.objects.all()
 def get_queryset(user: User, collection_uid: str, queryset=default_queryset) -> t.Tuple[models.Collection, QuerySet]:
     collection = get_object_or_404(get_collection_queryset(user, models.Collection.objects), uid=collection_uid)
     return collection, queryset.filter(collection=collection)
+
+
+class CollectionMemberModifyAccessLevelIn(BaseModel):
+    accessLevel: models.AccessLevels
 
 
 class CollectionMemberOut(BaseModel):
@@ -71,6 +76,24 @@ def member_delete(
     _, queryset = get_queryset(user, collection_uid)
     obj = get_object_or_404(queryset, user__username__iexact=username)
     obj.revoke()
+
+
+@collection_router.patch("/{collection_uid}/member/{username}/", status_code=status.HTTP_204_NO_CONTENT)
+def member_patch(
+    collection_uid: str,
+    username: str,
+    data: CollectionMemberModifyAccessLevelIn,
+    user: User = Depends(get_authenticated_user),
+):
+    _, queryset = get_queryset(user, collection_uid)
+    instance = get_object_or_404(queryset, user__username__iexact=username)
+
+    with transaction.atomic():
+        # We only allow updating accessLevel
+        if instance.accessLevel != data.accessLevel:
+            instance.stoken = models.Stoken.objects.create()
+            instance.accessLevel = data.accessLevel
+            instance.save()
 
 
 @collection_router.post("/{collection_uid}/member/leave/", status_code=status.HTTP_204_NO_CONTENT)
