@@ -239,6 +239,11 @@ class CollectionItemSerializer(BetterErrorsMixin, serializers.ModelSerializer):
                 # We don't have to use select_for_update here because the unique constraint on current guards against
                 # the race condition. But it's a good idea because it'll lock and wait rather than fail.
                 current_revision = instance.revisions.filter(current=True).select_for_update().first()
+
+                # If we are just re-uploading the same revision, consider it a succes and return.
+                if current_revision.uid == revision_data.get("uid"):
+                    return instance
+
                 current_revision.current = None
                 current_revision.save()
 
