@@ -194,18 +194,19 @@ def collection_list_common(
     return MsgpackResponse(content=ret)
 
 
-def get_collection_queryset(user: User) -> QuerySet:
+def get_collection_queryset(user: User = Depends(get_authenticated_user)) -> QuerySet:
     return default_queryset.filter(members__user=user)
 
 
-def get_item_queryset(
-    user: User, collection_uid: str, queryset: QuerySet = default_item_queryset
-) -> t.Tuple[models.Collection, QuerySet]:
-    collection = get_object_or_404(get_collection_queryset(user), uid=collection_uid)
-    # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
-    queryset = queryset.filter(collection__pk=collection.pk, revisions__current=True)
+def get_collection(collection_uid: str, queryset: QuerySet = Depends(get_collection_queryset)) -> models.Collection:
+    return get_object_or_404(queryset, uid=collection_uid)
 
-    return collection, queryset
+
+def get_item_queryset(collection: models.Collection = Depends(get_collection)) -> QuerySet:
+    # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
+    queryset = default_item_queryset.filter(collection__pk=collection.pk, revisions__current=True)
+
+    return queryset
 
 
 @collection_router.post("/list_multi/")
@@ -213,11 +214,10 @@ async def list_multi(
     data: ListMulti,
     stoken: t.Optional[str] = None,
     limit: int = 50,
+    queryset: QuerySet = Depends(get_collection_queryset),
     user: User = Depends(get_authenticated_user),
     prefetch: Prefetch = PrefetchQuery,
 ):
-    queryset = get_collection_queryset(user)
-
     # FIXME: Remove the isnull part once we attach collection types to all objects ("collection-type-migration")
     queryset = queryset.filter(
         Q(members__collectionType__uid__in=data.collectionTypes) | Q(members__collectionType__isnull=True)
@@ -228,13 +228,12 @@ async def list_multi(
 
 @collection_router.post("/list/")
 async def collection_list(
-    req: Request,
     stoken: t.Optional[str] = None,
     limit: int = 50,
     prefetch: Prefetch = PrefetchQuery,
     user: User = Depends(get_authenticated_user),
+    queryset: QuerySet = Depends(get_collection_queryset),
 ):
-    queryset = get_collection_queryset(user)
     return await collection_list_common(queryset, user, stoken, limit, prefetch)
 
 
@@ -309,9 +308,12 @@ async def create(data: CollectionIn, user: User = Depends(get_authenticated_user
     return MsgpackResponse({}, status_code=status.HTTP_201_CREATED)
 
 
-@collection_router.get("/{uid}/")
-def collection_get(uid: str, user: User = Depends(get_authenticated_user), prefetch: Prefetch = PrefetchQuery):
-    obj = get_collection_queryset(user).get(uid=uid)
+@collection_router.get("/{collection_uid}/")
+def collection_get(
+        obj: models.Collection = Depends(get_collection),
+        user: User = Depends(get_authenticated_user),
+        prefetch: Prefetch = PrefetchQuery
+        ):
     ret = CollectionOut.from_orm_context(obj, Context(user, prefetch))
     return MsgpackResponse(ret)
 
@@ -358,9 +360,10 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
 
 @collection_router.get("/{collection_uid}/item/{uid}/")
 def item_get(
-    collection_uid: str, uid: str, user: User = Depends(get_authenticated_user), prefetch: Prefetch = PrefetchQuery
+    uid: str,
+    queryset: QuerySet = Depends(get_item_queryset),
+    user: User = Depends(get_authenticated_user), prefetch: Prefetch = PrefetchQuery,
 ):
-    _, queryset = get_item_queryset(user, collection_uid)
     obj = queryset.get(uid=uid)
     ret = CollectionItemOut.from_orm_context(obj, Context(user, prefetch))
     return MsgpackResponse(ret)
@@ -386,14 +389,13 @@ def item_list_common(
 
 @collection_router.get("/{collection_uid}/item/")
 async def item_list(
-    collection_uid: str,
+    queryset: QuerySet = Depends(get_item_queryset),
     stoken: t.Optional[str] = None,
     limit: int = 50,
     prefetch: Prefetch = PrefetchQuery,
     withCollection: bool = False,
     user: User = Depends(get_authenticated_user),
 ):
-    _, queryset = await sync_to_async(get_item_queryset)(user, collection_uid)
     if not withCollection:
         queryset = queryset.filter(parent__isnull=True)
 
@@ -419,14 +421,13 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
 
 @collection_router.get("/{collection_uid}/item/{uid}/revision/")
 def item_revisions(
-    collection_uid: str,
     uid: str,
     limit: int = 50,
     iterator: t.Optional[str] = None,
     prefetch: Prefetch = PrefetchQuery,
     user: User = Depends(get_authenticated_user),
+    items: QuerySet = Depends(get_item_queryset),
 ):
-    _, items = get_item_queryset(user, collection_uid)
     item = get_object_or_404(items, uid=uid)
 
     queryset = item.revisions.order_by("-id")
@@ -456,13 +457,12 @@ def item_revisions(
 
 @collection_router.post("/{collection_uid}/item/fetch_updates/")
 def fetch_updates(
-    collection_uid: str,
     data: t.List[CollectionItemBulkGetIn],
     stoken: t.Optional[str] = None,
     prefetch: Prefetch = PrefetchQuery,
     user: User = Depends(get_authenticated_user),
+    queryset: QuerySet = Depends(get_item_queryset),
 ):
-    _, queryset = get_item_queryset(user, collection_uid)
     # FIXME: make configurable?
     item_limit = 200
 

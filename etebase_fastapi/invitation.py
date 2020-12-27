@@ -73,12 +73,12 @@ class InvitationListResponse(BaseModel):
     done: bool
 
 
-def get_incoming_queryset(user: User, queryset=default_queryset):
-    return queryset.filter(user=user)
+def get_incoming_queryset(user: User = Depends(get_authenticated_user)):
+    return default_queryset.filter(user=user)
 
 
-def get_outgoing_queryset(user: User, queryset=default_queryset):
-    return queryset.filter(fromMember__user=user)
+def get_outgoing_queryset(user: User = Depends(get_authenticated_user)):
+    return default_queryset.filter(fromMember__user=user)
 
 
 def list_common(
@@ -114,17 +114,16 @@ def list_common(
 def incoming_list(
     iterator: t.Optional[str] = None,
     limit: int = 50,
-    user: User = Depends(get_authenticated_user),
+    queryset: QuerySet = Depends(get_incoming_queryset),
 ):
-    return list_common(get_incoming_queryset(user), iterator, limit)
+    return list_common(queryset, iterator, limit)
 
 
 @invitation_incoming_router.get("/{invitation_uid}/", response_model=CollectionInvitationOut)
 def incoming_get(
     invitation_uid: str,
-    user: User = Depends(get_authenticated_user),
+    queryset: QuerySet = Depends(get_incoming_queryset),
 ):
-    queryset = get_incoming_queryset(user)
     obj = get_object_or_404(queryset, uid=invitation_uid)
     ret = CollectionInvitationOut.from_orm(obj)
     return MsgpackResponse(ret)
@@ -133,9 +132,8 @@ def incoming_get(
 @invitation_incoming_router.delete("/{invitation_uid}/", status_code=status.HTTP_204_NO_CONTENT)
 def incoming_delete(
     invitation_uid: str,
-    user: User = Depends(get_authenticated_user),
+    queryset: QuerySet = Depends(get_incoming_queryset),
 ):
-    queryset = get_incoming_queryset(user)
     obj = get_object_or_404(queryset, uid=invitation_uid)
     obj.delete()
 
@@ -144,9 +142,8 @@ def incoming_delete(
 def incoming_accept(
     invitation_uid: str,
     data: CollectionInvitationAcceptIn,
-    user: User = Depends(get_authenticated_user),
+    queryset: QuerySet = Depends(get_incoming_queryset),
 ):
-    queryset = get_incoming_queryset(user)
     invitation = get_object_or_404(queryset, uid=invitation_uid)
 
     with transaction.atomic():
@@ -201,17 +198,16 @@ def outgoing_create(
 def outgoing_list(
     iterator: t.Optional[str] = None,
     limit: int = 50,
-    user: User = Depends(get_authenticated_user),
+    queryset: QuerySet = Depends(get_outgoing_queryset),
 ):
-    return list_common(get_outgoing_queryset(user), iterator, limit)
+    return list_common(queryset, iterator, limit)
 
 
 @invitation_outgoing_router.delete("/{invitation_uid}/", status_code=status.HTTP_204_NO_CONTENT)
 def outgoing_delete(
     invitation_uid: str,
-    user: User = Depends(get_authenticated_user),
+    queryset: QuerySet = Depends(get_outgoing_queryset),
 ):
-    queryset = get_outgoing_queryset(user)
     obj = get_object_or_404(queryset, uid=invitation_uid)
     obj.delete()
 
