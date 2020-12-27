@@ -1,4 +1,3 @@
-import dataclasses
 import typing as t
 
 from asgiref.sync import sync_to_async
@@ -8,7 +7,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import Q
 from django.db.models import QuerySet
-from fastapi import APIRouter, Depends, status, Query, Request
+from fastapi import APIRouter, Depends, status, Request
 from pydantic import BaseModel
 
 from django_etebase import models
@@ -16,22 +15,12 @@ from .authentication import get_authenticated_user
 from .exceptions import ValidationError, transform_validation_error
 from .msgpack import MsgpackRoute, MsgpackResponse
 from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
-from .utils import get_object_or_404
+from .utils import get_object_or_404, Context, Prefetch, PrefetchQuery
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute)
 default_queryset: QuerySet = models.Collection.objects.all()
 default_item_queryset: QuerySet = models.CollectionItem.objects.all()
-
-
-Prefetch = t.Literal["auto", "medium"]
-PrefetchQuery = Query(default="auto")
-
-
-@dataclasses.dataclass
-class Context:
-    user: t.Optional[User]
-    prefetch: t.Optional[Prefetch]
 
 
 class ListMulti(BaseModel):
