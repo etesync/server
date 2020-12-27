@@ -12,10 +12,10 @@ from pydantic import BaseModel
 
 from django_etebase import models
 from .authentication import get_authenticated_user
-from .exceptions import ValidationError, transform_validation_error
+from .exceptions import ValidationError, transform_validation_error, PermissionDenied
 from .msgpack import MsgpackRoute, MsgpackResponse
 from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
-from .utils import get_object_or_404, Context, Prefetch, PrefetchQuery
+from .utils import get_object_or_404, Context, Prefetch, PrefetchQuery, is_collection_admin
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute)
@@ -208,6 +208,26 @@ def get_item_queryset(collection: models.Collection = Depends(get_collection)) -
 
     return queryset
 
+
+# permissions
+
+
+def verify_collection_admin(
+    collection: models.Collection = Depends(get_collection), user: User = Depends(get_authenticated_user)
+):
+    if not is_collection_admin(collection, user):
+        raise PermissionDenied("admin_access_required", "Only collection admins can perform this operation.")
+
+
+def has_write_access(
+    collection: models.Collection = Depends(get_collection), user: User = Depends(get_authenticated_user)
+):
+    member = collection.members.get(user=user)
+    if member.accessLevel == models.AccessLevels.READ_ONLY:
+        raise PermissionDenied("no_write_access", "You need write access to write to this collection")
+
+
+# paths
 
 @collection_router.post("/list_multi/")
 async def list_multi(
@@ -489,14 +509,14 @@ def fetch_updates(
     return MsgpackResponse(ret)
 
 
-@collection_router.post("/{collection_uid}/item/transaction/")
+@collection_router.post("/{collection_uid}/item/transaction/", dependencies=[Depends(has_write_access)])
 def item_transaction(
     collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):
     return item_bulk_common(data, user, stoken, collection_uid, validate_etag=True)
 
 
-@collection_router.post("/{collection_uid}/item/batch/")
+@collection_router.post("/{collection_uid}/item/batch/", dependencies=[Depends(has_write_access)])
 def item_batch(
     collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):

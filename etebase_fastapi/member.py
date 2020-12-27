@@ -12,7 +12,7 @@ from .msgpack import MsgpackResponse
 from .utils import get_object_or_404
 from .stoken_handler import filter_by_stoken_and_limit
 
-from .collection import collection_router, get_collection
+from .collection import collection_router, get_collection, verify_collection_admin
 
 User = get_user_model()
 default_queryset: QuerySet = models.CollectionMember.objects.all()
@@ -48,7 +48,9 @@ class MemberListResponse(BaseModel):
     done: bool
 
 
-@collection_router.get("/{collection_uid}/member/", response_model=MemberListResponse)
+@collection_router.get(
+    "/{collection_uid}/member/", response_model=MemberListResponse, dependencies=[Depends(verify_collection_admin)]
+)
 def member_list(
     iterator: t.Optional[str] = None,
     limit: int = 50,
@@ -68,14 +70,22 @@ def member_list(
     return MsgpackResponse(ret)
 
 
-@collection_router.delete("/{collection_uid}/member/{username}/", status_code=status.HTTP_204_NO_CONTENT)
+@collection_router.delete(
+    "/{collection_uid}/member/{username}/",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(verify_collection_admin)],
+)
 def member_delete(
     obj: models.CollectionMember = Depends(get_member),
 ):
     obj.revoke()
 
 
-@collection_router.patch("/{collection_uid}/member/{username}/", status_code=status.HTTP_204_NO_CONTENT)
+@collection_router.patch(
+    "/{collection_uid}/member/{username}/",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(verify_collection_admin)],
+)
 def member_patch(
     data: CollectionMemberModifyAccessLevelIn,
     instance: models.CollectionMember = Depends(get_member),
@@ -88,7 +98,10 @@ def member_patch(
             instance.save()
 
 
-@collection_router.post("/{collection_uid}/member/leave/", status_code=status.HTTP_204_NO_CONTENT)
+@collection_router.post(
+    "/{collection_uid}/member/leave/",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 def member_leave(user: User = Depends(get_authenticated_user), collection: models.Collection = Depends(get_collection)):
     obj = get_object_or_404(collection.members, user=user)
     obj.revoke()
