@@ -4,7 +4,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from fastapi import APIRouter, Request, Response, status
 
-from django_etebase.utils import get_user_queryset
+from django_etebase.utils import get_user_queryset, CallbackContext
 from etebase_fastapi.authentication import SignupIn, signup_save
 from etebase_fastapi.msgpack import MsgpackRoute
 
@@ -19,8 +19,7 @@ def reset(data: SignupIn, request: Request):
         return Response("Only allowed in debug mode.", status_code=status.HTTP_400_BAD_REQUEST)
 
     with transaction.atomic():
-        # XXX-TOM
-        user_queryset = get_user_queryset(User.objects.all(), None)
+        user_queryset = get_user_queryset(User.objects.all(), CallbackContext(request.path_params))
         user = get_object_or_404(user_queryset, username=data.user.username)
         # Only allow test users for extra safety
         if not getattr(user, User.USERNAME_FIELD).startswith("test_user"):
