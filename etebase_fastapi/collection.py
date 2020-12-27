@@ -421,11 +421,11 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
 def item_transaction(
     collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):
-    item_bulk_common(data, user, stoken, collection_uid, validate_etag=True)
+    return item_bulk_common(data, user, stoken, collection_uid, validate_etag=True)
 
 
 @collection_router.post("/{collection_uid}/item/batch/")
 def item_batch(
     collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):
-    item_bulk_common(data, user, stoken, collection_uid, validate_etag=False)
+    return item_bulk_common(data, user, stoken, collection_uid, validate_etag=False)
