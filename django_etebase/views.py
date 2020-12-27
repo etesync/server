@@ -73,7 +73,7 @@ from .serializers import (
     UserInfoPubkeySerializer,
     UserSerializer,
 )
-from .utils import get_user_queryset
+from .utils import get_user_queryset, CallbackContext
 from .exceptions import EtebaseValidationError
 from .parsers import ChunkUploadParser
 from .signals import user_signed_up
@@ -598,7 +598,7 @@ class InvitationOutgoingViewSet(InvitationBaseViewSet):
     def fetch_user_profile(self, request, *args, **kwargs):
         username = request.GET.get("username")
         kwargs = {User.USERNAME_FIELD: username.lower()}
-        user = get_object_or_404(get_user_queryset(User.objects.all(), self), **kwargs)
+        user = get_object_or_404(get_user_queryset(User.objects.all(), CallbackContext(self.kwargs)), **kwargs)
         user_info = get_object_or_404(UserInfo.objects.all(), owner=user)
         serializer = UserInfoPubkeySerializer(user_info)
         return Response(serializer.data)
@@ -642,7 +642,7 @@ class AuthenticationViewSet(viewsets.ViewSet):
         )
 
     def get_queryset(self):
-        return get_user_queryset(User.objects.all(), self)
+        return get_user_queryset(User.objects.all(), CallbackContext(self.kwargs))
 
     def get_serializer_context(self):
         return {"request": self.request, "format": self.format_kwarg, "view": self}
@@ -837,7 +837,7 @@ class TestAuthenticationViewSet(viewsets.ViewSet):
             return HttpResponseBadRequest("Only allowed in debug mode.")
 
         with transaction.atomic():
-            user_queryset = get_user_queryset(User.objects.all(), self)
+            user_queryset = get_user_queryset(User.objects.all(), CallbackContext(self.kwargs))
             user = get_object_or_404(user_queryset, username=request.data.get("user").get("username"))
 
             # Only allow test users for extra safety

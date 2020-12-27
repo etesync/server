@@ -20,7 +20,7 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from rest_framework import serializers, status
 from . import models
-from .utils import get_user_queryset, create_user
+from .utils import get_user_queryset, create_user, CallbackContext
 
 from .exceptions import EtebaseValidationError
 
@@ -102,7 +102,7 @@ class CollectionTypeField(BinaryBase64Field):
 class UserSlugRelatedField(serializers.SlugRelatedField):
     def get_queryset(self):
         view = self.context.get("view", None)
-        return get_user_queryset(super().get_queryset(), view)
+        return get_user_queryset(super().get_queryset(), context=CallbackContext(view.kwargs))
 
     def __init__(self, **kwargs):
         super().__init__(slug_field=User.USERNAME_FIELD, **kwargs)
@@ -515,12 +515,17 @@ class AuthenticationSignupSerializer(BetterErrorsMixin, serializers.Serializer):
         with transaction.atomic():
             try:
                 view = self.context.get("view", None)
-                user_queryset = get_user_queryset(User.objects.all(), view)
+                user_queryset = get_user_queryset(User.objects.all(), context=CallbackContext(view.kwargs))
                 instance = user_queryset.get(**{User.USERNAME_FIELD: user_data["username"].lower()})
             except User.DoesNotExist:
                 # Create the user and save the casing the user chose as the first name
                 try:
-                    instance = create_user(**user_data, password=None, first_name=user_data["username"], view=view)
+                    instance = create_user(
+                        **user_data,
+                        password=None,
+                        first_name=user_data["username"],
+                        context=CallbackContext(view.kwargs)
+                    )
                     instance.full_clean()
                 except EtebaseValidationError as e:
                     raise e
