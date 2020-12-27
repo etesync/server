@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from django_etebase import models
 from django_etebase.models import Collection, AccessLevels, CollectionMember
 from .authentication import get_authenticated_user
-from .execptions import ValidationError
+from .exceptions import ValidationError
 from .msgpack import MsgpackRoute, MsgpackResponse
 from .stoken_handler import filter_by_stoken_and_limit
 

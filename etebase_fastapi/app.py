@@ -9,7 +9,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "etebase_server.settings")
 application = get_wsgi_application()
 from fastapi import FastAPI, Request
 
-from .execptions import CustomHttpException
+from .exceptions import CustomHttpException
 from .authentication import authentication_router
 from .collection import collection_router
 from .msgpack import MsgpackResponse

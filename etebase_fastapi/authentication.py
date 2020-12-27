@@ -26,7 +26,7 @@ from django_etebase.token_auth.models import AuthToken
 from django_etebase.token_auth.models import get_default_expiry
 from django_etebase.utils import create_user
 from django_etebase.views import msgpack_encode, msgpack_decode
-from .execptions import AuthenticationFailed, transform_validation_error, ValidationError
+from .exceptions import AuthenticationFailed, transform_validation_error, ValidationError
 from .msgpack import MsgpackResponse, MsgpackRoute
 
 User = get_user_model()
