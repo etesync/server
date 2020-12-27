@@ -378,13 +378,13 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
     return instance
 
 
-@collection_router.get("/{collection_uid}/item/{uid}/")
+@collection_router.get("/{collection_uid}/item/{item_uid}/")
 def item_get(
-    uid: str,
+    item_uid: str,
     queryset: QuerySet = Depends(get_item_queryset),
     user: User = Depends(get_authenticated_user), prefetch: Prefetch = PrefetchQuery,
 ):
-    obj = queryset.get(uid=uid)
+    obj = queryset.get(uid=item_uid)
     ret = CollectionItemOut.from_orm_context(obj, Context(user, prefetch))
     return MsgpackResponse(ret)
 
@@ -439,16 +439,16 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
         return MsgpackResponse({})
 
 
-@collection_router.get("/{collection_uid}/item/{uid}/revision/")
+@collection_router.get("/{collection_uid}/item/{item_uid}/revision/")
 def item_revisions(
-    uid: str,
+    item_uid: str,
     limit: int = 50,
     iterator: t.Optional[str] = None,
     prefetch: Prefetch = PrefetchQuery,
     user: User = Depends(get_authenticated_user),
     items: QuerySet = Depends(get_item_queryset),
 ):
-    item = get_object_or_404(items, uid=uid)
+    item = get_object_or_404(items, uid=item_uid)
 
     queryset = item.revisions.order_by("-id")
 
