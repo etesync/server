@@ -38,7 +38,7 @@ def get_queryset_stoken(queryset: list) -> t.Optional[Stoken]:
     for row in queryset:
         rowmaxid = getattr(row, "max_stoken") or -1
         maxid = max(maxid, rowmaxid)
-    new_stoken = (maxid >= 0) and Stoken.objects.get(id=maxid)
+    new_stoken = Stoken.objects.get(id=maxid) if (maxid >= 0) else None
 
     return new_stoken or None
 
