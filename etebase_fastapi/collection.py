@@ -15,7 +15,7 @@ from django_etebase import models
 from .authentication import get_authenticated_user
 from .exceptions import ValidationError, transform_validation_error
 from .msgpack import MsgpackRoute, MsgpackResponse
-from .stoken_handler import filter_by_stoken_and_limit
+from .stoken_handler import filter_by_stoken_and_limit, get_stoken_obj
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute)
@@ -115,10 +115,16 @@ class CollectionIn(CollectionCommon):
     item: CollectionItemIn
 
 
+class RemovedMembershipOut(BaseModel):
+    uid: str
+
+
 class CollectionListResponse(BaseModel):
     data: t.List[CollectionOut]
     stoken: t.Optional[str]
     done: bool
+
+    removedMemberships: t.Optional[RemovedMembershipOut]
 
 
 class CollectionItemListResponse(BaseModel):
@@ -164,7 +170,22 @@ def collection_list_common(
     new_stoken = new_stoken_obj and new_stoken_obj.uid
     context = Context(user, prefetch)
     data: t.List[CollectionOut] = [CollectionOut.from_orm_context(item, context) for item in result]
-    ret = CollectionListResponse(data=data, stoken=new_stoken, done=done)
+
+    stoken_obj = get_stoken_obj(stoken)
+    removedMemberships = None
+    if stoken_obj is not None:
+        # FIXME: honour limit? (the limit should be combined for data and this because of stoken)
+        remed_qs = models.CollectionMemberRemoved.objects.filter(user=user, stoken__id__gt=stoken_obj.id)
+        if not done and new_stoken_obj is not None:
+            # We only filter by the new_stoken if we are not done. This is because if we are done, the new stoken
+            # can point to the most recent collection change rather than most recent removed membership.
+            remed_qs = remed_qs.filter(stoken__id__lte=new_stoken_obj.id)
+
+        remed = remed_qs.values_list("collection__uid", flat=True)
+        if len(remed) > 0:
+            removedMemberships = [{"uid": x} for x in remed]
+
+    ret = CollectionListResponse(data=data, stoken=new_stoken, done=done, removedMemberships=removedMemberships)
     return MsgpackResponse(content=ret)
 
 
@@ -194,13 +215,13 @@ async def list_multi(
     prefetch: Prefetch = PrefetchQuery,
 ):
     queryset = get_collection_queryset(user, default_queryset)
+
     # FIXME: Remove the isnull part once we attach collection types to all objects ("collection-type-migration")
     queryset = queryset.filter(
         Q(members__collectionType__uid__in=data.collectionTypes) | Q(members__collectionType__isnull=True)
     )
-    # XXX-TOM: missing removedMemeberships
-    response = await collection_list_common(queryset, user, stoken, limit, prefetch)
-    return response
+
+    return await collection_list_common(queryset, user, stoken, limit, prefetch)
 
 
 @collection_router.post("/list/")
