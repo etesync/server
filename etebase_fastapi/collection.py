@@ -265,7 +265,7 @@ def get_collection(uid: str, user: User = Depends(get_authenticated_user), prefe
     return MsgpackResponse(ret)
 
 
-def item_create(item_model: CollectionItemIn, validate_etag: bool):
+def item_create(item_model: CollectionItemIn, collection: models.Collection, validate_etag: bool):
     """Function that's called when this serializer creates an item"""
     etag = item_model.etag
     revision_data = item_model.content
@@ -275,7 +275,7 @@ def item_create(item_model: CollectionItemIn, validate_etag: bool):
 
     with transaction.atomic():
         instance, created = Model.objects.get_or_create(
-            uid=uid, defaults=item_model.dict(exclude={"uid", "etag", "content"})
+            uid=uid, collection=collection, defaults=item_model.dict(exclude={"uid", "etag", "content"})
         )
         cur_etag = instance.etag if not created else None
 
@@ -316,7 +316,7 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
         # XXX-TOM: make sure we return compatible errors
         data.validate_db()
         for item in data.items:
-            item_create(item, validate_etag)
+            item_create(item, collection_object, validate_etag)
 
         return MsgpackResponse({})
 
