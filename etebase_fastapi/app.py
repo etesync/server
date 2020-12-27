@@ -3,10 +3,12 @@ import os
 from django.core.wsgi import get_wsgi_application
 from fastapi.middleware.cors import CORSMiddleware
 
-from django.conf import settings
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "etebase_server.settings")
 application = get_wsgi_application()
+
+from django.conf import settings
+
+# Not at the top of the file because we first need to setup django
 from fastapi import FastAPI, Request
 
 from .exceptions import CustomHttpException
