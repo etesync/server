@@ -11,17 +11,15 @@ from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, status, Query, Request
 from pydantic import BaseModel
 
-# FIXME: it's not good that some things are imported, and some are used from the model including all of the name clashes
 from django_etebase import models
-from django_etebase.models import Collection, AccessLevels, CollectionMember
 from .authentication import get_authenticated_user
 from .exceptions import ValidationError, transform_validation_error
 from .msgpack import MsgpackRoute, MsgpackResponse
-from .stoken_handler import filter_by_stoken_and_limit, StokenAnnotation
+from .stoken_handler import filter_by_stoken_and_limit
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute)
-default_queryset: QuerySet = Collection.objects.all()
+default_queryset: QuerySet = models.Collection.objects.all()
 default_item_queryset: QuerySet = models.CollectionItem.objects.all()
 
 
@@ -39,7 +37,7 @@ class ListMulti(BaseModel):
     collectionTypes: t.List[bytes]
 
 
-class CollectionItemRevision(BaseModel):
+class CollectionItemRevisionInOut(BaseModel):
     uid: str
     meta: bytes
     deleted: bool
@@ -50,8 +48,8 @@ class CollectionItemRevision(BaseModel):
 
     @classmethod
     def from_orm_context(
-        cls: t.Type["CollectionItemRevision"], obj: models.CollectionItemRevision, context: Context
-    ) -> "CollectionItemRevision":
+        cls: t.Type["CollectionItemRevisionInOut"], obj: models.CollectionItemRevision, context: Context
+    ) -> "CollectionItemRevisionInOut":
         chunk_obj = obj.chunks_relation.get().chunk
         if context.prefetch == "auto":
             with open(chunk_obj.chunkFile.path, "rb") as f:
@@ -65,7 +63,7 @@ class CollectionItemCommon(BaseModel):
     uid: str
     version: int
     encryptionKey: t.Optional[bytes]
-    content: CollectionItemRevision
+    content: CollectionItemRevisionInOut
 
 
 class CollectionItemOut(CollectionItemCommon):
@@ -81,7 +79,7 @@ class CollectionItemOut(CollectionItemCommon):
             version=obj.version,
             encryptionKey=obj.encryptionKey,
             etag=obj.etag,
-            content=CollectionItemRevision.from_orm_context(obj.content, context),
+            content=CollectionItemRevisionInOut.from_orm_context(obj.content, context),
         )
 
 
@@ -95,12 +93,12 @@ class CollectionCommon(BaseModel):
 
 
 class CollectionOut(CollectionCommon):
-    accessLevel: AccessLevels
+    accessLevel: models.AccessLevels
     stoken: str
     item: CollectionItemOut
 
     @classmethod
-    def from_orm_context(cls: t.Type["CollectionOut"], obj: Collection, context: Context) -> "CollectionOut":
+    def from_orm_context(cls: t.Type["CollectionOut"], obj: models.Collection, context: Context) -> "CollectionOut":
         member: CollectionMember = obj.members.get(user=context.user)
         collection_type = member.collectionType
         ret = cls(
@@ -162,7 +160,7 @@ def collection_list_common(
     limit: int,
     prefetch: Prefetch,
 ) -> MsgpackResponse:
-    result, new_stoken_obj, done = filter_by_stoken_and_limit(stoken, limit, queryset, Collection.stoken_annotation)
+    result, new_stoken_obj, done = filter_by_stoken_and_limit(stoken, limit, queryset, models.Collection.stoken_annotation)
     new_stoken = new_stoken_obj and new_stoken_obj.uid
     context = Context(user, prefetch)
     data: t.List[CollectionOut] = [CollectionOut.from_orm_context(item, context) for item in result]
@@ -178,8 +176,8 @@ def get_item_queryset(
     user: User, collection_uid: str, queryset: QuerySet = default_item_queryset
 ) -> t.Tuple[models.Collection, QuerySet]:
     try:
-        collection = get_collection_queryset(user, Collection.objects).get(uid=collection_uid)
-    except Collection.DoesNotExist:
+        collection = get_collection_queryset(user, models.Collection.objects).get(uid=collection_uid)
+    except models.Collection.DoesNotExist:
         raise ValidationError("does_not_exist", "Collection does not exist", status_code=status.HTTP_404_NOT_FOUND)
     # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
     queryset = queryset.filter(collection__pk=collection.pk, revisions__current=True)
@@ -213,7 +211,7 @@ async def collection_list(
     pass
 
 
-def process_revisions_for_item(item: models.CollectionItem, revision_data: CollectionItemRevision):
+def process_revisions_for_item(item: models.CollectionItem, revision_data: CollectionItemRevisionInOut):
     chunks_objs = []
 
     revision = models.CollectionItemRevision(**revision_data.dict(exclude={"chunks"}), item=item)
