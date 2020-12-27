@@ -19,7 +19,10 @@ class MsgpackRequest(Request):
 class MsgpackResponse(Response):
     media_type = "application/msgpack"
 
-    def render(self, content: t.Any) -> bytes:
+    def render(self, content: t.Optional[t.Any]) -> t.Optional[bytes]:
+        if content is None:
+            return b""
+
         if isinstance(content, BaseModel):
             content = content.dict()
         return msgpack.packb(content, use_bin_type=True)
