@@ -11,16 +11,18 @@ from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, status, Query, Request
 from pydantic import BaseModel
 
+# FIXME: it's not good that some things are imported, and some are used from the model including all of the name clashes
 from django_etebase import models
 from django_etebase.models import Collection, AccessLevels, CollectionMember
 from .authentication import get_authenticated_user
 from .exceptions import ValidationError, transform_validation_error
 from .msgpack import MsgpackRoute, MsgpackResponse
-from .stoken_handler import filter_by_stoken_and_limit
+from .stoken_handler import filter_by_stoken_and_limit, StokenAnnotation
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute)
 default_queryset: QuerySet = Collection.objects.all()
+default_item_queryset: QuerySet = models.CollectionItem.objects.all()
 
 
 Prefetch = t.Literal["auto", "medium"]
@@ -115,8 +117,14 @@ class CollectionIn(CollectionCommon):
     item: CollectionItemIn
 
 
-class ListResponse(BaseModel):
+class CollectionListResponse(BaseModel):
     data: t.List[CollectionOut]
+    stoken: t.Optional[str]
+    done: bool
+
+
+class CollectionItemListResponse(BaseModel):
+    data: t.List[CollectionItemOut]
     stoken: t.Optional[str]
     done: bool
 
@@ -147,19 +155,36 @@ class ItemBatchIn(BaseModel):
 
 
 @sync_to_async
-def list_common(
-    queryset: QuerySet, user: User, stoken: t.Optional[str], limit: int, prefetch: Prefetch
+def collection_list_common(
+    queryset: QuerySet,
+    user: User,
+    stoken: t.Optional[str],
+    limit: int,
+    prefetch: Prefetch,
 ) -> MsgpackResponse:
     result, new_stoken_obj, done = filter_by_stoken_and_limit(stoken, limit, queryset, Collection.stoken_annotation)
     new_stoken = new_stoken_obj and new_stoken_obj.uid
     context = Context(user, prefetch)
     data: t.List[CollectionOut] = [CollectionOut.from_orm_context(item, context) for item in result]
-    ret = ListResponse(data=data, stoken=new_stoken, done=done)
+    ret = CollectionListResponse(data=data, stoken=new_stoken, done=done)
     return MsgpackResponse(content=ret)
 
 
 def get_collection_queryset(user: User, queryset: QuerySet) -> QuerySet:
     return queryset.filter(members__user=user)
+
+
+def get_item_queryset(
+    user: User, collection_uid: str, queryset: QuerySet = default_item_queryset
+) -> t.Tuple[models.Collection, QuerySet]:
+    try:
+        collection = get_collection_queryset(user, Collection.objects).get(uid=collection_uid)
+    except Collection.DoesNotExist:
+        raise ValidationError("does_not_exist", "Collection does not exist", status_code=status.HTTP_404_NOT_FOUND)
+    # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
+    queryset = queryset.filter(collection__pk=collection.pk, revisions__current=True)
+
+    return collection, queryset
 
 
 @collection_router.post("/list_multi/")
@@ -175,7 +200,8 @@ async def list_multi(
     queryset = queryset.filter(
         Q(members__collectionType__uid__in=data.collectionTypes) | Q(members__collectionType__isnull=True)
     )
-    response = await list_common(queryset, user, stoken, limit, prefetch)
+    # XXX-TOM: missing removedMemeberships
+    response = await collection_list_common(queryset, user, stoken, limit, prefetch)
     return response
 
 
@@ -303,6 +329,51 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
             transform_validation_error("content", e)
 
     return instance
+
+
+@collection_router.get("/{collection_uid}/item/{uid}/")
+def item_get(
+    collection_uid: str, uid: str, user: User = Depends(get_authenticated_user), prefetch: Prefetch = PrefetchQuery
+):
+    _, queryset = get_item_queryset(user, collection_uid)
+    obj = queryset.get(uid=uid)
+    ret = CollectionItemOut.from_orm_context(obj, Context(user, prefetch))
+    return MsgpackResponse(ret)
+
+
+@sync_to_async
+def item_list_common(
+    queryset: QuerySet,
+    user: User,
+    stoken: t.Optional[str],
+    limit: int,
+    prefetch: Prefetch,
+) -> MsgpackResponse:
+    result, new_stoken_obj, done = filter_by_stoken_and_limit(
+        stoken, limit, queryset, models.CollectionItem.stoken_annotation
+    )
+    new_stoken = new_stoken_obj and new_stoken_obj.uid
+    context = Context(user, prefetch)
+    data: t.List[CollectionItemOut] = [CollectionItemOut.from_orm_context(item, context) for item in result]
+    ret = CollectionItemListResponse(data=data, stoken=new_stoken, done=done)
+    return MsgpackResponse(content=ret)
+
+
+@collection_router.get("/{collection_uid}/item/")
+async def item_list(
+    collection_uid: str,
+    stoken: t.Optional[str] = None,
+    limit: int = 50,
+    prefetch: Prefetch = PrefetchQuery,
+    withCollection: bool = False,
+    user: User = Depends(get_authenticated_user),
+):
+    _, queryset = await sync_to_async(get_item_queryset)(user, collection_uid)
+    if not withCollection:
+        queryset = queryset.filter(parent__isnull=True)
+
+    response = await item_list_common(queryset, user, stoken, limit, prefetch)
+    return response
 
 
 def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid: str, validate_etag: bool):
