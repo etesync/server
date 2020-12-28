@@ -14,11 +14,11 @@ from .authentication import get_authenticated_user
 from .exceptions import HttpError, transform_validation_error, PermissionDenied
 from .msgpack import MsgpackRoute
 from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
-from .utils import get_object_or_404, Context, Prefetch, PrefetchQuery, is_collection_admin, BaseModel
+from .utils import get_object_or_404, Context, Prefetch, PrefetchQuery, is_collection_admin, BaseModel, permission_responses
 
 User = get_user_model()
-collection_router = APIRouter(route_class=MsgpackRoute)
-item_router = APIRouter(route_class=MsgpackRoute)
+collection_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
+item_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 default_queryset: QuerySet = models.Collection.objects.all()
 default_item_queryset: QuerySet = models.CollectionItem.objects.all()
 

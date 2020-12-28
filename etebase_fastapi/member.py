@@ -8,13 +8,13 @@ from fastapi import APIRouter, Depends, status
 from django_etebase import models
 from .authentication import get_authenticated_user
 from .msgpack import MsgpackRoute
-from .utils import get_object_or_404, BaseModel
+from .utils import get_object_or_404, BaseModel, permission_responses
 from .stoken_handler import filter_by_stoken_and_limit
 
 from .collection import get_collection, verify_collection_admin
 
 User = get_user_model()
-member_router = APIRouter(route_class=MsgpackRoute)
+member_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 default_queryset: QuerySet = models.CollectionMember.objects.all()
 
 

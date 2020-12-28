@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 
 from django_etebase.models import AccessLevels
 
-from .exceptions import HttpError
+from .exceptions import HttpError, HttpErrorOut
 
 User = get_user_model()
 
@@ -41,3 +41,7 @@ def get_object_or_404(queryset: QuerySet, **kwargs):
 def is_collection_admin(collection, user):
     member = collection.members.filter(user=user).first()
     return (member is not None) and (member.accessLevel == AccessLevels.ADMIN)
+
+
+response_model_dict = {"model": HttpErrorOut}
+permission_responses = {403: response_model_dict}

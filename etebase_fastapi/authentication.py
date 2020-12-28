@@ -14,7 +14,7 @@ from django.contrib.auth import get_user_model, user_logged_out, user_logged_in
 from django.core import exceptions as django_exceptions
 from django.db import transaction
 from django.utils import timezone
-from fastapi import APIRouter, Depends, status, Request, Response
+from fastapi import APIRouter, Depends, status, Request
 from fastapi.security import APIKeyHeader
 
 from django_etebase import app_settings, models
@@ -27,7 +27,7 @@ from django_etebase.utils import create_user, get_user_queryset, CallbackContext
 from django_etebase.views import msgpack_encode, msgpack_decode
 from .exceptions import AuthenticationFailed, transform_validation_error, HttpError
 from .msgpack import MsgpackRoute
-from .utils import BaseModel
+from .utils import BaseModel, permission_responses
 
 User = get_user_model()
 token_scheme = APIKeyHeader(name="Authorization")
@@ -250,21 +250,21 @@ async def login(data: Login, request: Request):
     return data
 
 
-@authentication_router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
+@authentication_router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT, responses=permission_responses)
 async def logout(request: Request, auth_data: AuthData = Depends(get_auth_data)):
     await sync_to_async(auth_data.token.delete)()
     # XXX-TOM
     await sync_to_async(user_logged_out.send)(sender=auth_data.user.__class__, request=None, user=auth_data.user)
 
 
-@authentication_router.post("/change_password/", status_code=status.HTTP_204_NO_CONTENT)
+@authentication_router.post("/change_password/", status_code=status.HTTP_204_NO_CONTENT, responses=permission_responses)
 async def change_password(data: ChangePassword, request: Request, user: User = Depends(get_authenticated_user)):
     host = request.headers.get("Host")
     await validate_login_request(data.response_data, data, user, "changePassword", host)
     await sync_to_async(save_changed_password)(data, user)
 
 
-@authentication_router.post("/dashboard_url/")
+@authentication_router.post("/dashboard_url/", responses=permission_responses)
 def dashboard_url(user: User = Depends(get_authenticated_user)):
     # XXX-TOM
     get_dashboard_url = app_settings.DASHBOARD_URL_FUNC

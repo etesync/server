@@ -10,11 +10,11 @@ from django_etebase.utils import get_user_queryset, CallbackContext
 from .authentication import get_authenticated_user
 from .exceptions import HttpError, PermissionDenied
 from .msgpack import MsgpackRoute
-from .utils import get_object_or_404, Context, is_collection_admin, BaseModel
+from .utils import get_object_or_404, Context, is_collection_admin, BaseModel, permission_responses
 
 User = get_user_model()
-invitation_incoming_router = APIRouter(route_class=MsgpackRoute)
-invitation_outgoing_router = APIRouter(route_class=MsgpackRoute)
+invitation_incoming_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
+invitation_outgoing_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 default_queryset: QuerySet = models.CollectionInvitation.objects.all()
 
 
