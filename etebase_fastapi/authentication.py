@@ -250,7 +250,7 @@ async def login(data: Login, request: Request):
 
 
 @authentication_router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT, responses=permission_responses)
-def logout(request: Request, auth_data: AuthData = Depends(get_auth_data)):
+def logout(auth_data: AuthData = Depends(get_auth_data)):
     auth_data.token.delete()
     user_logged_out.send(sender=auth_data.user.__class__, request=None, user=auth_data.user)
 
