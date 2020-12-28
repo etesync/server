@@ -1,13 +1,14 @@
 import dataclasses
 import typing as t
 
-from fastapi import status, Query
+from fastapi import status, Query, Depends
 from pydantic import BaseModel as PyBaseModel
 
 from django.db.models import QuerySet
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth import get_user_model
 
+from django_etebase import app_settings
 from django_etebase.models import AccessLevels
 
 from .exceptions import HttpError, HttpErrorOut
@@ -41,6 +42,10 @@ def get_object_or_404(queryset: QuerySet, **kwargs):
 def is_collection_admin(collection, user):
     member = collection.members.filter(user=user).first()
     return (member is not None) and (member.accessLevel == AccessLevels.ADMIN)
+
+
+PERMISSIONS_READ = [Depends(x) for x in app_settings.API_PERMISSIONS_READ]
+PERMISSIONS_READWRITE = PERMISSIONS_READ + [Depends(x) for x in app_settings.API_PERMISSIONS_WRITE]
 
 
 response_model_dict = {"model": HttpErrorOut}

@@ -14,7 +14,17 @@ from .authentication import get_authenticated_user
 from .exceptions import HttpError, transform_validation_error, PermissionDenied
 from .msgpack import MsgpackRoute
 from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
-from .utils import get_object_or_404, Context, Prefetch, PrefetchQuery, is_collection_admin, BaseModel, permission_responses
+from .utils import (
+    get_object_or_404,
+    Context,
+    Prefetch,
+    PrefetchQuery,
+    is_collection_admin,
+    BaseModel,
+    permission_responses,
+    PERMISSIONS_READ,
+    PERMISSIONS_READWRITE,
+)
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
@@ -228,7 +238,13 @@ def has_write_access(
 
 # paths
 
-@collection_router.post("/list_multi/", response_model=CollectionListResponse, response_model_exclude_unset=True)
+
+@collection_router.post(
+    "/list_multi/",
+    response_model=CollectionListResponse,
+    response_model_exclude_unset=True,
+    dependencies=PERMISSIONS_READ,
+)
 async def list_multi(
     data: ListMulti,
     stoken: t.Optional[str] = None,
@@ -245,7 +261,7 @@ async def list_multi(
     return await collection_list_common(queryset, user, stoken, limit, prefetch)
 
 
-@collection_router.get("/", response_model=CollectionListResponse)
+@collection_router.get("/", response_model=CollectionListResponse, dependencies=PERMISSIONS_READ)
 async def collection_list(
     stoken: t.Optional[str] = None,
     limit: int = 50,
@@ -321,17 +337,17 @@ def _create(data: CollectionIn, user: User):
         ).save()
 
 
-@collection_router.post("/", status_code=status.HTTP_201_CREATED)
+@collection_router.post("/", status_code=status.HTTP_201_CREATED, dependencies=PERMISSIONS_READWRITE)
 async def create(data: CollectionIn, user: User = Depends(get_authenticated_user)):
     await sync_to_async(_create)(data, user)
 
 
-@collection_router.get("/{collection_uid}/", response_model=CollectionOut)
+@collection_router.get("/{collection_uid}/", response_model=CollectionOut, dependencies=PERMISSIONS_READ)
 def collection_get(
-        obj: models.Collection = Depends(get_collection),
-        user: User = Depends(get_authenticated_user),
-        prefetch: Prefetch = PrefetchQuery
-        ):
+    obj: models.Collection = Depends(get_collection),
+    user: User = Depends(get_authenticated_user),
+    prefetch: Prefetch = PrefetchQuery,
+):
     return CollectionOut.from_orm_context(obj, Context(user, prefetch))
 
 
@@ -375,11 +391,12 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
     return instance
 
 
-@item_router.get("/item/{item_uid}/", response_model=CollectionItemOut)
+@item_router.get("/item/{item_uid}/", response_model=CollectionItemOut, dependencies=PERMISSIONS_READ)
 def item_get(
     item_uid: str,
     queryset: QuerySet = Depends(get_item_queryset),
-    user: User = Depends(get_authenticated_user), prefetch: Prefetch = PrefetchQuery,
+    user: User = Depends(get_authenticated_user),
+    prefetch: Prefetch = PrefetchQuery,
 ):
     obj = queryset.get(uid=item_uid)
     return CollectionItemOut.from_orm_context(obj, Context(user, prefetch))
@@ -402,7 +419,7 @@ def item_list_common(
     return CollectionItemListResponse(data=data, stoken=new_stoken, done=done)
 
 
-@item_router.get("/item/", response_model=CollectionItemListResponse)
+@item_router.get("/item/", response_model=CollectionItemListResponse, dependencies=PERMISSIONS_READ)
 async def item_list(
     queryset: QuerySet = Depends(get_item_queryset),
     stoken: t.Optional[str] = None,
@@ -434,7 +451,9 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
         return None
 
 
-@item_router.get("/item/{item_uid}/revision/", response_model=CollectionItemRevisionListResponse)
+@item_router.get(
+    "/item/{item_uid}/revision/", response_model=CollectionItemRevisionListResponse, dependencies=PERMISSIONS_READ
+)
 def item_revisions(
     item_uid: str,
     limit: int = 50,
@@ -469,7 +488,7 @@ def item_revisions(
     )
 
 
-@item_router.post("/item/fetch_updates/", response_model=CollectionItemListResponse)
+@item_router.post("/item/fetch_updates/", response_model=CollectionItemListResponse, dependencies=PERMISSIONS_READ)
 def fetch_updates(
     data: t.List[CollectionItemBulkGetIn],
     stoken: t.Optional[str] = None,
@@ -502,14 +521,14 @@ def fetch_updates(
     )
 
 
-@item_router.post("/item/transaction/", dependencies=[Depends(has_write_access)])
+@item_router.post("/item/transaction/", dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE])
 def item_transaction(
     collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):
     return item_bulk_common(data, user, stoken, collection_uid, validate_etag=True)
 
 
-@item_router.post("/item/batch/", dependencies=[Depends(has_write_access)])
+@item_router.post("/item/batch/", dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE])
 def item_batch(
     collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):
@@ -519,7 +538,11 @@ def item_batch(
 # Chunks
 
 
-@item_router.put("/item/{item_uid}/chunk/{chunk_uid}/", dependencies=[Depends(has_write_access)], status_code=status.HTTP_201_CREATED)
+@item_router.put(
+    "/item/{item_uid}/chunk/{chunk_uid}/",
+    dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE],
+    status_code=status.HTTP_201_CREATED,
+)
 def chunk_update(
     limit: int = 50,
     iterator: t.Optional[str] = None,
@@ -539,6 +562,4 @@ def chunk_update(
     try:
         serializer.save(collection=col)
     except IntegrityError:
-        return Response(
-            {"code": "chunk_exists", "detail": "Chunk already exists."}, status=status.HTTP_409_CONFLICT
-        )
+        return Response({"code": "chunk_exists", "detail": "Chunk already exists."}, status=status.HTTP_409_CONFLICT)

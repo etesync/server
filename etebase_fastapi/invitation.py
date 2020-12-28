@@ -10,7 +10,15 @@ from django_etebase.utils import get_user_queryset, CallbackContext
 from .authentication import get_authenticated_user
 from .exceptions import HttpError, PermissionDenied
 from .msgpack import MsgpackRoute
-from .utils import get_object_or_404, Context, is_collection_admin, BaseModel, permission_responses
+from .utils import (
+    get_object_or_404,
+    Context,
+    is_collection_admin,
+    BaseModel,
+    permission_responses,
+    PERMISSIONS_READ,
+    PERMISSIONS_READWRITE,
+)
 
 User = get_user_model()
 invitation_incoming_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
@@ -108,7 +116,7 @@ def list_common(
     )
 
 
-@invitation_incoming_router.get("/", response_model=InvitationListResponse)
+@invitation_incoming_router.get("/", response_model=InvitationListResponse, dependencies=PERMISSIONS_READ)
 def incoming_list(
     iterator: t.Optional[str] = None,
     limit: int = 50,
@@ -117,7 +125,9 @@ def incoming_list(
     return list_common(queryset, iterator, limit)
 
 
-@invitation_incoming_router.get("/{invitation_uid}/", response_model=CollectionInvitationOut)
+@invitation_incoming_router.get(
+    "/{invitation_uid}/", response_model=CollectionInvitationOut, dependencies=PERMISSIONS_READ
+)
 def incoming_get(
     invitation_uid: str,
     queryset: QuerySet = Depends(get_incoming_queryset),
@@ -126,7 +136,9 @@ def incoming_get(
     return CollectionInvitationOut.from_orm(obj)
 
 
-@invitation_incoming_router.delete("/{invitation_uid}/", status_code=status.HTTP_204_NO_CONTENT)
+@invitation_incoming_router.delete(
+    "/{invitation_uid}/", status_code=status.HTTP_204_NO_CONTENT, dependencies=PERMISSIONS_READWRITE
+)
 def incoming_delete(
     invitation_uid: str,
     queryset: QuerySet = Depends(get_incoming_queryset),
@@ -135,7 +147,9 @@ def incoming_delete(
     obj.delete()
 
 
-@invitation_incoming_router.post("/{invitation_uid}/accept/", status_code=status.HTTP_201_CREATED)
+@invitation_incoming_router.post(
+    "/{invitation_uid}/accept/", status_code=status.HTTP_201_CREATED, dependencies=PERMISSIONS_READWRITE
+)
 def incoming_accept(
     invitation_uid: str,
     data: CollectionInvitationAcceptIn,
@@ -161,7 +175,7 @@ def incoming_accept(
         invitation.delete()
 
 
-@invitation_outgoing_router.post("/", status_code=status.HTTP_201_CREATED)
+@invitation_outgoing_router.post("/", status_code=status.HTTP_201_CREATED, dependencies=PERMISSIONS_READWRITE)
 def outgoing_create(
     data: CollectionInvitationIn,
     request: Request,
@@ -189,7 +203,7 @@ def outgoing_create(
             raise HttpError("invitation_exists", "Invitation already exists")
 
 
-@invitation_outgoing_router.get("/", response_model=InvitationListResponse)
+@invitation_outgoing_router.get("/", response_model=InvitationListResponse, dependencies=PERMISSIONS_READ)
 def outgoing_list(
     iterator: t.Optional[str] = None,
     limit: int = 50,
@@ -198,7 +212,9 @@ def outgoing_list(
     return list_common(queryset, iterator, limit)
 
 
-@invitation_outgoing_router.delete("/{invitation_uid}/", status_code=status.HTTP_204_NO_CONTENT)
+@invitation_outgoing_router.delete(
+    "/{invitation_uid}/", status_code=status.HTTP_204_NO_CONTENT, dependencies=PERMISSIONS_READWRITE
+)
 def outgoing_delete(
     invitation_uid: str,
     queryset: QuerySet = Depends(get_outgoing_queryset),
@@ -207,7 +223,7 @@ def outgoing_delete(
     obj.delete()
 
 
-@invitation_outgoing_router.get("/fetch_user_profile/", response_model=UserInfoOut)
+@invitation_outgoing_router.get("/fetch_user_profile/", response_model=UserInfoOut, dependencies=PERMISSIONS_READ)
 def outgoing_fetch_user_profile(
     username: str,
     request: Request,

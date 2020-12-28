@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, status
 from django_etebase import models
 from .authentication import get_authenticated_user
 from .msgpack import MsgpackRoute
-from .utils import get_object_or_404, BaseModel, permission_responses
+from .utils import get_object_or_404, BaseModel, permission_responses, PERMISSIONS_READ, PERMISSIONS_READWRITE
 from .stoken_handler import filter_by_stoken_and_limit
 
 from .collection import get_collection, verify_collection_admin
@@ -48,7 +48,9 @@ class MemberListResponse(BaseModel):
     done: bool
 
 
-@member_router.get("/member/", response_model=MemberListResponse, dependencies=[Depends(verify_collection_admin)])
+@member_router.get(
+    "/member/", response_model=MemberListResponse, dependencies=[Depends(verify_collection_admin), *PERMISSIONS_READ]
+)
 def member_list(
     iterator: t.Optional[str] = None,
     limit: int = 50,
@@ -70,7 +72,7 @@ def member_list(
 @member_router.delete(
     "/member/{username}/",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(verify_collection_admin)],
+    dependencies=[Depends(verify_collection_admin), *PERMISSIONS_READWRITE],
 )
 def member_delete(
     obj: models.CollectionMember = Depends(get_member),
@@ -81,7 +83,7 @@ def member_delete(
 @member_router.patch(
     "/member/{username}/",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(verify_collection_admin)],
+    dependencies=[Depends(verify_collection_admin), *PERMISSIONS_READWRITE],
 )
 def member_patch(
     data: CollectionMemberModifyAccessLevelIn,
@@ -95,10 +97,7 @@ def member_patch(
             instance.save()
 
 
-@member_router.post(
-    "/member/leave/",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
+@member_router.post("/member/leave/", status_code=status.HTTP_204_NO_CONTENT, dependencies=PERMISSIONS_READ)
 def member_leave(user: User = Depends(get_authenticated_user), collection: models.Collection = Depends(get_collection)):
     obj = get_object_or_404(collection.members, user=user)
     obj.revoke()
