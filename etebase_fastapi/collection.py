@@ -176,8 +176,9 @@ def collection_list_common(
     context = Context(user, prefetch)
     data: t.List[CollectionOut] = [CollectionOut.from_orm_context(item, context) for item in result]
 
+    ret = CollectionListResponse(data=data, stoken=new_stoken, done=done)
+
     stoken_obj = get_stoken_obj(stoken)
-    removedMemberships = None
     if stoken_obj is not None:
         # FIXME: honour limit? (the limit should be combined for data and this because of stoken)
         remed_qs = models.CollectionMemberRemoved.objects.filter(user=user, stoken__id__gt=stoken_obj.id)
@@ -188,9 +189,8 @@ def collection_list_common(
 
         remed = remed_qs.values_list("collection__uid", flat=True)
         if len(remed) > 0:
-            removedMemberships = [{"uid": x} for x in remed]
+            ret.removedMemberships = [{"uid": x} for x in remed]
 
-    ret = CollectionListResponse(data=data, stoken=new_stoken, done=done, removedMemberships=removedMemberships)
     return MsgpackResponse(content=ret)
 
 

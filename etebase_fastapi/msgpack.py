@@ -24,7 +24,7 @@ class MsgpackResponse(Response):
             return b""
 
         if isinstance(content, BaseModel):
-            content = content.dict()
+            content = content.dict(exclude_unset=True)
         return msgpack.packb(content, use_bin_type=True)
 
 
