@@ -70,7 +70,6 @@ class CollectionItemOut(CollectionItemCommon):
             uid=obj.uid,
             version=obj.version,
             encryptionKey=obj.encryptionKey,
-            etag=obj.etag,
             content=CollectionItemRevisionInOut.from_orm_context(obj.content, context),
         )
 
@@ -91,7 +90,7 @@ class CollectionOut(CollectionCommon):
 
     @classmethod
     def from_orm_context(cls: t.Type["CollectionOut"], obj: models.Collection, context: Context) -> "CollectionOut":
-        member: CollectionMember = obj.members.get(user=context.user)
+        member: models.CollectionMember = obj.members.get(user=context.user)
         collection_type = member.collectionType
         ret = cls(
             collectionType=collection_type and collection_type.uid,
