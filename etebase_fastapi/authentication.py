@@ -261,6 +261,6 @@ def signup_save(data: SignupIn, request: Request) -> User:
 @authentication_router.post("/signup/", response_model=LoginOut, status_code=status.HTTP_201_CREATED)
 def signup(data: SignupIn, request: Request):
     user = signup_save(data, request)
-    data = LoginOut.from_orm(user)
+    ret = LoginOut.from_orm(user)
     user_signed_up.send(sender=user.__class__, request=None, user=user)
-    return data
+    return ret
