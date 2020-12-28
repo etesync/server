@@ -7,7 +7,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import Q
 from django.db.models import QuerySet
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 
 from django_etebase import models
@@ -18,7 +18,8 @@ from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_st
 from .utils import get_object_or_404, Context, Prefetch, PrefetchQuery, is_collection_admin
 
 User = get_user_model()
-collection_router = APIRouter(route_class=MsgpackRoute)
+collection_router = APIRouter(route_class=MsgpackRoute, tags=["collection"])
+item_router = APIRouter(route_class=MsgpackRoute, tags=["item"])
 default_queryset: QuerySet = models.Collection.objects.all()
 default_item_queryset: QuerySet = models.CollectionItem.objects.all()
 
@@ -378,7 +379,7 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
     return instance
 
 
-@collection_router.get("/{collection_uid}/item/{item_uid}/")
+@item_router.get("/{collection_uid}/item/{item_uid}/")
 def item_get(
     item_uid: str,
     queryset: QuerySet = Depends(get_item_queryset),
@@ -407,7 +408,7 @@ def item_list_common(
     return MsgpackResponse(content=ret)
 
 
-@collection_router.get("/{collection_uid}/item/")
+@item_router.get("/{collection_uid}/item/")
 async def item_list(
     queryset: QuerySet = Depends(get_item_queryset),
     stoken: t.Optional[str] = None,
@@ -439,7 +440,7 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
         return MsgpackResponse({})
 
 
-@collection_router.get("/{collection_uid}/item/{item_uid}/revision/")
+@item_router.get("/{collection_uid}/item/{item_uid}/revision/")
 def item_revisions(
     item_uid: str,
     limit: int = 50,
@@ -475,7 +476,7 @@ def item_revisions(
     return MsgpackResponse(ret)
 
 
-@collection_router.post("/{collection_uid}/item/fetch_updates/")
+@item_router.post("/{collection_uid}/item/fetch_updates/")
 def fetch_updates(
     data: t.List[CollectionItemBulkGetIn],
     stoken: t.Optional[str] = None,
@@ -509,14 +510,14 @@ def fetch_updates(
     return MsgpackResponse(ret)
 
 
-@collection_router.post("/{collection_uid}/item/transaction/", dependencies=[Depends(has_write_access)])
+@item_router.post("/{collection_uid}/item/transaction/", dependencies=[Depends(has_write_access)])
 def item_transaction(
     collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):
     return item_bulk_common(data, user, stoken, collection_uid, validate_etag=True)
 
 
-@collection_router.post("/{collection_uid}/item/batch/", dependencies=[Depends(has_write_access)])
+@item_router.post("/{collection_uid}/item/batch/", dependencies=[Depends(has_write_access)])
 def item_batch(
     collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):

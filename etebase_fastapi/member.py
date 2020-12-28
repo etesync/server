@@ -3,18 +3,19 @@ import typing as t
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import QuerySet
-from fastapi import Depends, status
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 
 from django_etebase import models
 from .authentication import get_authenticated_user
-from .msgpack import MsgpackResponse
+from .msgpack import MsgpackRoute, MsgpackResponse
 from .utils import get_object_or_404
 from .stoken_handler import filter_by_stoken_and_limit
 
-from .collection import collection_router, get_collection, verify_collection_admin
+from .collection import get_collection, verify_collection_admin
 
 User = get_user_model()
+member_router = APIRouter(route_class=MsgpackRoute, tags=["member"])
 default_queryset: QuerySet = models.CollectionMember.objects.all()
 
 
@@ -48,7 +49,7 @@ class MemberListResponse(BaseModel):
     done: bool
 
 
-@collection_router.get(
+@member_router.get(
     "/{collection_uid}/member/", response_model=MemberListResponse, dependencies=[Depends(verify_collection_admin)]
 )
 def member_list(
@@ -70,7 +71,7 @@ def member_list(
     return MsgpackResponse(ret)
 
 
-@collection_router.delete(
+@member_router.delete(
     "/{collection_uid}/member/{username}/",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(verify_collection_admin)],
@@ -81,7 +82,7 @@ def member_delete(
     obj.revoke()
 
 
-@collection_router.patch(
+@member_router.patch(
     "/{collection_uid}/member/{username}/",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(verify_collection_admin)],
@@ -98,7 +99,7 @@ def member_patch(
             instance.save()
 
 
-@collection_router.post(
+@member_router.post(
     "/{collection_uid}/member/leave/",
     status_code=status.HTTP_204_NO_CONTENT,
 )
