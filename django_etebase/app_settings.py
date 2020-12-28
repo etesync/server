@@ -33,6 +33,9 @@ class AppSettings:
 
     @cached_property
     def API_PERMISSIONS(self):  # pylint: disable=invalid-name
+        """
+        Deprecated. Do not use.
+        """
         perms = self._setting("API_PERMISSIONS", ("rest_framework.permissions.IsAuthenticated",))
         ret = []
         for perm in perms:
@@ -40,7 +43,26 @@ class AppSettings:
         return ret
 
     @cached_property
+    def API_PERMISSIONS_READ(self):  # pylint: disable=invalid-name
+        perms = self._setting("API_PERMISSIONS_READ", tuple())
+        ret = []
+        for perm in perms:
+            ret.append(self.import_from_str(perm))
+        return ret
+
+    @cached_property
+    def API_PERMISSIONS_WRITE(self):  # pylint: disable=invalid-name
+        perms = self._setting("API_PERMISSIONS_WRITE", tuple())
+        ret = []
+        for perm in perms:
+            ret.append(self.import_from_str(perm))
+        return ret
+
+    @cached_property
     def API_AUTHENTICATORS(self):  # pylint: disable=invalid-name
+        """
+        Deprecated. Do not use.
+        """
         perms = self._setting(
             "API_AUTHENTICATORS",
             (
