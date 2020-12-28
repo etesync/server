@@ -298,7 +298,7 @@ def signup_save(data: SignupIn, request: Request) -> User:
             except django_exceptions.ValidationError as e:
                 transform_validation_error("user", e)
             except Exception as e:
-                raise EtebaseValidationError("generic", str(e))
+                raise HttpError("generic", str(e))
 
         if hasattr(instance, "userinfo"):
             raise HttpError("user_exists", "User already exists", status_code=status.HTTP_409_CONFLICT)

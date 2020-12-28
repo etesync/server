@@ -3,8 +3,9 @@ import typing as t
 from django.db.models import QuerySet
 from fastapi import status
 
-from django_etebase.exceptions import EtebaseValidationError
 from django_etebase.models import Stoken
+
+from .exceptions import HttpError
 
 # TODO missing stoken_annotation type
 StokenAnnotation = t.Any
@@ -15,7 +16,7 @@ def get_stoken_obj(stoken: t.Optional[str]) -> t.Optional[Stoken]:
         try:
             return Stoken.objects.get(uid=stoken)
         except Stoken.DoesNotExist:
-            raise EtebaseValidationError("bad_stoken", "Invalid stoken.", status_code=status.HTTP_400_BAD_REQUEST)
+            raise HttpError("bad_stoken", "Invalid stoken.", status_code=status.HTTP_400_BAD_REQUEST)
 
     return None
 
