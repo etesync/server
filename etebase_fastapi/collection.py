@@ -7,7 +7,6 @@ from django.core.files.base import ContentFile
 from django.db import transaction, IntegrityError
 from django.db.models import Q, QuerySet
 from fastapi import APIRouter, Depends, status, Request
-from fastapi.responses import FileResponse
 
 from django_etebase import models
 from .authentication import get_authenticated_user
@@ -26,6 +25,7 @@ from .utils import (
     PERMISSIONS_READWRITE,
 )
 from .dependencies import get_collection_queryset, get_item_queryset, get_collection
+from .sendfile import sendfile
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
@@ -582,4 +582,4 @@ def chunk_download(
     chunk = get_object_or_404(collection.chunks, uid=chunk_uid)
 
     filename = chunk.chunkFile.path
-    return FileResponse(filename, media_type="application/octet-stream")
+    return sendfile(filename)
