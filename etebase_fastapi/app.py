@@ -21,10 +21,11 @@ from .msgpack import MsgpackResponse
 app = FastAPI()
 VERSION = "v1"
 BASE_PATH = f"/api/{VERSION}"
+COLLECTION_UID_MARKER = "{collection_uid}"
 app.include_router(authentication_router, prefix=f"{BASE_PATH}/authentication")
 app.include_router(collection_router, prefix=f"{BASE_PATH}/collection")
-app.include_router(item_router, prefix=f"{BASE_PATH}/collection")
-app.include_router(member_router, prefix=f"{BASE_PATH}/collection")
+app.include_router(item_router, prefix=f"{BASE_PATH}/collection/{COLLECTION_UID_MARKER}")
+app.include_router(member_router, prefix=f"{BASE_PATH}/collection/{COLLECTION_UID_MARKER}")
 app.include_router(invitation_incoming_router, prefix=f"{BASE_PATH}/invitation/incoming")
 app.include_router(invitation_outgoing_router, prefix=f"{BASE_PATH}/invitation/outgoing")
 if settings.DEBUG:

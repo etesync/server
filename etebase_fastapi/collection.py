@@ -379,7 +379,7 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
     return instance
 
 
-@item_router.get("/{collection_uid}/item/{item_uid}/")
+@item_router.get("/item/{item_uid}/")
 def item_get(
     item_uid: str,
     queryset: QuerySet = Depends(get_item_queryset),
@@ -408,7 +408,7 @@ def item_list_common(
     return MsgpackResponse(content=ret)
 
 
-@item_router.get("/{collection_uid}/item/")
+@item_router.get("/item/")
 async def item_list(
     queryset: QuerySet = Depends(get_item_queryset),
     stoken: t.Optional[str] = None,
@@ -440,7 +440,7 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
         return MsgpackResponse({})
 
 
-@item_router.get("/{collection_uid}/item/{item_uid}/revision/")
+@item_router.get("/item/{item_uid}/revision/")
 def item_revisions(
     item_uid: str,
     limit: int = 50,
@@ -476,7 +476,7 @@ def item_revisions(
     return MsgpackResponse(ret)
 
 
-@item_router.post("/{collection_uid}/item/fetch_updates/")
+@item_router.post("/item/fetch_updates/")
 def fetch_updates(
     data: t.List[CollectionItemBulkGetIn],
     stoken: t.Optional[str] = None,
@@ -510,14 +510,14 @@ def fetch_updates(
     return MsgpackResponse(ret)
 
 
-@item_router.post("/{collection_uid}/item/transaction/", dependencies=[Depends(has_write_access)])
+@item_router.post("/item/transaction/", dependencies=[Depends(has_write_access)])
 def item_transaction(
     collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):
     return item_bulk_common(data, user, stoken, collection_uid, validate_etag=True)
 
 
-@item_router.post("/{collection_uid}/item/batch/", dependencies=[Depends(has_write_access)])
+@item_router.post("/item/batch/", dependencies=[Depends(has_write_access)])
 def item_batch(
     collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):

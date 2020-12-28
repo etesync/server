@@ -49,9 +49,7 @@ class MemberListResponse(BaseModel):
     done: bool
 
 
-@member_router.get(
-    "/{collection_uid}/member/", response_model=MemberListResponse, dependencies=[Depends(verify_collection_admin)]
-)
+@member_router.get("/member/", response_model=MemberListResponse, dependencies=[Depends(verify_collection_admin)])
 def member_list(
     iterator: t.Optional[str] = None,
     limit: int = 50,
@@ -72,7 +70,7 @@ def member_list(
 
 
 @member_router.delete(
-    "/{collection_uid}/member/{username}/",
+    "/member/{username}/",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(verify_collection_admin)],
 )
@@ -83,7 +81,7 @@ def member_delete(
 
 
 @member_router.patch(
-    "/{collection_uid}/member/{username}/",
+    "/member/{username}/",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(verify_collection_admin)],
 )
@@ -100,7 +98,7 @@ def member_patch(
 
 
 @member_router.post(
-    "/{collection_uid}/member/leave/",
+    "/member/leave/",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 def member_leave(user: User = Depends(get_authenticated_user), collection: models.Collection = Depends(get_collection)):
