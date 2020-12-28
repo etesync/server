@@ -9,11 +9,17 @@ class HttpErrorField(BaseModel):
     code: str
     detail: str
 
+    class Config:
+        orm_mode = True
+
 
 class HttpErrorOut(BaseModel):
     code: str
     detail: str
     errors: t.Optional[t.List[HttpErrorField]]
+
+    class Config:
+        orm_mode = True
 
 
 class CustomHttpException(Exception):
@@ -71,6 +77,19 @@ class HttpError(CustomHttpException):
     @property
     def as_dict(self) -> dict:
         return HttpErrorOut(code=self.code, errors=self.errors, detail=self.detail).dict()
+
+
+class ValidationError(HttpError):
+    def __init__(
+        self,
+        code: str,
+        detail: str,
+        status_code: int = status.HTTP_400_BAD_REQUEST,
+        errors: t.Optional[t.List["HttpError"]] = None,
+        field: t.Optional[str] = None,
+    ):
+        self.field = field
+        super().__init__(code=code, detail=detail, errors=errors, status_code=status_code)
 
 
 def flatten_errors(field_name, errors) -> t.List[HttpError]:

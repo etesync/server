@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, status
 
 from django_etebase import models
 from .authentication import get_authenticated_user
-from .exceptions import HttpError, transform_validation_error, PermissionDenied
+from .exceptions import HttpError, transform_validation_error, PermissionDenied, ValidationError
 from .msgpack import MsgpackRoute
 from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
 from .utils import (
@@ -151,10 +151,11 @@ class ItemDepIn(BaseModel):
         item = models.CollectionItem.objects.get(uid=self.uid)
         etag = self.etag
         if item.etag != etag:
-            raise HttpError(
+            raise ValidationError(
                 "wrong_etag",
                 "Wrong etag. Expected {} got {}".format(item.etag, etag),
                 status_code=status.HTTP_409_CONFLICT,
+                field=self.uid,
             )
 
 
@@ -164,8 +165,19 @@ class ItemBatchIn(BaseModel):
 
     def validate_db(self):
         if self.deps is not None:
+            errors: t.List[HttpError] = []
             for dep in self.deps:
-                dep.validate_db()
+                try:
+                    dep.validate_db()
+                except ValidationError as e:
+                    errors.append(e)
+            if len(errors) > 0:
+                raise ValidationError(
+                    code="dep_failed",
+                    detail="Dependencies failed to validate",
+                    errors=errors,
+                    status_code=status.HTTP_409_CONFLICT,
+                )
 
 
 @sync_to_async
@@ -293,7 +305,7 @@ def _create(data: CollectionIn, user: User):
         try:
             instance.validate_unique()
         except django_exceptions.ValidationError:
-            raise HttpError(
+            raise ValidationError(
                 "unique_uid", "Collection with this uid already exists", status_code=status.HTTP_409_CONFLICT
             )
         instance.save()
@@ -353,10 +365,11 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
             return instance
 
         if validate_etag and cur_etag != etag:
-            raise HttpError(
+            raise ValidationError(
                 "wrong_etag",
                 "Wrong etag. Expected {} got {}".format(cur_etag, etag),
                 status_code=status.HTTP_409_CONFLICT,
+                field=uid,
             )
 
         if not created:
@@ -426,12 +439,22 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
         if stoken is not None and stoken != collection_object.stoken:
             raise HttpError("stale_stoken", "Stoken is too old", status_code=status.HTTP_409_CONFLICT)
 
-        # XXX-TOM: make sure we return compatible errors
         data.validate_db()
-        for item in data.items:
-            item_create(item, collection_object, validate_etag)
 
-        return None
+        errors: t.List[HttpError] = []
+        for item in data.items:
+            try:
+                item_create(item, collection_object, validate_etag)
+            except ValidationError as e:
+                errors.append(e)
+
+        if len(errors) > 0:
+            raise ValidationError(
+                code="item_failed",
+                detail="Items failed to validate",
+                errors=errors,
+                status_code=status.HTTP_409_CONFLICT,
+            )
 
 
 @item_router.get(
