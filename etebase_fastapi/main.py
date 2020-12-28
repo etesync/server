@@ -1,15 +1,7 @@
-import os
-
-from django.core.wsgi import get_wsgi_application
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "etebase_server.settings")
-application = get_wsgi_application()
-
 from django.conf import settings
 
 # Not at the top of the file because we first need to setup django
 from fastapi import FastAPI, Request
-from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
@@ -30,15 +22,16 @@ app.include_router(item_router, prefix=f"{BASE_PATH}/collection/{COLLECTION_UID_
 app.include_router(member_router, prefix=f"{BASE_PATH}/collection/{COLLECTION_UID_MARKER}", tags=["member"])
 app.include_router(invitation_incoming_router, prefix=f"{BASE_PATH}/invitation/incoming", tags=["incoming invitation"])
 app.include_router(invitation_outgoing_router, prefix=f"{BASE_PATH}/invitation/outgoing", tags=["outgoing invitation"])
+
 if settings.DEBUG:
-    from .test_reset_view import test_reset_view_router
+    from etebase_fastapi.test_reset_view import test_reset_view_router
 
     app.include_router(test_reset_view_router, prefix=f"{BASE_PATH}/test/authentication")
+
 app.add_middleware(
     CORSMiddleware, allow_origin_regex="https?://.*", allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOSTS)
-app.mount("/", WSGIMiddleware(application))
 
 
 @app.exception_handler(CustomHttpException)
