@@ -285,7 +285,7 @@ def process_revisions_for_item(item: models.CollectionItem, revision_data: Colle
                 chunk_obj.chunkFile.save("IGNORED", ContentFile(content))
                 chunk_obj.save()
             else:
-                raise HttpError("chunk_no_content", "Tried to create a new chunk without content")
+                raise ValidationError("chunk_no_content", "Tried to create a new chunk without content")
 
         chunks_objs.append(chunk_obj)
 
@@ -301,7 +301,7 @@ def process_revisions_for_item(item: models.CollectionItem, revision_data: Colle
 def _create(data: CollectionIn, user: User):
     with transaction.atomic():
         if data.item.etag is not None:
-            raise HttpError("bad_etag", "etag is not null")
+            raise ValidationError("bad_etag", "etag is not null")
         instance = models.Collection(uid=data.item.uid, owner=user)
         try:
             instance.validate_unique()
