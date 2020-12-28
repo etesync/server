@@ -4,9 +4,9 @@ from asgiref.sync import sync_to_async
 from django.contrib.auth import get_user_model
 from django.core import exceptions as django_exceptions
 from django.core.files.base import ContentFile
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Q, QuerySet
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Request
 
 from django_etebase import models
 from .authentication import get_authenticated_user
@@ -544,28 +544,27 @@ def item_batch(
 # Chunks
 
 
+@sync_to_async
+def chunk_save(chunk_uid: str, collection: models.Collection, content_file: ContentFile):
+    chunk_obj = models.CollectionItemChunk(uid=chunk_uid, collection=collection)
+    chunk_obj.chunkFile.save("IGNORED", content_file)
+    chunk_obj.save()
+    return chunk_obj
+
+
 @item_router.put(
     "/item/{item_uid}/chunk/{chunk_uid}/",
     dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE],
     status_code=status.HTTP_201_CREATED,
 )
-def chunk_update(
-    limit: int = 50,
-    iterator: t.Optional[str] = None,
-    prefetch: Prefetch = PrefetchQuery,
-    user: User = Depends(get_authenticated_user),
+async def chunk_update(
+    request: Request,
+    chunk_uid: str,
     collection: models.Collection = Depends(get_collection),
 ):
     # IGNORED FOR NOW: col_it = get_object_or_404(col.items, uid=collection_item_uid)
-
-    data = {
-        "uid": chunk_uid,
-        "chunkFile": request.data["file"],
-    }
-
-    serializer = self.get_serializer_class()(data=data)
-    serializer.is_valid(raise_exception=True)
+    content_file = ContentFile(await request.body())
     try:
-        serializer.save(collection=col)
+        await chunk_save(chunk_uid, collection, content_file)
     except IntegrityError:
-        return Response({"code": "chunk_exists", "detail": "Chunk already exists."}, status=status.HTTP_409_CONFLICT)
+        raise HttpError("chunk_exists", "Chunk already exists.", status_code=status.HTTP_409_CONFLICT)
