@@ -44,4 +44,4 @@ def is_collection_admin(collection, user):
 
 
 response_model_dict = {"model": HttpErrorOut}
-permission_responses = {403: response_model_dict}
+permission_responses = {401: response_model_dict, 403: response_model_dict}
