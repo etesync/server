@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 0.7.0
+* Chunks: improve the chunk download endpoint to use sendfile extensions
+* Chunks: support not passing chunk content if exists
+* Chunks: fix chunk uploading media type to accept everything
+* Gracefull handle uploading the same revision
+* Pass generic context to callbacks instead of the whole view
+* Fix handling of some validation errors
+
 ## Version 0.6.1
 * Collection: save the UID on the model to use the db for enforcing uniqueness
 
