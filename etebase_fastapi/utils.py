@@ -68,4 +68,7 @@ PERMISSIONS_READWRITE = PERMISSIONS_READ + [Depends(x) for x in app_settings.API
 
 
 response_model_dict = {"model": HttpErrorOut}
-permission_responses = {401: response_model_dict, 403: response_model_dict}
+permission_responses: t.Dict[t.Union[int, str], t.Dict[str, t.Any]] = {
+    401: response_model_dict,
+    403: response_model_dict,
+}
