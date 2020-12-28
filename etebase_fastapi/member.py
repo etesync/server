@@ -14,7 +14,7 @@ from .stoken_handler import filter_by_stoken_and_limit
 from .collection import get_collection, verify_collection_admin
 
 User = get_user_model()
-member_router = APIRouter(route_class=MsgpackRoute, tags=["member"])
+member_router = APIRouter(route_class=MsgpackRoute)
 default_queryset: QuerySet = models.CollectionMember.objects.all()
 
 

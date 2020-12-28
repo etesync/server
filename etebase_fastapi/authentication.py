@@ -33,7 +33,7 @@ User = get_user_model()
 token_scheme = APIKeyHeader(name="Authorization")
 AUTO_REFRESH = True
 MIN_REFRESH_INTERVAL = 60
-authentication_router = APIRouter(route_class=MsgpackRoute, tags=["authentication"])
+authentication_router = APIRouter(route_class=MsgpackRoute)
 
 
 @dataclasses.dataclass(frozen=True)

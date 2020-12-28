@@ -22,12 +22,12 @@ app = FastAPI()
 VERSION = "v1"
 BASE_PATH = f"/api/{VERSION}"
 COLLECTION_UID_MARKER = "{collection_uid}"
-app.include_router(authentication_router, prefix=f"{BASE_PATH}/authentication")
-app.include_router(collection_router, prefix=f"{BASE_PATH}/collection")
-app.include_router(item_router, prefix=f"{BASE_PATH}/collection/{COLLECTION_UID_MARKER}")
-app.include_router(member_router, prefix=f"{BASE_PATH}/collection/{COLLECTION_UID_MARKER}")
-app.include_router(invitation_incoming_router, prefix=f"{BASE_PATH}/invitation/incoming")
-app.include_router(invitation_outgoing_router, prefix=f"{BASE_PATH}/invitation/outgoing")
+app.include_router(authentication_router, prefix=f"{BASE_PATH}/authentication", tags=["authentication"])
+app.include_router(collection_router, prefix=f"{BASE_PATH}/collection", tags=["collection"])
+app.include_router(item_router, prefix=f"{BASE_PATH}/collection/{COLLECTION_UID_MARKER}", tags=["item"])
+app.include_router(member_router, prefix=f"{BASE_PATH}/collection/{COLLECTION_UID_MARKER}", tags=["member"])
+app.include_router(invitation_incoming_router, prefix=f"{BASE_PATH}/invitation/incoming", tags=["incoming invitation"])
+app.include_router(invitation_outgoing_router, prefix=f"{BASE_PATH}/invitation/outgoing", tags=["outgoing invitation"])
 if settings.DEBUG:
     from .test_reset_view import test_reset_view_router
 

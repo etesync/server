@@ -17,8 +17,8 @@ from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_st
 from .utils import get_object_or_404, Context, Prefetch, PrefetchQuery, is_collection_admin, BaseModel
 
 User = get_user_model()
-collection_router = APIRouter(route_class=MsgpackRoute, tags=["collection"])
-item_router = APIRouter(route_class=MsgpackRoute, tags=["item"])
+collection_router = APIRouter(route_class=MsgpackRoute)
+item_router = APIRouter(route_class=MsgpackRoute)
 default_queryset: QuerySet = models.Collection.objects.all()
 default_item_queryset: QuerySet = models.CollectionItem.objects.all()
 

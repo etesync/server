@@ -13,8 +13,8 @@ from .msgpack import MsgpackRoute
 from .utils import get_object_or_404, Context, is_collection_admin, BaseModel
 
 User = get_user_model()
-invitation_incoming_router = APIRouter(route_class=MsgpackRoute, tags=["incoming invitation"])
-invitation_outgoing_router = APIRouter(route_class=MsgpackRoute, tags=["outgoing invitation"])
+invitation_incoming_router = APIRouter(route_class=MsgpackRoute)
+invitation_outgoing_router = APIRouter(route_class=MsgpackRoute)
 default_queryset: QuerySet = models.CollectionInvitation.objects.all()
 
 
