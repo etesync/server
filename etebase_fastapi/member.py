@@ -4,12 +4,11 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel
 
 from django_etebase import models
 from .authentication import get_authenticated_user
-from .msgpack import MsgpackRoute, MsgpackResponse
-from .utils import get_object_or_404
+from .msgpack import MsgpackRoute
+from .utils import get_object_or_404, BaseModel
 from .stoken_handler import filter_by_stoken_and_limit
 
 from .collection import get_collection, verify_collection_admin
@@ -61,12 +60,11 @@ def member_list(
     )
     new_stoken = new_stoken_obj and new_stoken_obj.uid
 
-    ret = MemberListResponse(
+    return MemberListResponse(
         data=[CollectionMemberOut.from_orm(item) for item in result],
         iterator=new_stoken,
         done=done,
     )
-    return MsgpackResponse(ret)
 
 
 @member_router.delete(

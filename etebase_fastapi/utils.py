@@ -2,6 +2,7 @@ import dataclasses
 import typing as t
 
 from fastapi import status, Query
+from pydantic import BaseModel as PyBaseModel
 
 from django.db.models import QuerySet
 from django.core.exceptions import ObjectDoesNotExist
@@ -15,6 +16,13 @@ User = get_user_model()
 
 Prefetch = t.Literal["auto", "medium"]
 PrefetchQuery = Query(default="auto")
+
+
+class BaseModel(PyBaseModel):
+    class Config:
+        json_encoders = {
+            bytes: lambda x: x,
+        }
 
 
 @dataclasses.dataclass

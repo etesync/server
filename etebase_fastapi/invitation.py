@@ -4,14 +4,13 @@ from django.contrib.auth import get_user_model
 from django.db import transaction, IntegrityError
 from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, status, Request
-from pydantic import BaseModel
 
 from django_etebase import models
 from django_etebase.utils import get_user_queryset, CallbackContext
 from .authentication import get_authenticated_user
 from .exceptions import ValidationError, PermissionDenied
-from .msgpack import MsgpackRoute, MsgpackResponse
-from .utils import get_object_or_404, Context, is_collection_admin
+from .msgpack import MsgpackRoute
+from .utils import get_object_or_404, Context, is_collection_admin, BaseModel
 
 User = get_user_model()
 invitation_incoming_router = APIRouter(route_class=MsgpackRoute, tags=["incoming invitation"])
@@ -85,7 +84,7 @@ def list_common(
     queryset: QuerySet,
     iterator: t.Optional[str],
     limit: int,
-) -> MsgpackResponse:
+) -> InvitationListResponse:
     queryset = queryset.order_by("id")
 
     if iterator is not None:
@@ -102,12 +101,11 @@ def list_common(
     ret_data = result
     iterator = ret_data[-1].uid if len(result) > 0 else None
 
-    ret = InvitationListResponse(
+    return InvitationListResponse(
         data=ret_data,
         iterator=iterator,
         done=done,
     )
-    return MsgpackResponse(ret)
 
 
 @invitation_incoming_router.get("/", response_model=InvitationListResponse)
@@ -125,8 +123,7 @@ def incoming_get(
     queryset: QuerySet = Depends(get_incoming_queryset),
 ):
     obj = get_object_or_404(queryset, uid=invitation_uid)
-    ret = CollectionInvitationOut.from_orm(obj)
-    return MsgpackResponse(ret)
+    return CollectionInvitationOut.from_orm(obj)
 
 
 @invitation_incoming_router.delete("/{invitation_uid}/", status_code=status.HTTP_204_NO_CONTENT)
@@ -191,8 +188,6 @@ def outgoing_create(
         except IntegrityError:
             raise ValidationError("invitation_exists", "Invitation already exists")
 
-    return MsgpackResponse(CollectionInvitationOut.from_orm(ret), status_code=status.HTTP_201_CREATED)
-
 
 @invitation_outgoing_router.get("/", response_model=InvitationListResponse)
 def outgoing_list(
@@ -221,5 +216,4 @@ def outgoing_fetch_user_profile(
     kwargs = {User.USERNAME_FIELD: username.lower()}
     user = get_object_or_404(get_user_queryset(User.objects.all(), CallbackContext(request.path_params)), **kwargs)
     user_info = get_object_or_404(models.UserInfo.objects.all(), owner=user)
-    ret = UserInfoOut.from_orm(user_info)
-    return MsgpackResponse(ret)
+    return UserInfoOut.from_orm(user_info)

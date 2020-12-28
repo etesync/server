@@ -16,7 +16,6 @@ from django.db import transaction
 from django.utils import timezone
 from fastapi import APIRouter, Depends, status, Request, Response
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel
 
 from django_etebase import app_settings, models
 from django_etebase.exceptions import EtebaseValidationError
@@ -27,7 +26,8 @@ from django_etebase.token_auth.models import get_default_expiry
 from django_etebase.utils import create_user, get_user_queryset, CallbackContext
 from django_etebase.views import msgpack_encode, msgpack_decode
 from .exceptions import AuthenticationFailed, transform_validation_error, ValidationError
-from .msgpack import MsgpackResponse, MsgpackRoute
+from .msgpack import MsgpackRoute
+from .utils import BaseModel
 
 User = get_user_model()
 token_scheme = APIKeyHeader(name="Authorization")
@@ -225,10 +225,10 @@ def validate_login_request(
 
 @authentication_router.get("/is_etebase/")
 async def is_etebase():
-    return MsgpackResponse({})
+    pass
 
 
-@authentication_router.post("/login_challenge/")
+@authentication_router.post("/login_challenge/", response_model=LoginChallengeOut)
 async def login_challenge(user: User = Depends(get_login_user)):
     enc_key = get_encryption_key(user.userinfo.salt)
     box = nacl.secret.SecretBox(enc_key)
@@ -237,35 +237,31 @@ async def login_challenge(user: User = Depends(get_login_user)):
         "userId": user.id,
     }
     challenge = bytes(box.encrypt(msgpack_encode(challenge_data), encoder=nacl.encoding.RawEncoder))
-    return MsgpackResponse(
-        LoginChallengeOut(salt=user.userinfo.salt, challenge=challenge, version=user.userinfo.version)
-    )
+    return LoginChallengeOut(salt=user.userinfo.salt, challenge=challenge, version=user.userinfo.version)
 
 
-@authentication_router.post("/login/")
+@authentication_router.post("/login/", response_model=LoginOut)
 async def login(data: Login, request: Request):
     user = await get_login_user(LoginChallengeIn(username=data.response_data.username))
     host = request.headers.get("Host")
     await validate_login_request(data.response_data, data, user, "login", host)
     data = await sync_to_async(LoginOut.from_orm)(user)
     await sync_to_async(user_logged_in.send)(sender=user.__class__, request=None, user=user)
-    return MsgpackResponse(content=data, status_code=status.HTTP_200_OK)
+    return data
 
 
-@authentication_router.post("/logout/")
+@authentication_router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(request: Request, auth_data: AuthData = Depends(get_auth_data)):
     await sync_to_async(auth_data.token.delete)()
     # XXX-TOM
     await sync_to_async(user_logged_out.send)(sender=auth_data.user.__class__, request=None, user=auth_data.user)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@authentication_router.post("/change_password/")
+@authentication_router.post("/change_password/", status_code=status.HTTP_204_NO_CONTENT)
 async def change_password(data: ChangePassword, request: Request, user: User = Depends(get_authenticated_user)):
     host = request.headers.get("Host")
     await validate_login_request(data.response_data, data, user, "changePassword", host)
     await sync_to_async(save_changed_password)(data, user)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @authentication_router.post("/dashboard_url/")
@@ -278,7 +274,7 @@ def dashboard_url(user: User = Depends(get_authenticated_user)):
     ret = {
         "url": get_dashboard_url(request, *args, **kwargs),
     }
-    return MsgpackResponse(ret)
+    return ret
 
 
 def signup_save(data: SignupIn, request: Request) -> User:
@@ -311,10 +307,10 @@ def signup_save(data: SignupIn, request: Request) -> User:
     return instance
 
 
-@authentication_router.post("/signup/")
+@authentication_router.post("/signup/", response_model=LoginOut, status_code=status.HTTP_201_CREATED)
 async def signup(data: SignupIn, request: Request):
     user = await sync_to_async(signup_save)(data, request)
     # XXX-TOM
     data = await sync_to_async(LoginOut.from_orm)(user)
     await sync_to_async(user_signed_up.send)(sender=user.__class__, request=None, user=user)
-    return MsgpackResponse(content=data, status_code=status.HTTP_201_CREATED)
+    return data

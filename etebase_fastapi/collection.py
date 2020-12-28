@@ -8,14 +8,13 @@ from django.db import transaction
 from django.db.models import Q
 from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel
 
 from django_etebase import models
 from .authentication import get_authenticated_user
 from .exceptions import ValidationError, transform_validation_error, PermissionDenied
-from .msgpack import MsgpackRoute, MsgpackResponse
+from .msgpack import MsgpackRoute
 from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
-from .utils import get_object_or_404, Context, Prefetch, PrefetchQuery, is_collection_admin
+from .utils import get_object_or_404, Context, Prefetch, PrefetchQuery, is_collection_admin, BaseModel
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute, tags=["collection"])
@@ -169,7 +168,7 @@ def collection_list_common(
     stoken: t.Optional[str],
     limit: int,
     prefetch: Prefetch,
-) -> MsgpackResponse:
+) -> CollectionListResponse:
     result, new_stoken_obj, done = filter_by_stoken_and_limit(
         stoken, limit, queryset, models.Collection.stoken_annotation
     )
@@ -192,7 +191,7 @@ def collection_list_common(
         if len(remed) > 0:
             ret.removedMemberships = [{"uid": x} for x in remed]
 
-    return MsgpackResponse(content=ret)
+    return ret
 
 
 def get_collection_queryset(user: User = Depends(get_authenticated_user)) -> QuerySet:
@@ -230,7 +229,7 @@ def has_write_access(
 
 # paths
 
-@collection_router.post("/list_multi/")
+@collection_router.post("/list_multi/", response_model=CollectionListResponse, response_model_exclude_unset=True)
 async def list_multi(
     data: ListMulti,
     stoken: t.Optional[str] = None,
@@ -247,7 +246,7 @@ async def list_multi(
     return await collection_list_common(queryset, user, stoken, limit, prefetch)
 
 
-@collection_router.post("/list/")
+@collection_router.get("/", response_model=CollectionListResponse)
 async def collection_list(
     stoken: t.Optional[str] = None,
     limit: int = 50,
@@ -323,20 +322,18 @@ def _create(data: CollectionIn, user: User):
         ).save()
 
 
-@collection_router.post("/")
+@collection_router.post("/", status_code=status.HTTP_201_CREATED)
 async def create(data: CollectionIn, user: User = Depends(get_authenticated_user)):
     await sync_to_async(_create)(data, user)
-    return MsgpackResponse({}, status_code=status.HTTP_201_CREATED)
 
 
-@collection_router.get("/{collection_uid}/")
+@collection_router.get("/{collection_uid}/", response_model=CollectionOut)
 def collection_get(
         obj: models.Collection = Depends(get_collection),
         user: User = Depends(get_authenticated_user),
         prefetch: Prefetch = PrefetchQuery
         ):
-    ret = CollectionOut.from_orm_context(obj, Context(user, prefetch))
-    return MsgpackResponse(ret)
+    return CollectionOut.from_orm_context(obj, Context(user, prefetch))
 
 
 def item_create(item_model: CollectionItemIn, collection: models.Collection, validate_etag: bool):
@@ -379,15 +376,14 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
     return instance
 
 
-@item_router.get("/item/{item_uid}/")
+@item_router.get("/item/{item_uid}/", response_model=CollectionItemOut)
 def item_get(
     item_uid: str,
     queryset: QuerySet = Depends(get_item_queryset),
     user: User = Depends(get_authenticated_user), prefetch: Prefetch = PrefetchQuery,
 ):
     obj = queryset.get(uid=item_uid)
-    ret = CollectionItemOut.from_orm_context(obj, Context(user, prefetch))
-    return MsgpackResponse(ret)
+    return CollectionItemOut.from_orm_context(obj, Context(user, prefetch))
 
 
 @sync_to_async
@@ -397,18 +393,17 @@ def item_list_common(
     stoken: t.Optional[str],
     limit: int,
     prefetch: Prefetch,
-) -> MsgpackResponse:
+) -> CollectionItemListResponse:
     result, new_stoken_obj, done = filter_by_stoken_and_limit(
         stoken, limit, queryset, models.CollectionItem.stoken_annotation
     )
     new_stoken = new_stoken_obj and new_stoken_obj.uid
     context = Context(user, prefetch)
     data: t.List[CollectionItemOut] = [CollectionItemOut.from_orm_context(item, context) for item in result]
-    ret = CollectionItemListResponse(data=data, stoken=new_stoken, done=done)
-    return MsgpackResponse(content=ret)
+    return CollectionItemListResponse(data=data, stoken=new_stoken, done=done)
 
 
-@item_router.get("/item/")
+@item_router.get("/item/", response_model=CollectionItemListResponse)
 async def item_list(
     queryset: QuerySet = Depends(get_item_queryset),
     stoken: t.Optional[str] = None,
@@ -437,10 +432,10 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
         for item in data.items:
             item_create(item, collection_object, validate_etag)
 
-        return MsgpackResponse({})
+        return None
 
 
-@item_router.get("/item/{item_uid}/revision/")
+@item_router.get("/item/{item_uid}/revision/", response_model=CollectionItemRevisionListResponse)
 def item_revisions(
     item_uid: str,
     limit: int = 50,
@@ -468,15 +463,14 @@ def item_revisions(
     ret_data = [CollectionItemRevisionInOut.from_orm_context(revision, context) for revision in result]
     iterator = ret_data[-1].uid if len(result) > 0 else None
 
-    ret = CollectionItemRevisionListResponse(
+    return CollectionItemRevisionListResponse(
         data=ret_data,
         iterator=iterator,
         done=done,
     )
-    return MsgpackResponse(ret)
 
 
-@item_router.post("/item/fetch_updates/")
+@item_router.post("/item/fetch_updates/", response_model=CollectionItemListResponse)
 def fetch_updates(
     data: t.List[CollectionItemBulkGetIn],
     stoken: t.Optional[str] = None,
@@ -502,12 +496,11 @@ def fetch_updates(
     new_stoken = new_stoken or stoken
 
     context = Context(user, prefetch)
-    ret = CollectionItemListResponse(
+    return CollectionItemListResponse(
         data=[CollectionItemOut.from_orm_context(item, context) for item in queryset],
         stoken=new_stoken,
         done=True,  # we always return all the items, so it's always done
     )
-    return MsgpackResponse(ret)
 
 
 @item_router.post("/item/transaction/", dependencies=[Depends(has_write_access)])
