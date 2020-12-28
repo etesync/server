@@ -18,16 +18,14 @@ from fastapi import APIRouter, Depends, status, Request
 from fastapi.security import APIKeyHeader
 
 from django_etebase import app_settings, models
-from django_etebase.exceptions import EtebaseValidationError
 from django_etebase.models import UserInfo
 from django_etebase.signals import user_signed_up
 from django_etebase.token_auth.models import AuthToken
 from django_etebase.token_auth.models import get_default_expiry
 from django_etebase.utils import create_user, get_user_queryset, CallbackContext
-from django_etebase.views import msgpack_encode, msgpack_decode
 from .exceptions import AuthenticationFailed, transform_validation_error, HttpError
 from .msgpack import MsgpackRoute
-from .utils import BaseModel, permission_responses
+from .utils import BaseModel, permission_responses, msgpack_encode, msgpack_decode 
 
 User = get_user_model()
 token_scheme = APIKeyHeader(name="Authorization")
@@ -293,7 +291,7 @@ def signup_save(data: SignupIn, request: Request) -> User:
                     context=CallbackContext(request.path_params),
                 )
                 instance.full_clean()
-            except EtebaseValidationError as e:
+            except HttpError as e:
                 raise e
             except django_exceptions.ValidationError as e:
                 transform_validation_error("user", e)

@@ -1,5 +1,6 @@
 import dataclasses
 import typing as t
+import msgpack
 
 from fastapi import status, Query, Depends
 from pydantic import BaseModel as PyBaseModel
@@ -42,6 +43,14 @@ def get_object_or_404(queryset: QuerySet, **kwargs):
 def is_collection_admin(collection, user):
     member = collection.members.filter(user=user).first()
     return (member is not None) and (member.accessLevel == AccessLevels.ADMIN)
+
+
+def msgpack_encode(content):
+    return msgpack.packb(content, use_bin_type=True)
+
+
+def msgpack_decode(content):
+    return msgpack.unpackb(content, raw=False)
 
 
 PERMISSIONS_READ = [Depends(x) for x in app_settings.API_PERMISSIONS_READ]

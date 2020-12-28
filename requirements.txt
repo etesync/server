@@ -7,14 +7,10 @@
 asgiref==3.3.1            # via django
 cffi==1.14.4              # via pynacl
 click==7.1.2              # via uvicorn
-django-cors-headers==3.6.0  # via -r requirements.in/base.txt
-django==3.1.4             # via -r requirements.in/base.txt, django-cors-headers, djangorestframework, drf-nested-routers
-djangorestframework==3.12.2  # via -r requirements.in/base.txt, drf-nested-routers
-drf-nested-routers==0.92.5  # via -r requirements.in/base.txt
+django==3.1.4             # via -r requirements.in/base.txt
 fastapi==0.63.0           # via -r requirements.in/base.txt
 h11==0.11.0               # via uvicorn
 msgpack==1.0.2            # via -r requirements.in/base.txt
-psycopg2-binary==2.8.6    # via -r requirements.in/base.txt
 pycparser==2.20           # via cffi
 pydantic==1.7.3           # via fastapi
 pynacl==1.4.0             # via -r requirements.in/base.txt
