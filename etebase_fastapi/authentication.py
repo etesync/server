@@ -263,7 +263,7 @@ async def change_password(data: ChangePassword, request: Request, user: User = D
 
 
 @authentication_router.post("/dashboard_url/", responses=permission_responses)
-def dashboard_url(user: User = Depends(get_authenticated_user)):
+def dashboard_url(request: Request, user: User = Depends(get_authenticated_user)):
     get_dashboard_url = app_settings.DASHBOARD_URL_FUNC
     if get_dashboard_url is None:
         raise HttpError("not_supported", "This server doesn't have a user dashboard.")
