@@ -46,12 +46,19 @@ class LoginResponse(BaseModel):
 
 
 class UserOut(BaseModel):
+    username: str
+    email: str
     pubkey: bytes
     encryptedContent: bytes
 
     @classmethod
     def from_orm(cls: t.Type["UserOut"], obj: User) -> "UserOut":
-        return cls(pubkey=bytes(obj.userinfo.pubkey), encryptedContent=bytes(obj.userinfo.encryptedContent))
+        return cls(
+            username=obj.username,
+            email=obj.email,
+            pubkey=bytes(obj.userinfo.pubkey),
+            encryptedContent=bytes(obj.userinfo.encryptedContent),
+        )
 
 
 class LoginOut(BaseModel):
