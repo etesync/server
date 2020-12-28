@@ -7,6 +7,7 @@ from django.core.files.base import ContentFile
 from django.db import transaction, IntegrityError
 from django.db.models import Q, QuerySet
 from fastapi import APIRouter, Depends, status, Request
+from fastapi.responses import FileResponse
 
 from django_etebase import models
 from .authentication import get_authenticated_user
@@ -568,3 +569,17 @@ async def chunk_update(
         await chunk_save(chunk_uid, collection, content_file)
     except IntegrityError:
         raise HttpError("chunk_exists", "Chunk already exists.", status_code=status.HTTP_409_CONFLICT)
+
+
+@item_router.get(
+    "/item/{item_uid}/chunk/{chunk_uid}/download/",
+    dependencies=PERMISSIONS_READ,
+)
+def chunk_download(
+    chunk_uid: str,
+    collection: models.Collection = Depends(get_collection),
+):
+    chunk = get_object_or_404(collection.chunks, uid=chunk_uid)
+
+    filename = chunk.chunkFile.path
+    return FileResponse(filename, media_type="application/octet-stream")
