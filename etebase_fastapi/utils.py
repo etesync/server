@@ -1,6 +1,7 @@
 import dataclasses
 import typing as t
 import msgpack
+import base64
 
 from fastapi import status, Query, Depends
 from pydantic import BaseModel as PyBaseModel
@@ -51,6 +52,15 @@ def msgpack_encode(content):
 
 def msgpack_decode(content):
     return msgpack.unpackb(content, raw=False)
+
+
+def b64encode(value):
+    return base64.urlsafe_b64encode(value).decode("ascii").strip("=")
+
+
+def b64decode(data):
+    data += "=" * ((4 - len(data) % 4) % 4)
+    return base64.urlsafe_b64decode(data)
 
 
 PERMISSIONS_READ = [Depends(x) for x in app_settings.API_PERMISSIONS_READ]
