@@ -32,6 +32,10 @@ class UserInfoOut(BaseModel):
     class Config:
         orm_mode = True
 
+    @classmethod
+    def from_orm(cls: t.Type["UserInfoOut"], obj: models.UserInfo) -> "UserInfoOut":
+        return cls(pubkey=bytes(obj.pubkey))
+
 
 class CollectionInvitationAcceptIn(BaseModel):
     collectionType: bytes
@@ -69,8 +73,8 @@ class CollectionInvitationOut(CollectionInvitationCommon):
             username=obj.user.username,
             collection=obj.collection.uid,
             fromUsername=obj.fromMember.user.username,
-            fromPubkey=obj.fromMember.user.userinfo.pubkey,
-            signedEncryptionKey=obj.signedEncryptionKey,
+            fromPubkey=bytes(obj.fromMember.user.userinfo.pubkey),
+            signedEncryptionKey=bytes(obj.signedEncryptionKey),
         )
 
 

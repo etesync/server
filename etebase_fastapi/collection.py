@@ -58,7 +58,7 @@ class CollectionItemRevisionInOut(BaseModel):
                     chunks.append((chunk_obj.uid, f.read()))
             else:
                 chunks.append((chunk_obj.uid,))
-        return cls(uid=obj.uid, meta=obj.meta, deleted=obj.deleted, chunks=chunks)
+        return cls(uid=obj.uid, meta=bytes(obj.meta), deleted=obj.deleted, chunks=chunks)
 
 
 class CollectionItemCommon(BaseModel):
@@ -103,8 +103,8 @@ class CollectionOut(CollectionCommon):
         member: models.CollectionMember = obj.members.get(user=context.user)
         collection_type = member.collectionType
         ret = cls(
-            collectionType=collection_type and collection_type.uid,
-            collectionKey=member.encryptionKey,
+            collectionType=collection_type and bytes(collection_type.uid),
+            collectionKey=bytes(member.encryptionKey),
             accessLevel=member.accessLevel,
             stoken=obj.stoken,
             item=CollectionItemOut.from_orm_context(obj.main_item, context),

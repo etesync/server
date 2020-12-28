@@ -25,7 +25,7 @@ from django_etebase.token_auth.models import get_default_expiry
 from django_etebase.utils import create_user, get_user_queryset, CallbackContext
 from .exceptions import AuthenticationFailed, transform_validation_error, HttpError
 from .msgpack import MsgpackRoute
-from .utils import BaseModel, permission_responses, msgpack_encode, msgpack_decode 
+from .utils import BaseModel, permission_responses, msgpack_encode, msgpack_decode
 
 User = get_user_model()
 token_scheme = APIKeyHeader(name="Authorization")
@@ -63,7 +63,7 @@ class UserOut(BaseModel):
 
     @classmethod
     def from_orm(cls: t.Type["UserOut"], obj: User) -> "UserOut":
-        return cls(pubkey=obj.userinfo.pubkey, encryptedContent=obj.userinfo.encryptedContent)
+        return cls(pubkey=bytes(obj.userinfo.pubkey), encryptedContent=bytes(obj.userinfo.encryptedContent))
 
 
 class LoginOut(BaseModel):
@@ -228,14 +228,15 @@ async def is_etebase():
 
 @authentication_router.post("/login_challenge/", response_model=LoginChallengeOut)
 async def login_challenge(user: User = Depends(get_login_user)):
-    enc_key = get_encryption_key(user.userinfo.salt)
+    salt = bytes(user.userinfo.salt)
+    enc_key = get_encryption_key(salt)
     box = nacl.secret.SecretBox(enc_key)
     challenge_data = {
         "timestamp": int(datetime.now().timestamp()),
         "userId": user.id,
     }
     challenge = bytes(box.encrypt(msgpack_encode(challenge_data), encoder=nacl.encoding.RawEncoder))
-    return LoginChallengeOut(salt=user.userinfo.salt, challenge=challenge, version=user.userinfo.version)
+    return LoginChallengeOut(salt=salt, challenge=challenge, version=user.userinfo.version)
 
 
 @authentication_router.post("/login/", response_model=LoginOut)
