@@ -31,7 +31,10 @@ class CollectionItemRevisionInOut(BaseModel):
     uid: str
     meta: bytes
     deleted: bool
-    chunks: t.List[t.Tuple[str, t.Optional[bytes]]]
+    chunks: t.List[t.Union[
+        t.Tuple[str],
+        t.Tuple[str, bytes],
+        ]]
 
     class Config:
         orm_mode = True
