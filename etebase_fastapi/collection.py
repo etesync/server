@@ -515,3 +515,31 @@ def item_batch(
     collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
 ):
     return item_bulk_common(data, user, stoken, collection_uid, validate_etag=False)
+
+
+# Chunks
+
+
+@item_router.put("/item/{item_uid}/chunk/{chunk_uid}/", dependencies=[Depends(has_write_access)], status_code=status.HTTP_201_CREATED)
+def chunk_update(
+    limit: int = 50,
+    iterator: t.Optional[str] = None,
+    prefetch: Prefetch = PrefetchQuery,
+    user: User = Depends(get_authenticated_user),
+    collection: models.Collection = Depends(get_collection),
+):
+    # IGNORED FOR NOW: col_it = get_object_or_404(col.items, uid=collection_item_uid)
+
+    data = {
+        "uid": chunk_uid,
+        "chunkFile": request.data["file"],
+    }
+
+    serializer = self.get_serializer_class()(data=data)
+    serializer.is_valid(raise_exception=True)
+    try:
+        serializer.save(collection=col)
+    except IntegrityError:
+        return Response(
+            {"code": "chunk_exists", "detail": "Chunk already exists."}, status=status.HTTP_409_CONFLICT
+        )
