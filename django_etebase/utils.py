@@ -28,7 +28,7 @@ def get_user_queryset(queryset, context: CallbackContext):
 def create_user(context: CallbackContext, *args, **kwargs):
     custom_func = app_settings.CREATE_USER_FUNC
     if custom_func is not None:
-        return custom_func(*args, **kwargs)
+        return custom_func(context, *args, **kwargs)
     return User.objects.create_user(*args, **kwargs)
 
 

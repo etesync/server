@@ -181,7 +181,7 @@ async def is_etebase():
 
 
 @authentication_router.post("/login_challenge/", response_model=LoginChallengeOut)
-async def login_challenge(user: User = Depends(get_login_user)):
+def login_challenge(user: User = Depends(get_login_user)):
     salt = bytes(user.userinfo.salt)
     enc_key = get_encryption_key(salt)
     box = nacl.secret.SecretBox(enc_key)
@@ -238,10 +238,10 @@ def signup_save(data: SignupIn, request: Request) -> User:
             # Create the user and save the casing the user chose as the first name
             try:
                 instance = create_user(
+                    CallbackContext(request.path_params),
                     **user_data.dict(),
                     password=None,
                     first_name=user_data.username,
-                    context=CallbackContext(request.path_params),
                 )
                 instance.full_clean()
             except HttpError as e:
