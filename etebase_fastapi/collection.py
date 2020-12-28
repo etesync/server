@@ -5,8 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core import exceptions as django_exceptions
 from django.core.files.base import ContentFile
 from django.db import transaction
-from django.db.models import Q
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from fastapi import APIRouter, Depends, status
 
 from django_etebase import models
@@ -25,12 +24,11 @@ from .utils import (
     PERMISSIONS_READ,
     PERMISSIONS_READWRITE,
 )
+from .dependencies import get_collection_queryset, get_item_queryset, get_collection
 
 User = get_user_model()
 collection_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 item_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
-default_queryset: QuerySet = models.Collection.objects.all()
-default_item_queryset: QuerySet = models.CollectionItem.objects.all()
 
 
 class ListMulti(BaseModel):
@@ -201,21 +199,6 @@ def collection_list_common(
             ret.removedMemberships = [{"uid": x} for x in remed]
 
     return ret
-
-
-def get_collection_queryset(user: User = Depends(get_authenticated_user)) -> QuerySet:
-    return default_queryset.filter(members__user=user)
-
-
-def get_collection(collection_uid: str, queryset: QuerySet = Depends(get_collection_queryset)) -> models.Collection:
-    return get_object_or_404(queryset, uid=collection_uid)
-
-
-def get_item_queryset(collection: models.Collection = Depends(get_collection)) -> QuerySet:
-    # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')
-    queryset = default_item_queryset.filter(collection__pk=collection.pk, revisions__current=True)
-
-    return queryset
 
 
 # permissions

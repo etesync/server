@@ -1,4 +1,3 @@
-import dataclasses
 import typing as t
 from datetime import datetime
 from functools import cached_property
@@ -13,31 +12,20 @@ from django.conf import settings
 from django.contrib.auth import get_user_model, user_logged_out, user_logged_in
 from django.core import exceptions as django_exceptions
 from django.db import transaction
-from django.utils import timezone
 from fastapi import APIRouter, Depends, status, Request
-from fastapi.security import APIKeyHeader
 
 from django_etebase import app_settings, models
+from django_etebase.token_auth.models import AuthToken
 from django_etebase.models import UserInfo
 from django_etebase.signals import user_signed_up
-from django_etebase.token_auth.models import AuthToken
-from django_etebase.token_auth.models import get_default_expiry
 from django_etebase.utils import create_user, get_user_queryset, CallbackContext
 from .exceptions import AuthenticationFailed, transform_validation_error, HttpError
 from .msgpack import MsgpackRoute
 from .utils import BaseModel, permission_responses, msgpack_encode, msgpack_decode
+from .dependencies import AuthData, get_auth_data, get_authenticated_user
 
 User = get_user_model()
-token_scheme = APIKeyHeader(name="Authorization")
-AUTO_REFRESH = True
-MIN_REFRESH_INTERVAL = 60
 authentication_router = APIRouter(route_class=MsgpackRoute)
-
-
-@dataclasses.dataclass(frozen=True)
-class AuthData:
-    user: User
-    token: AuthToken
 
 
 class LoginChallengeIn(BaseModel):
@@ -113,47 +101,6 @@ class SignupIn(BaseModel):
     loginPubkey: bytes
     pubkey: bytes
     encryptedContent: bytes
-
-
-def __renew_token(auth_token: AuthToken):
-    current_expiry = auth_token.expiry
-    new_expiry = get_default_expiry()
-    # Throttle refreshing of token to avoid db writes
-    delta = (new_expiry - current_expiry).total_seconds()
-    if delta > MIN_REFRESH_INTERVAL:
-        auth_token.expiry = new_expiry
-        auth_token.save(update_fields=("expiry",))
-
-
-@sync_to_async
-def __get_authenticated_user(api_token: str):
-    api_token = api_token.split()[1]
-    try:
-        token: AuthToken = AuthToken.objects.select_related("user").get(key=api_token)
-    except AuthToken.DoesNotExist:
-        raise AuthenticationFailed(detail="Invalid token.")
-    if not token.user.is_active:
-        raise AuthenticationFailed(detail="User inactive or deleted.")
-
-    if token.expiry is not None:
-        if token.expiry < timezone.now():
-            token.delete()
-            raise AuthenticationFailed(detail="Invalid token.")
-
-        if AUTO_REFRESH:
-            __renew_token(token)
-
-    return token.user, token
-
-
-async def get_auth_data(api_token: str = Depends(token_scheme)) -> AuthData:
-    user, token = await __get_authenticated_user(api_token)
-    return AuthData(user, token)
-
-
-async def get_authenticated_user(api_token: str = Depends(token_scheme)) -> User:
-    user, token = await __get_authenticated_user(api_token)
-    return user
 
 
 @sync_to_async
