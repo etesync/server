@@ -59,9 +59,6 @@ class PermissionDenied(CustomHttpException):
         super().__init__(code=code, detail=detail, status_code=status_code)
 
 
-from django_etebase.exceptions import EtebaseValidationError
-
-
 class ValidationError(CustomHttpException):
     def __init__(
         self,
