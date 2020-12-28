@@ -7,7 +7,9 @@ django_application = get_asgi_application()
 
 
 def create_application():
-    from etebase_fastapi.main import app
+    from etebase_fastapi.main import create_application
+
+    app = create_application()
 
     app.mount("/", django_application)
 
