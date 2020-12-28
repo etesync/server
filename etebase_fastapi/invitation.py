@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, status, Request
 from django_etebase import models
 from django_etebase.utils import get_user_queryset, CallbackContext
 from .authentication import get_authenticated_user
-from .exceptions import ValidationError, PermissionDenied
+from .exceptions import HttpError, PermissionDenied
 from .msgpack import MsgpackRoute
 from .utils import get_object_or_404, Context, is_collection_admin, BaseModel
 
@@ -42,7 +42,7 @@ class CollectionInvitationCommon(BaseModel):
 class CollectionInvitationIn(CollectionInvitationCommon):
     def validate_db(self, context: Context):
         if context.user.username == self.username.lower():
-            raise ValidationError("no_self_invite", "Inviting yourself is not allowed")
+            raise HttpError("no_self_invite", "Inviting yourself is not allowed")
 
 
 class CollectionInvitationOut(CollectionInvitationCommon):
@@ -186,7 +186,7 @@ def outgoing_create(
                 **data.dict(exclude={"collection", "username"}), user=to_user, fromMember=member
             )
         except IntegrityError:
-            raise ValidationError("invitation_exists", "Invitation already exists")
+            raise HttpError("invitation_exists", "Invitation already exists")
 
 
 @invitation_outgoing_router.get("/", response_model=InvitationListResponse)

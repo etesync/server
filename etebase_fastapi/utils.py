@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 
 from django_etebase.models import AccessLevels
 
-from .exceptions import ValidationError
+from .exceptions import HttpError
 
 User = get_user_model()
 
@@ -35,7 +35,7 @@ def get_object_or_404(queryset: QuerySet, **kwargs):
     try:
         return queryset.get(**kwargs)
     except ObjectDoesNotExist as e:
-        raise ValidationError("does_not_exist", str(e), status_code=status.HTTP_404_NOT_FOUND)
+        raise HttpError("does_not_exist", str(e), status_code=status.HTTP_404_NOT_FOUND)
 
 
 def is_collection_admin(collection, user):

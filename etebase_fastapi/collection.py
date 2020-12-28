@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, status
 
 from django_etebase import models
 from .authentication import get_authenticated_user
-from .exceptions import ValidationError, transform_validation_error, PermissionDenied
+from .exceptions import HttpError, transform_validation_error, PermissionDenied
 from .msgpack import MsgpackRoute
 from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
 from .utils import get_object_or_404, Context, Prefetch, PrefetchQuery, is_collection_admin, BaseModel
@@ -144,7 +144,7 @@ class ItemDepIn(BaseModel):
         item = models.CollectionItem.objects.get(uid=self.uid)
         etag = self.etag
         if item.etag != etag:
-            raise ValidationError(
+            raise HttpError(
                 "wrong_etag",
                 "Wrong etag. Expected {} got {}".format(item.etag, etag),
                 status_code=status.HTTP_409_CONFLICT,
@@ -274,7 +274,7 @@ def process_revisions_for_item(item: models.CollectionItem, revision_data: Colle
                 chunk_obj.chunkFile.save("IGNORED", ContentFile(content))
                 chunk_obj.save()
             else:
-                raise ValidationError("chunk_no_content", "Tried to create a new chunk without content")
+                raise HttpError("chunk_no_content", "Tried to create a new chunk without content")
 
         chunks_objs.append(chunk_obj)
 
@@ -290,12 +290,12 @@ def process_revisions_for_item(item: models.CollectionItem, revision_data: Colle
 def _create(data: CollectionIn, user: User):
     with transaction.atomic():
         if data.item.etag is not None:
-            raise ValidationError("bad_etag", "etag is not null")
+            raise HttpError("bad_etag", "etag is not null")
         instance = models.Collection(uid=data.item.uid, owner=user)
         try:
             instance.validate_unique()
         except django_exceptions.ValidationError:
-            raise ValidationError(
+            raise HttpError(
                 "unique_uid", "Collection with this uid already exists", status_code=status.HTTP_409_CONFLICT
             )
         instance.save()
@@ -355,7 +355,7 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
             return instance
 
         if validate_etag and cur_etag != etag:
-            raise ValidationError(
+            raise HttpError(
                 "wrong_etag",
                 "Wrong etag. Expected {} got {}".format(cur_etag, etag),
                 status_code=status.HTTP_409_CONFLICT,
@@ -425,7 +425,7 @@ def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid
         collection_object = queryset.select_for_update().get(uid=uid)
 
         if stoken is not None and stoken != collection_object.stoken:
-            raise ValidationError("stale_stoken", "Stoken is too old", status_code=status.HTTP_409_CONFLICT)
+            raise HttpError("stale_stoken", "Stoken is too old", status_code=status.HTTP_409_CONFLICT)
 
         # XXX-TOM: make sure we return compatible errors
         data.validate_db()
@@ -482,7 +482,7 @@ def fetch_updates(
     item_limit = 200
 
     if len(data) > item_limit:
-        raise ValidationError("too_many_items", "Request has too many items.", status_code=status.HTTP_400_BAD_REQUEST)
+        raise HttpError("too_many_items", "Request has too many items.", status_code=status.HTTP_400_BAD_REQUEST)
 
     queryset, stoken_rev = filter_by_stoken(stoken, queryset, models.CollectionItem.stoken_annotation)
 

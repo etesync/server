@@ -25,7 +25,7 @@ from django_etebase.token_auth.models import AuthToken
 from django_etebase.token_auth.models import get_default_expiry
 from django_etebase.utils import create_user, get_user_queryset, CallbackContext
 from django_etebase.views import msgpack_encode, msgpack_decode
-from .exceptions import AuthenticationFailed, transform_validation_error, ValidationError
+from .exceptions import AuthenticationFailed, transform_validation_error, HttpError
 from .msgpack import MsgpackRoute
 from .utils import BaseModel
 
@@ -207,20 +207,20 @@ def validate_login_request(
     challenge_data = msgpack_decode(box.decrypt(validated_data.challenge))
     now = int(datetime.now().timestamp())
     if validated_data.action != expected_action:
-        raise ValidationError("wrong_action", f'Expected "{challenge_sent_to_user.response}" but got something else')
+        raise HttpError("wrong_action", f'Expected "{challenge_sent_to_user.response}" but got something else')
     elif now - challenge_data["timestamp"] > app_settings.CHALLENGE_VALID_SECONDS:
-        raise ValidationError("challenge_expired", "Login challenge has expired")
+        raise HttpError("challenge_expired", "Login challenge has expired")
     elif challenge_data["userId"] != user.id:
-        raise ValidationError("wrong_user", "This challenge is for the wrong user")
+        raise HttpError("wrong_user", "This challenge is for the wrong user")
     elif not settings.DEBUG and validated_data.host.split(":", 1)[0] != host_from_request:
-        raise ValidationError(
+        raise HttpError(
             "wrong_host", f'Found wrong host name. Got: "{validated_data.host}" expected: "{host_from_request}"'
         )
     verify_key = nacl.signing.VerifyKey(bytes(user.userinfo.loginPubkey), encoder=nacl.encoding.RawEncoder)
     try:
         verify_key.verify(challenge_sent_to_user.response, challenge_sent_to_user.signature)
     except nacl.exceptions.BadSignatureError:
-        raise ValidationError("login_bad_signature", "Wrong password for user.", status.HTTP_401_UNAUTHORIZED)
+        raise HttpError("login_bad_signature", "Wrong password for user.", status.HTTP_401_UNAUTHORIZED)
 
 
 @authentication_router.get("/is_etebase/")
@@ -269,7 +269,7 @@ def dashboard_url(user: User = Depends(get_authenticated_user)):
     # XXX-TOM
     get_dashboard_url = app_settings.DASHBOARD_URL_FUNC
     if get_dashboard_url is None:
-        raise ValidationError("not_supported", "This server doesn't have a user dashboard.")
+        raise HttpError("not_supported", "This server doesn't have a user dashboard.")
 
     ret = {
         "url": get_dashboard_url(request, *args, **kwargs),
@@ -301,7 +301,7 @@ def signup_save(data: SignupIn, request: Request) -> User:
                 raise EtebaseValidationError("generic", str(e))
 
         if hasattr(instance, "userinfo"):
-            raise ValidationError("user_exists", "User already exists", status_code=status.HTTP_409_CONFLICT)
+            raise HttpError("user_exists", "User already exists", status_code=status.HTTP_409_CONFLICT)
 
         models.UserInfo.objects.create(**data.dict(exclude={"user"}), owner=instance)
     return instance

@@ -3,19 +3,17 @@ import typing as t
 
 from pydantic import BaseModel
 
-from django_etebase.exceptions import EtebaseValidationError
 
-
-class ValidationErrorField(BaseModel):
+class HttpErrorField(BaseModel):
     field: str
     code: str
     detail: str
 
 
-class ValidationErrorOut(BaseModel):
+class HttpErrorOut(BaseModel):
     code: str
     detail: str
-    errors: t.Optional[t.List[ValidationErrorField]]
+    errors: t.Optional[t.List[HttpErrorField]]
 
 
 class CustomHttpException(Exception):
@@ -59,24 +57,23 @@ class PermissionDenied(CustomHttpException):
         super().__init__(code=code, detail=detail, status_code=status_code)
 
 
-class ValidationError(CustomHttpException):
+class HttpError(CustomHttpException):
     def __init__(
         self,
         code: str,
         detail: str,
         status_code: int = status.HTTP_400_BAD_REQUEST,
-        field: t.Optional[str] = None,
-        errors: t.Optional[t.List["ValidationError"]] = None,
+        errors: t.Optional[t.List["HttpError"]] = None,
     ):
         self.errors = errors
         super().__init__(code=code, detail=detail, status_code=status_code)
 
     @property
     def as_dict(self) -> dict:
-        return ValidationErrorOut(code=self.code, errors=self.errors, detail=self.detail).dict()
+        return HttpErrorOut(code=self.code, errors=self.errors, detail=self.detail).dict()
 
 
-def flatten_errors(field_name, errors) -> t.List[ValidationError]:
+def flatten_errors(field_name, errors) -> t.List[HttpError]:
     ret = []
     if isinstance(errors, dict):
         for error_key in errors:
@@ -98,5 +95,5 @@ def transform_validation_error(prefix, err):
     elif not hasattr(err, "message"):
         errors = flatten_errors(prefix, err.error_list)
     else:
-        raise EtebaseValidationError(err.code, err.message)
-    raise ValidationError(code="field_errors", detail="Field validations failed.", errors=errors)
+        raise HttpError(err.code, err.message)
+    raise HttpError(code="field_errors", detail="Field validations failed.", errors=errors)
