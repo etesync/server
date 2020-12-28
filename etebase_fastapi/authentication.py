@@ -250,10 +250,9 @@ async def login(data: Login, request: Request):
 
 
 @authentication_router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT, responses=permission_responses)
-async def logout(request: Request, auth_data: AuthData = Depends(get_auth_data)):
-    await sync_to_async(auth_data.token.delete)()
-    # XXX-TOM
-    await sync_to_async(user_logged_out.send)(sender=auth_data.user.__class__, request=None, user=auth_data.user)
+def logout(request: Request, auth_data: AuthData = Depends(get_auth_data)):
+    auth_data.token.delete()
+    user_logged_out.send(sender=auth_data.user.__class__, request=None, user=auth_data.user)
 
 
 @authentication_router.post("/change_password/", status_code=status.HTTP_204_NO_CONTENT, responses=permission_responses)
@@ -306,9 +305,8 @@ def signup_save(data: SignupIn, request: Request) -> User:
 
 
 @authentication_router.post("/signup/", response_model=LoginOut, status_code=status.HTTP_201_CREATED)
-async def signup(data: SignupIn, request: Request):
-    user = await sync_to_async(signup_save)(data, request)
-    # XXX-TOM
-    data = await sync_to_async(LoginOut.from_orm)(user)
-    await sync_to_async(user_signed_up.send)(sender=user.__class__, request=None, user=user)
+def signup(data: SignupIn, request: Request):
+    user = signup_save(data, request)
+    data = LoginOut.from_orm(user)
+    user_signed_up.send(sender=user.__class__, request=None, user=user)
     return data
