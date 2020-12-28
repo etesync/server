@@ -15,6 +15,7 @@ class CallbackContext:
     """Class for passing extra context to callbacks"""
 
     url_kwargs: t.Dict[str, t.Any]
+    user: t.Optional[User]
 
 
 def get_user_queryset(queryset, context: CallbackContext):
