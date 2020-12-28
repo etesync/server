@@ -9,6 +9,7 @@ from django.conf import settings
 
 # Not at the top of the file because we first need to setup django
 from fastapi import FastAPI, Request
+from fastapi.middleware.wsgi import WSGIMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
@@ -37,6 +38,7 @@ app.add_middleware(
     CORSMiddleware, allow_origin_regex="https?://.*", allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOSTS)
+app.mount("/", WSGIMiddleware(application))
 
 
 @app.exception_handler(CustomHttpException)
