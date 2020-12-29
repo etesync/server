@@ -30,6 +30,8 @@ from ..sendfile import sendfile
 User = get_typed_user_model
 collection_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 item_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
+CollectionQuerySet = QuerySet[models.Collection]
+CollectionItemQuerySet = QuerySet[models.CollectionItem]
 
 
 class ListMulti(BaseModel):
@@ -187,7 +189,7 @@ class ItemBatchIn(BaseModel):
 
 @sync_to_async
 def collection_list_common(
-    queryset: QuerySet,
+    queryset: CollectionQuerySet,
     user: UserType,
     stoken: t.Optional[str],
     limit: int,
@@ -249,7 +251,7 @@ async def list_multi(
     data: ListMulti,
     stoken: t.Optional[str] = None,
     limit: int = 50,
-    queryset: QuerySet = Depends(get_collection_queryset),
+    queryset: CollectionQuerySet = Depends(get_collection_queryset),
     user: UserType = Depends(get_authenticated_user),
     prefetch: Prefetch = PrefetchQuery,
 ):
@@ -267,7 +269,7 @@ async def collection_list(
     limit: int = 50,
     prefetch: Prefetch = PrefetchQuery,
     user: UserType = Depends(get_authenticated_user),
-    queryset: QuerySet = Depends(get_collection_queryset),
+    queryset: CollectionQuerySet = Depends(get_collection_queryset),
 ):
     return await collection_list_common(queryset, user, stoken, limit, prefetch)
 
@@ -395,7 +397,7 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
 @item_router.get("/item/{item_uid}/", response_model=CollectionItemOut, dependencies=PERMISSIONS_READ)
 def item_get(
     item_uid: str,
-    queryset: QuerySet = Depends(get_item_queryset),
+    queryset: CollectionItemQuerySet = Depends(get_item_queryset),
     user: UserType = Depends(get_authenticated_user),
     prefetch: Prefetch = PrefetchQuery,
 ):
@@ -405,7 +407,7 @@ def item_get(
 
 @sync_to_async
 def item_list_common(
-    queryset: QuerySet,
+    queryset: CollectionItemQuerySet,
     user: UserType,
     stoken: t.Optional[str],
     limit: int,
@@ -422,7 +424,7 @@ def item_list_common(
 
 @item_router.get("/item/", response_model=CollectionItemListResponse, dependencies=PERMISSIONS_READ)
 async def item_list(
-    queryset: QuerySet = Depends(get_item_queryset),
+    queryset: CollectionItemQuerySet = Depends(get_item_queryset),
     stoken: t.Optional[str] = None,
     limit: int = 50,
     prefetch: Prefetch = PrefetchQuery,
@@ -471,7 +473,7 @@ def item_revisions(
     iterator: t.Optional[str] = None,
     prefetch: Prefetch = PrefetchQuery,
     user: UserType = Depends(get_authenticated_user),
-    items: QuerySet = Depends(get_item_queryset),
+    items: CollectionItemQuerySet = Depends(get_item_queryset),
 ):
     item = get_object_or_404(items, uid=item_uid)
 
@@ -505,7 +507,7 @@ def fetch_updates(
     stoken: t.Optional[str] = None,
     prefetch: Prefetch = PrefetchQuery,
     user: UserType = Depends(get_authenticated_user),
-    queryset: QuerySet = Depends(get_item_queryset),
+    queryset: CollectionItemQuerySet = Depends(get_item_queryset),
 ):
     # FIXME: make configurable?
     item_limit = 200

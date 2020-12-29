@@ -23,7 +23,8 @@ from ..utils import (
 User = get_typed_user_model()
 invitation_incoming_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 invitation_outgoing_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
-default_queryset: QuerySet = models.CollectionInvitation.objects.all()
+InvitationQuerySet = QuerySet[models.CollectionInvitation]
+default_queryset: InvitationQuerySet = models.CollectionInvitation.objects.all()
 
 
 class UserInfoOut(BaseModel):
@@ -94,7 +95,7 @@ def get_outgoing_queryset(user: UserType = Depends(get_authenticated_user)):
 
 
 def list_common(
-    queryset: QuerySet,
+    queryset: InvitationQuerySet,
     iterator: t.Optional[str],
     limit: int,
 ) -> InvitationListResponse:
@@ -125,7 +126,7 @@ def list_common(
 def incoming_list(
     iterator: t.Optional[str] = None,
     limit: int = 50,
-    queryset: QuerySet = Depends(get_incoming_queryset),
+    queryset: InvitationQuerySet = Depends(get_incoming_queryset),
 ):
     return list_common(queryset, iterator, limit)
 
@@ -135,7 +136,7 @@ def incoming_list(
 )
 def incoming_get(
     invitation_uid: str,
-    queryset: QuerySet = Depends(get_incoming_queryset),
+    queryset: InvitationQuerySet = Depends(get_incoming_queryset),
 ):
     obj = get_object_or_404(queryset, uid=invitation_uid)
     return CollectionInvitationOut.from_orm(obj)
@@ -146,7 +147,7 @@ def incoming_get(
 )
 def incoming_delete(
     invitation_uid: str,
-    queryset: QuerySet = Depends(get_incoming_queryset),
+    queryset: InvitationQuerySet = Depends(get_incoming_queryset),
 ):
     obj = get_object_or_404(queryset, uid=invitation_uid)
     obj.delete()
@@ -158,7 +159,7 @@ def incoming_delete(
 def incoming_accept(
     invitation_uid: str,
     data: CollectionInvitationAcceptIn,
-    queryset: QuerySet = Depends(get_incoming_queryset),
+    queryset: InvitationQuerySet = Depends(get_incoming_queryset),
 ):
     invitation = get_object_or_404(queryset, uid=invitation_uid)
 
@@ -201,7 +202,7 @@ def outgoing_create(
 
     with transaction.atomic():
         try:
-            ret = models.CollectionInvitation.objects.create(
+            models.CollectionInvitation.objects.create(
                 **data.dict(exclude={"collection", "username"}), user=to_user, fromMember=member
             )
         except IntegrityError:
@@ -212,7 +213,7 @@ def outgoing_create(
 def outgoing_list(
     iterator: t.Optional[str] = None,
     limit: int = 50,
-    queryset: QuerySet = Depends(get_outgoing_queryset),
+    queryset: InvitationQuerySet = Depends(get_outgoing_queryset),
 ):
     return list_common(queryset, iterator, limit)
 
@@ -222,7 +223,7 @@ def outgoing_list(
 )
 def outgoing_delete(
     invitation_uid: str,
-    queryset: QuerySet = Depends(get_outgoing_queryset),
+    queryset: InvitationQuerySet = Depends(get_outgoing_queryset),
 ):
     obj = get_object_or_404(queryset, uid=invitation_uid)
     obj.delete()
