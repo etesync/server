@@ -7,7 +7,7 @@ import base64
 from fastapi import status, Query, Depends
 from pydantic import BaseModel as PyBaseModel
 
-from django.db.models import QuerySet
+from django.db.models import Model, QuerySet
 from django.core.exceptions import ObjectDoesNotExist
 
 from django_etebase import app_settings
@@ -20,6 +20,9 @@ User = get_typed_user_model()
 
 Prefetch = Literal["auto", "medium"]
 PrefetchQuery = Query(default="auto")
+
+
+T = t.TypeVar("T", bound=Model, covariant=True)
 
 
 class BaseModel(PyBaseModel):
@@ -35,7 +38,7 @@ class Context:
     prefetch: t.Optional[Prefetch]
 
 
-def get_object_or_404(queryset: QuerySet, **kwargs):
+def get_object_or_404(queryset: QuerySet[T], **kwargs) -> T:
     try:
         return queryset.get(**kwargs)
     except ObjectDoesNotExist as e:

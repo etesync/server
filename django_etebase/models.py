@@ -12,6 +12,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+import typing as t
 from pathlib import Path
 
 from django.db import models, transaction
@@ -28,7 +29,7 @@ from . import app_settings
 UidValidator = RegexValidator(regex=r"^[a-zA-Z0-9\-_]{20,}$", message="Not a valid UID")
 
 
-def stoken_annotation_builder(stoken_id_fields):
+def stoken_annotation_builder(stoken_id_fields: t.List[str]):
     aggr_fields = [Coalesce(Max(field), V(0)) for field in stoken_id_fields]
     return Greatest(*aggr_fields) if len(aggr_fields) > 1 else aggr_fields[0]
 
@@ -36,6 +37,8 @@ def stoken_annotation_builder(stoken_id_fields):
 class CollectionType(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     uid = models.BinaryField(editable=True, blank=False, null=False, db_index=True, unique=True)
+
+    objects: models.manager.BaseManager["CollectionType"]
 
 
 class Collection(models.Model):
@@ -46,19 +49,21 @@ class Collection(models.Model):
 
     stoken_annotation = stoken_annotation_builder(["items__revisions__stoken", "members__stoken"])
 
+    objects: models.manager.BaseManager["Collection"]
+
     def __str__(self):
         return self.uid
 
     @property
-    def content(self):
+    def content(self) -> "CollectionItemRevision":
         return self.main_item.content
 
     @property
-    def etag(self):
+    def etag(self) -> str:
         return self.content.uid
 
     @cached_property
-    def stoken(self):
+    def stoken(self) -> str:
         stoken_id = (
             self.__class__.objects.filter(main_item=self.main_item)
             .annotate(max_stoken=self.stoken_annotation)
@@ -80,6 +85,8 @@ class CollectionItem(models.Model):
 
     stoken_annotation = stoken_annotation_builder(["revisions__stoken"])
 
+    objects: models.manager.BaseManager["CollectionItem"]
+
     class Meta:
         unique_together = ("uid", "collection")
 
@@ -87,23 +94,23 @@ class CollectionItem(models.Model):
         return "{} {}".format(self.uid, self.collection.uid)
 
     @cached_property
-    def content(self):
+    def content(self) -> "CollectionItemRevision":
         return self.revisions.get(current=True)
 
     @property
-    def etag(self):
+    def etag(self) -> str:
         return self.content.uid
 
 
-def chunk_directory_path(instance, filename):
+def chunk_directory_path(instance: "CollectionItemChunk", filename: str) -> Path:
     custom_func = app_settings.CHUNK_PATH_FUNC
     if custom_func is not None:
         return custom_func(instance, filename)
 
-    col = instance.collection
-    user_id = col.owner.id
-    uid_prefix = instance.uid[:2]
-    uid_rest = instance.uid[2:]
+    col: Collection = instance.collection
+    user_id: int = col.owner.id
+    uid_prefix: str = instance.uid[:2]
+    uid_rest: str = instance.uid[2:]
     return Path("user_{}".format(user_id), col.uid, uid_prefix, uid_rest)
 
 
@@ -111,6 +118,8 @@ class CollectionItemChunk(models.Model):
     uid = models.CharField(db_index=True, blank=False, null=False, max_length=60, validators=[UidValidator])
     collection = models.ForeignKey(Collection, related_name="chunks", on_delete=models.CASCADE)
     chunkFile = models.FileField(upload_to=chunk_directory_path, max_length=150, unique=True)
+
+    objects: models.manager.BaseManager["CollectionItemChunk"]
 
     def __str__(self):
         return self.uid
@@ -135,6 +144,8 @@ class Stoken(models.Model):
         validators=[UidValidator],
     )
 
+    objects: models.manager.BaseManager["Stoken"]
+
 
 class CollectionItemRevision(models.Model):
     stoken = models.OneToOneField(Stoken, on_delete=models.PROTECT)
@@ -146,6 +157,8 @@ class CollectionItemRevision(models.Model):
     current = models.BooleanField(db_index=True, default=True, null=True)
     deleted = models.BooleanField(default=False)
 
+    objects: models.manager.BaseManager["CollectionItemRevision"]
+
     class Meta:
         unique_together = ("item", "current")
 
@@ -156,6 +169,8 @@ class CollectionItemRevision(models.Model):
 class RevisionChunkRelation(models.Model):
     chunk = models.ForeignKey(CollectionItemChunk, related_name="revisions_relation", on_delete=models.CASCADE)
     revision = models.ForeignKey(CollectionItemRevision, related_name="chunks_relation", on_delete=models.CASCADE)
+
+    objects: models.manager.BaseManager["RevisionChunkRelation"]
 
     class Meta:
         ordering = ("id",)
@@ -179,6 +194,8 @@ class CollectionMember(models.Model):
     )
 
     stoken_annotation = stoken_annotation_builder(["stoken"])
+
+    objects: models.manager.BaseManager["CollectionMember"]
 
     class Meta:
         unique_together = ("user", "collection")
@@ -204,6 +221,8 @@ class CollectionMemberRemoved(models.Model):
     collection = models.ForeignKey(Collection, related_name="removed_members", on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
+    objects: models.manager.BaseManager["CollectionMemberRemoved"]
+
     class Meta:
         unique_together = ("user", "collection")
 
@@ -225,6 +244,8 @@ class CollectionInvitation(models.Model):
         default=AccessLevels.READ_ONLY,
     )
 
+    objects: models.manager.BaseManager["CollectionInvitation"]
+
     class Meta:
         unique_together = ("user", "fromMember")
 
@@ -232,7 +253,7 @@ class CollectionInvitation(models.Model):
         return "{} {}".format(self.fromMember.collection.uid, self.user)
 
     @cached_property
-    def collection(self):
+    def collection(self) -> Collection:
         return self.fromMember.collection
 
 
@@ -243,6 +264,8 @@ class UserInfo(models.Model):
     pubkey = models.BinaryField(editable=True, blank=False, null=False)
     encryptedContent = models.BinaryField(editable=True, blank=False, null=False)
     salt = models.BinaryField(editable=True, blank=False, null=False)
+
+    objects: models.manager.BaseManager["UserInfo"]
 
     def __str__(self):
         return "UserInfo<{}>".format(self.owner)

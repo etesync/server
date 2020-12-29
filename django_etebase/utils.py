@@ -1,6 +1,7 @@
 import typing as t
 from dataclasses import dataclass
 
+from django.db.models import QuerySet
 from django.core.exceptions import PermissionDenied
 from myauth.models import UserType, get_typed_user_model
 
@@ -18,14 +19,14 @@ class CallbackContext:
     user: t.Optional[UserType] = None
 
 
-def get_user_queryset(queryset, context: CallbackContext):
+def get_user_queryset(queryset: QuerySet[UserType], context: CallbackContext) -> QuerySet[UserType]:
     custom_func = app_settings.GET_USER_QUERYSET_FUNC
     if custom_func is not None:
         return custom_func(queryset, context)
     return queryset
 
 
-def create_user(context: CallbackContext, *args, **kwargs):
+def create_user(context: CallbackContext, *args, **kwargs) -> UserType:
     custom_func = app_settings.CREATE_USER_FUNC
     if custom_func is not None:
         return custom_func(context, *args, **kwargs)

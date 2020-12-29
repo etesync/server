@@ -15,14 +15,15 @@ from .collection import get_collection, verify_collection_admin
 
 User = get_typed_user_model()
 member_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
-default_queryset: QuerySet = models.CollectionMember.objects.all()
+MemberQuerySet = QuerySet[models.CollectionMember]
+default_queryset: MemberQuerySet = models.CollectionMember.objects.all()
 
 
-def get_queryset(collection: models.Collection = Depends(get_collection)) -> QuerySet:
+def get_queryset(collection: models.Collection = Depends(get_collection)) -> MemberQuerySet:
     return default_queryset.filter(collection=collection)
 
 
-def get_member(username: str, queryset: QuerySet = Depends(get_queryset)) -> QuerySet:
+def get_member(username: str, queryset: MemberQuerySet = Depends(get_queryset)) -> models.CollectionMember:
     return get_object_or_404(queryset, user__username__iexact=username)
 
 
@@ -54,7 +55,7 @@ class MemberListResponse(BaseModel):
 def member_list(
     iterator: t.Optional[str] = None,
     limit: int = 50,
-    queryset: QuerySet = Depends(get_queryset),
+    queryset: MemberQuerySet = Depends(get_queryset),
 ):
     queryset = queryset.order_by("id")
     result, new_stoken_obj, done = filter_by_stoken_and_limit(

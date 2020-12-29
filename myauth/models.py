@@ -15,7 +15,7 @@ class UnicodeUsernameValidator(validators.RegexValidator):
 
 
 class UserManager(DjangoUserManager):
-    def get_by_natural_key(self, username):
+    def get_by_natural_key(self, username: str):
         return self.get(**{self.model.USERNAME_FIELD + "__iexact": username})
 
 
@@ -37,7 +37,7 @@ class User(AbstractUser):
     )
 
     @classmethod
-    def normalize_username(cls, username):
+    def normalize_username(cls, username: str):
         return super().normalize_username(username).lower()
 
 
