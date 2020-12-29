@@ -21,6 +21,7 @@ pyyaml==5.3.1             # via uvicorn
 six==1.15.0               # via pynacl
 sqlparse==0.4.1           # via django
 starlette==0.13.6         # via fastapi
+typing-extensions==3.7.4.3  # via -r requirements.in/base.txt
 uvicorn[standard]==0.13.2  # via -r requirements.in/base.txt
 uvloop==0.14.0            # via uvicorn
 watchgod==0.6             # via uvicorn

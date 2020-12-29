@@ -2,4 +2,5 @@ django
 msgpack
 pynacl
 fastapi
+typing_extensions
 uvicorn[standard]
