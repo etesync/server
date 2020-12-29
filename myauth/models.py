@@ -20,9 +20,10 @@ class UserManager(DjangoUserManager):
 
 
 class User(AbstractUser):
+    id: int
     username_validator = UnicodeUsernameValidator()
 
-    objects = UserManager()
+    objects: UserManager = UserManager()
 
     username = models.CharField(
         _("username"),

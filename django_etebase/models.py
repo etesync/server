@@ -124,6 +124,7 @@ def generate_stoken_uid():
 
 
 class Stoken(models.Model):
+    id: int
     uid = models.CharField(
         db_index=True,
         unique=True,
