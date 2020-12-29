@@ -88,7 +88,8 @@ class CollectionItemIn(CollectionItemCommon):
 
 
 class CollectionCommon(BaseModel):
-    collectionType: bytes
+    # FIXME: remove optional once we finish collection-type-migration
+    collectionType: t.Optional[bytes]
     collectionKey: bytes
 
 
