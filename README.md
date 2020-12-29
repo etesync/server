@@ -62,18 +62,14 @@ Now you can initialise our django app.
 And you are done! You can now run the debug server just to see everything works as expected by running:
 
 ```
-uvicorn etebase_server.asgi:application --port 8000
+uvicorn etebase_server.asgi:application --host 0.0.0.0 --port 8000
 ```
 
 Using the debug server in production is not recommended, so please read the following section for a proper deployment.
 
 # Production deployment
 
-There are more details about a proper production setup using Daphne and Nginx in the [wiki](https://github.com/etesync/server/wiki/Production-setup-using-Daphne-and-Nginx).
-
-Etebase is based on Django so you should refer to one of the following
-  * The instructions of the Django project [here](https://docs.djangoproject.com/en/2.2/howto/deployment/wsgi/).
-  * Instructions from uwsgi [here](http://uwsgi-docs.readthedocs.io/en/latest/tutorials/Django_and_nginx.html).
+There are more details about a proper production setup using uvicorn and Nginx in the [wiki](https://github.com/etesync/server/wiki/Production-setup-using-Nginx).
 
 The webserver should also be configured to serve Etebase using TLS.
 A guide for doing so can be found in the [wiki](https://github.com/etesync/server/wiki/Setup-HTTPS-for-Etebase) as well.
