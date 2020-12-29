@@ -13,7 +13,7 @@ from .invitation import invitation_incoming_router, invitation_outgoing_router
 from .msgpack import MsgpackResponse
 
 
-def create_application(prefix=""):
+def create_application(prefix="", middlewares=[]):
     app = FastAPI(
         title="Etebase",
         description="The Etebase server API documentation",
@@ -50,6 +50,9 @@ def create_application(prefix=""):
         allow_headers=["*"],
     )
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOSTS)
+
+    for middleware in middlewares:
+        app.add_middleware(middleware)
 
     @app.exception_handler(CustomHttpException)
     async def custom_exception_handler(request: Request, exc: CustomHttpException):
