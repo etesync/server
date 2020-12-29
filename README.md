@@ -62,7 +62,7 @@ Now you can initialise our django app.
 And you are done! You can now run the debug server just to see everything works as expected by running:
 
 ```
-./manage.py runserver 0.0.0.0:8000
+uvicorn etebase_server.asgi:application --port 8000
 ```
 
 Using the debug server in production is not recommended, so please read the following section for a proper deployment.

@@ -4,9 +4,11 @@ from pathlib import Path, PurePath
 from urllib.parse import quote
 import logging
 
+from fastapi import status
+from ..exceptions import HttpError
+
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.http import Http404
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +56,12 @@ def _sanitize_path(filepath):
     try:
         filepath_abs.relative_to(path_root)
     except ValueError:
-        raise Http404("{} wrt {} is impossible".format(filepath_abs, path_root))
+        raise HttpError("generic", "{} wrt {} is impossible".format(filepath_abs, path_root), status_code=status.HTTP_404_NOT_FOUND)
 
     return filepath_abs
 
 
-def sendfile(request, filename, mimetype="application/octet-stream", encoding=None):
+def sendfile(filename, mimetype="application/octet-stream", encoding=None):
     """
     Create a response to send file using backend configured in ``SENDFILE_BACKEND``
 
@@ -75,11 +77,10 @@ def sendfile(request, filename, mimetype="application/octet-stream", encoding=No
     _sendfile = _get_sendfile()
 
     if not filepath_obj.exists():
-        raise Http404('"%s" does not exist' % filepath_obj)
+        raise HttpError("does_not_exist", '"%s" does not exist' % filepath_obj, status_code=status.HTTP_404_NOT_FOUND)
 
-    response = _sendfile(request, filepath_obj, mimetype=mimetype)
+    response = _sendfile(filepath_obj, mimetype=mimetype)
 
-    response["Content-length"] = filepath_obj.stat().st_size
-    response["Content-Type"] = mimetype
+    response.headers["Content-Type"] = mimetype
 
     return response

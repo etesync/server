@@ -1,9 +1,9 @@
-from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 from django.utils.crypto import get_random_string
+from myauth.models import get_typed_user_model
 
-User = get_user_model()
+User = get_typed_user_model()
 
 
 def generate_key():

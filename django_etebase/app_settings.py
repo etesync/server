@@ -32,22 +32,16 @@ class AppSettings:
         return getattr(settings, self.prefix + name, dflt)
 
     @cached_property
-    def API_PERMISSIONS(self):  # pylint: disable=invalid-name
-        perms = self._setting("API_PERMISSIONS", ("rest_framework.permissions.IsAuthenticated",))
+    def API_PERMISSIONS_READ(self):  # pylint: disable=invalid-name
+        perms = self._setting("API_PERMISSIONS_READ", tuple())
         ret = []
         for perm in perms:
             ret.append(self.import_from_str(perm))
         return ret
 
     @cached_property
-    def API_AUTHENTICATORS(self):  # pylint: disable=invalid-name
-        perms = self._setting(
-            "API_AUTHENTICATORS",
-            (
-                "rest_framework.authentication.TokenAuthentication",
-                "rest_framework.authentication.SessionAuthentication",
-            ),
-        )
+    def API_PERMISSIONS_WRITE(self):  # pylint: disable=invalid-name
+        perms = self._setting("API_PERMISSIONS_WRITE", tuple())
         ret = []
         for perm in perms:
             ret.append(self.import_from_str(perm))

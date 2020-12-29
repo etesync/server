@@ -53,8 +53,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "corsheaders",
-    "rest_framework",
     "myauth.apps.MyauthConfig",
     "django_etebase.apps.DjangoEtebaseConfig",
     "django_etebase.token_auth.apps.TokenAuthConfig",
@@ -63,7 +61,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -124,9 +121,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-# Cors
-CORS_ORIGIN_ALLOW_ALL = True
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
@@ -166,11 +160,6 @@ if any(os.path.isfile(x) for x in config_locations):
     if "database" in config:
         DATABASES = {"default": {x.upper(): y for x, y in config.items("database")}}
 
-ETEBASE_API_PERMISSIONS = ("rest_framework.permissions.IsAuthenticated",)
-ETEBASE_API_AUTHENTICATORS = (
-    "django_etebase.token_auth.authentication.TokenAuthentication",
-    "rest_framework.authentication.SessionAuthentication",
-)
 ETEBASE_CREATE_USER_FUNC = "django_etebase.utils.create_user_blocked"
 
 # Efficient file streaming (for large files)

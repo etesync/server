@@ -1,8 +1,8 @@
 from django import forms
-from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UsernameField
+from myauth.models import get_typed_user_model
 
-User = get_user_model()
+User = get_typed_user_model()
 
 
 class AdminUserCreationForm(forms.ModelForm):
