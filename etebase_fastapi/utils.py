@@ -1,5 +1,6 @@
 import dataclasses
 import typing as t
+from typing_extensions import Literal
 import msgpack
 import base64
 
@@ -17,7 +18,7 @@ from .exceptions import HttpError, HttpErrorOut
 
 User = get_typed_user_model()
 
-Prefetch = t.Literal["auto", "medium"]
+Prefetch = Literal["auto", "medium"]
 PrefetchQuery = Query(default="auto")
 
 

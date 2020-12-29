@@ -1,6 +1,6 @@
 import typing as t
+from typing_extensions import Literal
 from datetime import datetime
-from functools import cached_property
 
 import nacl
 import nacl.encoding
@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib.auth import user_logged_out, user_logged_in
 from django.core import exceptions as django_exceptions
 from django.db import transaction
+from django.utils.functional import cached_property
 from fastapi import APIRouter, Depends, status, Request
 
 from django_etebase import app_settings, models
@@ -43,7 +44,7 @@ class LoginResponse(BaseModel):
     username: str
     challenge: bytes
     host: str
-    action: t.Literal["login", "changePassword"]
+    action: Literal["login", "changePassword"]
 
 
 class UserOut(BaseModel):
