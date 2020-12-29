@@ -6,11 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from .exceptions import CustomHttpException
-from .authentication import authentication_router
-from .collection import collection_router, item_router
-from .member import member_router
-from .invitation import invitation_incoming_router, invitation_outgoing_router
 from .msgpack import MsgpackResponse
+from .routers.authentication import authentication_router
+from .routers.collection import collection_router, item_router
+from .routers.member import member_router
+from .routers.invitation import invitation_incoming_router, invitation_outgoing_router
 
 
 def create_application(prefix="", middlewares=[]):
@@ -38,7 +38,7 @@ def create_application(prefix="", middlewares=[]):
     )
 
     if settings.DEBUG:
-        from etebase_fastapi.test_reset_view import test_reset_view_router
+        from etebase_fastapi.routers.test_reset_view import test_reset_view_router
 
         app.include_router(test_reset_view_router, prefix=f"{BASE_PATH}/test/authentication")
 

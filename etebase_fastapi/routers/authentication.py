@@ -20,10 +20,10 @@ from django_etebase.models import UserInfo
 from django_etebase.signals import user_signed_up
 from django_etebase.utils import create_user, get_user_queryset, CallbackContext
 from myauth.models import UserType, get_typed_user_model
-from .exceptions import AuthenticationFailed, transform_validation_error, HttpError
-from .msgpack import MsgpackRoute
-from .utils import BaseModel, permission_responses, msgpack_encode, msgpack_decode
-from .dependencies import AuthData, get_auth_data, get_authenticated_user
+from ..exceptions import AuthenticationFailed, transform_validation_error, HttpError
+from ..msgpack import MsgpackRoute
+from ..utils import BaseModel, permission_responses, msgpack_encode, msgpack_decode
+from ..dependencies import AuthData, get_auth_data, get_authenticated_user
 
 User = get_typed_user_model()
 authentication_router = APIRouter(route_class=MsgpackRoute)

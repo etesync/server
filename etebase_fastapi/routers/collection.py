@@ -10,10 +10,10 @@ from fastapi import APIRouter, Depends, status, Request
 from django_etebase import models
 from myauth.models import UserType, get_typed_user_model
 from .authentication import get_authenticated_user
-from .exceptions import HttpError, transform_validation_error, PermissionDenied, ValidationError
-from .msgpack import MsgpackRoute
-from .stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
-from .utils import (
+from ..exceptions import HttpError, transform_validation_error, PermissionDenied, ValidationError
+from ..msgpack import MsgpackRoute
+from ..stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
+from ..utils import (
     get_object_or_404,
     Context,
     Prefetch,
@@ -24,8 +24,8 @@ from .utils import (
     PERMISSIONS_READ,
     PERMISSIONS_READWRITE,
 )
-from .dependencies import get_collection_queryset, get_item_queryset, get_collection
-from .sendfile import sendfile
+from ..dependencies import get_collection_queryset, get_item_queryset, get_collection
+from ..sendfile import sendfile
 
 User = get_typed_user_model
 collection_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)

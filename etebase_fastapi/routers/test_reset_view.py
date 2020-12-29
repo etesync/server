@@ -4,9 +4,9 @@ from django.shortcuts import get_object_or_404
 from fastapi import APIRouter, Request, status
 
 from django_etebase.utils import get_user_queryset, CallbackContext
-from etebase_fastapi.authentication import SignupIn, signup_save
-from etebase_fastapi.msgpack import MsgpackRoute
-from etebase_fastapi.exceptions import HttpError
+from .authentication import SignupIn, signup_save
+from ..msgpack import MsgpackRoute
+from ..exceptions import HttpError
 from myauth.models import get_typed_user_model
 
 test_reset_view_router = APIRouter(route_class=MsgpackRoute, tags=["test helpers"])

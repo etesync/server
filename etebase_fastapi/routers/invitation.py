@@ -8,9 +8,9 @@ from django_etebase import models
 from django_etebase.utils import get_user_queryset, CallbackContext
 from myauth.models import UserType, get_typed_user_model
 from .authentication import get_authenticated_user
-from .exceptions import HttpError, PermissionDenied
-from .msgpack import MsgpackRoute
-from .utils import (
+from ..exceptions import HttpError, PermissionDenied
+from ..msgpack import MsgpackRoute
+from ..utils import (
     get_object_or_404,
     Context,
     is_collection_admin,
