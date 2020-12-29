@@ -534,14 +534,20 @@ def fetch_updates(
 
 @item_router.post("/item/transaction/", dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE])
 def item_transaction(
-    collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: UserType = Depends(get_authenticated_user)
+    collection_uid: str,
+    data: ItemBatchIn,
+    stoken: t.Optional[str] = None,
+    user: UserType = Depends(get_authenticated_user),
 ):
     return item_bulk_common(data, user, stoken, collection_uid, validate_etag=True)
 
 
 @item_router.post("/item/batch/", dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE])
 def item_batch(
-    collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: UserType = Depends(get_authenticated_user)
+    collection_uid: str,
+    data: ItemBatchIn,
+    stoken: t.Optional[str] = None,
+    user: UserType = Depends(get_authenticated_user),
 ):
     return item_bulk_common(data, user, stoken, collection_uid, validate_etag=False)
 

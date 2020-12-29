@@ -56,7 +56,9 @@ def _sanitize_path(filepath):
     try:
         filepath_abs.relative_to(path_root)
     except ValueError:
-        raise HttpError("generic", "{} wrt {} is impossible".format(filepath_abs, path_root), status_code=status.HTTP_404_NOT_FOUND)
+        raise HttpError(
+            "generic", "{} wrt {} is impossible".format(filepath_abs, path_root), status_code=status.HTTP_404_NOT_FOUND
+        )
 
     return filepath_abs
 
