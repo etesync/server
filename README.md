@@ -29,7 +29,6 @@ virtualenv -p python3 .venv  # If doesn't work, try: virtualenv3 .venv
 source .venv/bin/activate
 
 pip install -r requirements.txt
-pip install uvicorn[standard]  # To run the server
 ```
 
 # Configuration
@@ -63,7 +62,7 @@ Now you can initialise our django app.
 And you are done! You can now run the debug server just to see everything works as expected by running:
 
 ```
-uvicorn etebase_server.asgi:application --port 8000 --host 0.0.0.0
+uvicorn etebase_server.asgi:application --host 0.0.0.0 --port 8000
 ```
 
 Using the debug server in production is not recommended, so please read the following section for a proper deployment.
