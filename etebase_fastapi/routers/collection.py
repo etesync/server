@@ -107,6 +107,7 @@ class CollectionOut(CollectionCommon):
     def from_orm_context(cls: t.Type["CollectionOut"], obj: models.Collection, context: Context) -> "CollectionOut":
         member: models.CollectionMember = obj.members.get(user=context.user)
         collection_type = member.collectionType
+        assert obj.main_item is not None
         ret = cls(
             collectionType=collection_type and bytes(collection_type.uid),
             collectionKey=bytes(member.encryptionKey),
@@ -299,8 +300,8 @@ def process_revisions_for_item(item: models.CollectionItem, revision_data: Colle
     revision.stoken = stoken
     revision.save()
 
-    for chunk in chunks_objs:
-        models.RevisionChunkRelation.objects.create(chunk=chunk, revision=revision)
+    for chunk2 in chunks_objs:
+        models.RevisionChunkRelation.objects.create(chunk=chunk2, revision=revision)
     return revision
 
 
@@ -383,6 +384,7 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
             # We don't have to use select_for_update here because the unique constraint on current guards against
             # the race condition. But it's a good idea because it'll lock and wait rather than fail.
             current_revision = instance.revisions.filter(current=True).select_for_update().first()
+            assert current_revision is not None
             current_revision.current = None
             current_revision.save()
 
@@ -523,8 +525,8 @@ def fetch_updates(
 
     new_stoken_obj = get_queryset_stoken(queryset)
     new_stoken = new_stoken_obj and new_stoken_obj.uid
-    stoken = stoken_rev and getattr(stoken_rev, "uid", None)
-    new_stoken = new_stoken or stoken
+    stoken_rev_uid = stoken_rev and getattr(stoken_rev, "uid", None)
+    new_stoken = new_stoken or stoken_rev_uid
 
     context = Context(user, prefetch)
     return CollectionItemListResponse(

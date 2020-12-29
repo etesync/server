@@ -56,6 +56,7 @@ class Collection(models.Model):
 
     @property
     def content(self) -> "CollectionItemRevision":
+        assert self.main_item is not None
         return self.main_item.content
 
     @property
