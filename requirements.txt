@@ -10,12 +10,18 @@ click==7.1.2              # via uvicorn
 django==3.1.4             # via -r requirements.in/base.txt
 fastapi==0.63.0           # via -r requirements.in/base.txt
 h11==0.11.0               # via uvicorn
+httptools==0.1.1          # via uvicorn
 msgpack==1.0.2            # via -r requirements.in/base.txt
 pycparser==2.20           # via cffi
 pydantic==1.7.3           # via fastapi
 pynacl==1.4.0             # via -r requirements.in/base.txt
+python-dotenv==0.15.0     # via uvicorn
 pytz==2020.4              # via django
+pyyaml==5.3.1             # via uvicorn
 six==1.15.0               # via pynacl
 sqlparse==0.4.1           # via django
 starlette==0.13.6         # via fastapi
-uvicorn==0.13.2           # via -r requirements.in/base.txt
+uvicorn[standard]==0.13.2  # via -r requirements.in/base.txt
+uvloop==0.14.0            # via uvicorn
+watchgod==0.6             # via uvicorn
+websockets==8.1           # via uvicorn

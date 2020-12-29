@@ -2,4 +2,4 @@ django
 msgpack
 pynacl
 fastapi
-uvicorn
+uvicorn[standard]
