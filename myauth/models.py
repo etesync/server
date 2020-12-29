@@ -40,7 +40,7 @@ class User(AbstractUser):
         return super().normalize_username(username).lower()
 
 
-UserType = t.Type[User]
+UserType = User
 
 
 def get_typed_user_model() -> UserType:
