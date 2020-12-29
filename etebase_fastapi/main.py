@@ -14,7 +14,15 @@ from .msgpack import MsgpackResponse
 
 
 def create_application(prefix=""):
-    app = FastAPI()
+    app = FastAPI(
+        title="Etebase",
+        description="The Etebase server API documentation",
+        externalDocs={
+            "url": "https://docs.etebase.com",
+            "description": "Docs about the API specifications and clients.",
+        }
+        # FIXME: version="2.5.0",
+    )
     VERSION = "v1"
     BASE_PATH = f"{prefix}/api/{VERSION}"
     COLLECTION_UID_MARKER = "{collection_uid}"
