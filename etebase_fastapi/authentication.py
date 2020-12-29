@@ -9,7 +9,7 @@ import nacl.secret
 import nacl.signing
 from asgiref.sync import sync_to_async
 from django.conf import settings
-from django.contrib.auth import get_user_model, user_logged_out, user_logged_in
+from django.contrib.auth import user_logged_out, user_logged_in
 from django.core import exceptions as django_exceptions
 from django.db import transaction
 from fastapi import APIRouter, Depends, status, Request
@@ -19,12 +19,13 @@ from django_etebase.token_auth.models import AuthToken
 from django_etebase.models import UserInfo
 from django_etebase.signals import user_signed_up
 from django_etebase.utils import create_user, get_user_queryset, CallbackContext
+from myauth.models import UserType, get_typed_user_model
 from .exceptions import AuthenticationFailed, transform_validation_error, HttpError
 from .msgpack import MsgpackRoute
 from .utils import BaseModel, permission_responses, msgpack_encode, msgpack_decode
 from .dependencies import AuthData, get_auth_data, get_authenticated_user
 
-User = get_user_model()
+User = get_typed_user_model()
 authentication_router = APIRouter(route_class=MsgpackRoute)
 
 
@@ -52,7 +53,7 @@ class UserOut(BaseModel):
     encryptedContent: bytes
 
     @classmethod
-    def from_orm(cls: t.Type["UserOut"], obj: User) -> "UserOut":
+    def from_orm(cls: t.Type["UserOut"], obj: UserType) -> "UserOut":
         return cls(
             username=obj.username,
             email=obj.email,
@@ -66,7 +67,7 @@ class LoginOut(BaseModel):
     user: UserOut
 
     @classmethod
-    def from_orm(cls: t.Type["LoginOut"], obj: User) -> "LoginOut":
+    def from_orm(cls: t.Type["LoginOut"], obj: UserType) -> "LoginOut":
         token = AuthToken.objects.create(user=obj).key
         user = UserOut.from_orm(obj)
         return cls(token=token, user=user)
@@ -111,7 +112,7 @@ class SignupIn(BaseModel):
 
 
 @sync_to_async
-def __get_login_user(username: str) -> User:
+def __get_login_user(username: str) -> UserType:
     kwargs = {User.USERNAME_FIELD + "__iexact": username.lower()}
     try:
         user = User.objects.get(**kwargs)
@@ -122,7 +123,7 @@ def __get_login_user(username: str) -> User:
         raise AuthenticationFailed(code="user_not_found", detail="User not found")
 
 
-async def get_login_user(challenge: LoginChallengeIn) -> User:
+async def get_login_user(challenge: LoginChallengeIn) -> UserType:
     user = await __get_login_user(challenge.username)
     return user
 
@@ -138,7 +139,7 @@ def get_encryption_key(salt):
     )
 
 
-def save_changed_password(data: ChangePassword, user: User):
+def save_changed_password(data: ChangePassword, user: UserType):
     response_data = data.response_data
     user_info: UserInfo = user.userinfo
     user_info.loginPubkey = response_data.loginPubkey
@@ -150,7 +151,7 @@ def save_changed_password(data: ChangePassword, user: User):
 def validate_login_request(
     validated_data: LoginResponse,
     challenge_sent_to_user: Authentication,
-    user: User,
+    user: UserType,
     expected_action: str,
     host_from_request: str,
 ):
@@ -159,7 +160,7 @@ def validate_login_request(
     challenge_data = msgpack_decode(box.decrypt(validated_data.challenge))
     now = int(datetime.now().timestamp())
     if validated_data.action != expected_action:
-        raise HttpError("wrong_action", f'Expected "{challenge_sent_to_user.response}" but got something else')
+        raise HttpError("wrong_action", f'Expected "{expected_action}" but got something else')
     elif now - challenge_data["timestamp"] > app_settings.CHALLENGE_VALID_SECONDS:
         raise HttpError("challenge_expired", "Login challenge has expired")
     elif challenge_data["userId"] != user.id:
@@ -181,7 +182,7 @@ async def is_etebase():
 
 
 @authentication_router.post("/login_challenge/", response_model=LoginChallengeOut)
-def login_challenge(user: User = Depends(get_login_user)):
+def login_challenge(user: UserType = Depends(get_login_user)):
     salt = bytes(user.userinfo.salt)
     enc_key = get_encryption_key(salt)
     box = nacl.secret.SecretBox(enc_key)
@@ -210,14 +211,14 @@ def logout(auth_data: AuthData = Depends(get_auth_data)):
 
 
 @authentication_router.post("/change_password/", status_code=status.HTTP_204_NO_CONTENT, responses=permission_responses)
-async def change_password(data: ChangePassword, request: Request, user: User = Depends(get_authenticated_user)):
+async def change_password(data: ChangePassword, request: Request, user: UserType = Depends(get_authenticated_user)):
     host = request.headers.get("Host")
     await validate_login_request(data.response_data, data, user, "changePassword", host)
     await sync_to_async(save_changed_password)(data, user)
 
 
 @authentication_router.post("/dashboard_url/", responses=permission_responses)
-def dashboard_url(request: Request, user: User = Depends(get_authenticated_user)):
+def dashboard_url(request: Request, user: UserType = Depends(get_authenticated_user)):
     get_dashboard_url = app_settings.DASHBOARD_URL_FUNC
     if get_dashboard_url is None:
         raise HttpError("not_supported", "This server doesn't have a user dashboard.")
@@ -228,7 +229,7 @@ def dashboard_url(request: Request, user: User = Depends(get_authenticated_user)
     return ret
 
 
-def signup_save(data: SignupIn, request: Request) -> User:
+def signup_save(data: SignupIn, request: Request) -> UserType:
     user_data = data.user
     with transaction.atomic():
         try:

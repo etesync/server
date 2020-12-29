@@ -3,17 +3,17 @@ import dataclasses
 from fastapi import Depends
 from fastapi.security import APIKeyHeader
 
-from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db.models import QuerySet
 
 from django_etebase import models
 from django_etebase.token_auth.models import AuthToken, get_default_expiry
+from myauth.models import UserType, get_typed_user_model
 from .exceptions import AuthenticationFailed
 from .utils import get_object_or_404
 
 
-User = get_user_model()
+User = get_typed_user_model()
 token_scheme = APIKeyHeader(name="Authorization")
 AUTO_REFRESH = True
 MIN_REFRESH_INTERVAL = 60
@@ -21,7 +21,7 @@ MIN_REFRESH_INTERVAL = 60
 
 @dataclasses.dataclass(frozen=True)
 class AuthData:
-    user: User
+    user: UserType
     token: AuthToken
 
 
@@ -60,12 +60,12 @@ def get_auth_data(api_token: str = Depends(token_scheme)) -> AuthData:
     return AuthData(user, token)
 
 
-def get_authenticated_user(api_token: str = Depends(token_scheme)) -> User:
+def get_authenticated_user(api_token: str = Depends(token_scheme)) -> UserType:
     user, _ = __get_authenticated_user(api_token)
     return user
 
 
-def get_collection_queryset(user: User = Depends(get_authenticated_user)) -> QuerySet:
+def get_collection_queryset(user: UserType = Depends(get_authenticated_user)) -> QuerySet:
     default_queryset: QuerySet = models.Collection.objects.all()
     return default_queryset.filter(members__user=user)
 

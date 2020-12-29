@@ -1,13 +1,13 @@
 import typing as t
 from dataclasses import dataclass
 
-from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
+from myauth.models import UserType, get_typed_user_model
 
 from . import app_settings
 
 
-User = get_user_model()
+User = get_typed_user_model()
 
 
 @dataclass
@@ -15,7 +15,7 @@ class CallbackContext:
     """Class for passing extra context to callbacks"""
 
     url_kwargs: t.Dict[str, t.Any]
-    user: t.Optional[User] = None
+    user: t.Optional[UserType] = None
 
 
 def get_user_queryset(queryset, context: CallbackContext):

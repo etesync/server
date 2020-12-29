@@ -1,11 +1,11 @@
 import typing as t
 
-from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, status
 
 from django_etebase import models
+from myauth.models import UserType, get_typed_user_model
 from .authentication import get_authenticated_user
 from .msgpack import MsgpackRoute
 from .utils import get_object_or_404, BaseModel, permission_responses, PERMISSIONS_READ, PERMISSIONS_READWRITE
@@ -13,7 +13,7 @@ from .stoken_handler import filter_by_stoken_and_limit
 
 from .collection import get_collection, verify_collection_admin
 
-User = get_user_model()
+User = get_typed_user_model()
 member_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 default_queryset: QuerySet = models.CollectionMember.objects.all()
 
@@ -98,6 +98,8 @@ def member_patch(
 
 
 @member_router.post("/member/leave/", status_code=status.HTTP_204_NO_CONTENT, dependencies=PERMISSIONS_READ)
-def member_leave(user: User = Depends(get_authenticated_user), collection: models.Collection = Depends(get_collection)):
+def member_leave(
+    user: UserType = Depends(get_authenticated_user), collection: models.Collection = Depends(get_collection)
+):
     obj = get_object_or_404(collection.members, user=user)
     obj.revoke()

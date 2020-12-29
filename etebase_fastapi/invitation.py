@@ -1,12 +1,12 @@
 import typing as t
 
-from django.contrib.auth import get_user_model
 from django.db import transaction, IntegrityError
 from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, status, Request
 
 from django_etebase import models
 from django_etebase.utils import get_user_queryset, CallbackContext
+from myauth.models import UserType, get_typed_user_model
 from .authentication import get_authenticated_user
 from .exceptions import HttpError, PermissionDenied
 from .msgpack import MsgpackRoute
@@ -20,7 +20,7 @@ from .utils import (
     PERMISSIONS_READWRITE,
 )
 
-User = get_user_model()
+User = get_typed_user_model()
 invitation_incoming_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 invitation_outgoing_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 default_queryset: QuerySet = models.CollectionInvitation.objects.all()
@@ -53,7 +53,8 @@ class CollectionInvitationCommon(BaseModel):
 
 class CollectionInvitationIn(CollectionInvitationCommon):
     def validate_db(self, context: Context):
-        if context.user.username == self.username.lower():
+        user = context.user
+        if user is not None and (user.username == self.username.lower()):
             raise HttpError("no_self_invite", "Inviting yourself is not allowed")
 
 
@@ -84,11 +85,11 @@ class InvitationListResponse(BaseModel):
     done: bool
 
 
-def get_incoming_queryset(user: User = Depends(get_authenticated_user)):
+def get_incoming_queryset(user: UserType = Depends(get_authenticated_user)):
     return default_queryset.filter(user=user)
 
 
-def get_outgoing_queryset(user: User = Depends(get_authenticated_user)):
+def get_outgoing_queryset(user: UserType = Depends(get_authenticated_user)):
     return default_queryset.filter(fromMember__user=user)
 
 
@@ -183,7 +184,7 @@ def incoming_accept(
 def outgoing_create(
     data: CollectionInvitationIn,
     request: Request,
-    user: User = Depends(get_authenticated_user),
+    user: UserType = Depends(get_authenticated_user),
 ):
     collection = get_object_or_404(models.Collection.objects, uid=data.collection)
     to_user = get_object_or_404(
@@ -231,7 +232,7 @@ def outgoing_delete(
 def outgoing_fetch_user_profile(
     username: str,
     request: Request,
-    user: User = Depends(get_authenticated_user),
+    user: UserType = Depends(get_authenticated_user),
 ):
     kwargs = {User.USERNAME_FIELD: username.lower()}
     user = get_object_or_404(get_user_queryset(User.objects.all(), CallbackContext(request.path_params)), **kwargs)

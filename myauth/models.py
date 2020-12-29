@@ -1,3 +1,5 @@
+import typing as t
+
 from django.contrib.auth.models import AbstractUser, UserManager as DjangoUserManager
 from django.core import validators
 from django.db import models
@@ -28,9 +30,21 @@ class User(AbstractUser):
         unique=True,
         help_text=_("Required. 150 characters or fewer. Letters, digits and ./-/_ only."),
         validators=[username_validator],
-        error_messages={"unique": _("A user with that username already exists."),},
+        error_messages={
+            "unique": _("A user with that username already exists."),
+        },
     )
 
     @classmethod
     def normalize_username(cls, username):
         return super().normalize_username(username).lower()
+
+
+UserType = t.Type[User]
+
+
+def get_typed_user_model() -> UserType:
+    from django.contrib.auth import get_user_model
+
+    ret: t.Any = get_user_model()
+    return ret

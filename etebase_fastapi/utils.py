@@ -8,14 +8,14 @@ from pydantic import BaseModel as PyBaseModel
 
 from django.db.models import QuerySet
 from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth import get_user_model
 
 from django_etebase import app_settings
 from django_etebase.models import AccessLevels
+from myauth.models import UserType, get_typed_user_model
 
 from .exceptions import HttpError, HttpErrorOut
 
-User = get_user_model()
+User = get_typed_user_model()
 
 Prefetch = t.Literal["auto", "medium"]
 PrefetchQuery = Query(default="auto")
@@ -30,7 +30,7 @@ class BaseModel(PyBaseModel):
 
 @dataclasses.dataclass
 class Context:
-    user: t.Optional[User]
+    user: t.Optional[UserType]
     prefetch: t.Optional[Prefetch]
 
 

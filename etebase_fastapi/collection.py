@@ -1,7 +1,6 @@
 import typing as t
 
 from asgiref.sync import sync_to_async
-from django.contrib.auth import get_user_model
 from django.core import exceptions as django_exceptions
 from django.core.files.base import ContentFile
 from django.db import transaction, IntegrityError
@@ -9,6 +8,7 @@ from django.db.models import Q, QuerySet
 from fastapi import APIRouter, Depends, status, Request
 
 from django_etebase import models
+from myauth.models import UserType, get_typed_user_model
 from .authentication import get_authenticated_user
 from .exceptions import HttpError, transform_validation_error, PermissionDenied, ValidationError
 from .msgpack import MsgpackRoute
@@ -27,7 +27,7 @@ from .utils import (
 from .dependencies import get_collection_queryset, get_item_queryset, get_collection
 from .sendfile import sendfile
 
-User = get_user_model()
+User = get_typed_user_model
 collection_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 item_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 
@@ -36,11 +36,14 @@ class ListMulti(BaseModel):
     collectionTypes: t.List[bytes]
 
 
+ChunkType = t.Tuple[str, t.Optional[bytes]]
+
+
 class CollectionItemRevisionInOut(BaseModel):
     uid: str
     meta: bytes
     deleted: bool
-    chunks: t.List[t.Tuple[str, t.Optional[bytes]]]
+    chunks: t.List[ChunkType]
 
     class Config:
         orm_mode = True
@@ -49,7 +52,7 @@ class CollectionItemRevisionInOut(BaseModel):
     def from_orm_context(
         cls: t.Type["CollectionItemRevisionInOut"], obj: models.CollectionItemRevision, context: Context
     ) -> "CollectionItemRevisionInOut":
-        chunks = []
+        chunks: t.List[ChunkType] = []
         for chunk_relation in obj.chunks_relation.all():
             chunk_obj = chunk_relation.chunk
             if context.prefetch == "auto":
@@ -185,7 +188,7 @@ class ItemBatchIn(BaseModel):
 @sync_to_async
 def collection_list_common(
     queryset: QuerySet,
-    user: User,
+    user: UserType,
     stoken: t.Optional[str],
     limit: int,
     prefetch: Prefetch,
@@ -210,7 +213,7 @@ def collection_list_common(
 
         remed = remed_qs.values_list("collection__uid", flat=True)
         if len(remed) > 0:
-            ret.removedMemberships = [{"uid": x} for x in remed]
+            ret.removedMemberships = [RemovedMembershipOut(uid=x) for x in remed]
 
     return ret
 
@@ -219,14 +222,14 @@ def collection_list_common(
 
 
 def verify_collection_admin(
-    collection: models.Collection = Depends(get_collection), user: User = Depends(get_authenticated_user)
+    collection: models.Collection = Depends(get_collection), user: UserType = Depends(get_authenticated_user)
 ):
     if not is_collection_admin(collection, user):
         raise PermissionDenied("admin_access_required", "Only collection admins can perform this operation.")
 
 
 def has_write_access(
-    collection: models.Collection = Depends(get_collection), user: User = Depends(get_authenticated_user)
+    collection: models.Collection = Depends(get_collection), user: UserType = Depends(get_authenticated_user)
 ):
     member = collection.members.get(user=user)
     if member.accessLevel == models.AccessLevels.READ_ONLY:
@@ -247,7 +250,7 @@ async def list_multi(
     stoken: t.Optional[str] = None,
     limit: int = 50,
     queryset: QuerySet = Depends(get_collection_queryset),
-    user: User = Depends(get_authenticated_user),
+    user: UserType = Depends(get_authenticated_user),
     prefetch: Prefetch = PrefetchQuery,
 ):
     # FIXME: Remove the isnull part once we attach collection types to all objects ("collection-type-migration")
@@ -263,7 +266,7 @@ async def collection_list(
     stoken: t.Optional[str] = None,
     limit: int = 50,
     prefetch: Prefetch = PrefetchQuery,
-    user: User = Depends(get_authenticated_user),
+    user: UserType = Depends(get_authenticated_user),
     queryset: QuerySet = Depends(get_collection_queryset),
 ):
     return await collection_list_common(queryset, user, stoken, limit, prefetch)
@@ -299,7 +302,7 @@ def process_revisions_for_item(item: models.CollectionItem, revision_data: Colle
     return revision
 
 
-def _create(data: CollectionIn, user: User):
+def _create(data: CollectionIn, user: UserType):
     with transaction.atomic():
         if data.item.etag is not None:
             raise ValidationError("bad_etag", "etag is not null")
@@ -335,14 +338,14 @@ def _create(data: CollectionIn, user: User):
 
 
 @collection_router.post("/", status_code=status.HTTP_201_CREATED, dependencies=PERMISSIONS_READWRITE)
-async def create(data: CollectionIn, user: User = Depends(get_authenticated_user)):
+async def create(data: CollectionIn, user: UserType = Depends(get_authenticated_user)):
     await sync_to_async(_create)(data, user)
 
 
 @collection_router.get("/{collection_uid}/", response_model=CollectionOut, dependencies=PERMISSIONS_READ)
 def collection_get(
     obj: models.Collection = Depends(get_collection),
-    user: User = Depends(get_authenticated_user),
+    user: UserType = Depends(get_authenticated_user),
     prefetch: Prefetch = PrefetchQuery,
 ):
     return CollectionOut.from_orm_context(obj, Context(user, prefetch))
@@ -393,7 +396,7 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
 def item_get(
     item_uid: str,
     queryset: QuerySet = Depends(get_item_queryset),
-    user: User = Depends(get_authenticated_user),
+    user: UserType = Depends(get_authenticated_user),
     prefetch: Prefetch = PrefetchQuery,
 ):
     obj = queryset.get(uid=item_uid)
@@ -403,7 +406,7 @@ def item_get(
 @sync_to_async
 def item_list_common(
     queryset: QuerySet,
-    user: User,
+    user: UserType,
     stoken: t.Optional[str],
     limit: int,
     prefetch: Prefetch,
@@ -424,7 +427,7 @@ async def item_list(
     limit: int = 50,
     prefetch: Prefetch = PrefetchQuery,
     withCollection: bool = False,
-    user: User = Depends(get_authenticated_user),
+    user: UserType = Depends(get_authenticated_user),
 ):
     if not withCollection:
         queryset = queryset.filter(parent__isnull=True)
@@ -433,7 +436,7 @@ async def item_list(
     return response
 
 
-def item_bulk_common(data: ItemBatchIn, user: User, stoken: t.Optional[str], uid: str, validate_etag: bool):
+def item_bulk_common(data: ItemBatchIn, user: UserType, stoken: t.Optional[str], uid: str, validate_etag: bool):
     queryset = get_collection_queryset(user)
     with transaction.atomic():  # We need this for locking the collection object
         collection_object = queryset.select_for_update().get(uid=uid)
@@ -467,7 +470,7 @@ def item_revisions(
     limit: int = 50,
     iterator: t.Optional[str] = None,
     prefetch: Prefetch = PrefetchQuery,
-    user: User = Depends(get_authenticated_user),
+    user: UserType = Depends(get_authenticated_user),
     items: QuerySet = Depends(get_item_queryset),
 ):
     item = get_object_or_404(items, uid=item_uid)
@@ -501,7 +504,7 @@ def fetch_updates(
     data: t.List[CollectionItemBulkGetIn],
     stoken: t.Optional[str] = None,
     prefetch: Prefetch = PrefetchQuery,
-    user: User = Depends(get_authenticated_user),
+    user: UserType = Depends(get_authenticated_user),
     queryset: QuerySet = Depends(get_item_queryset),
 ):
     # FIXME: make configurable?
@@ -531,14 +534,14 @@ def fetch_updates(
 
 @item_router.post("/item/transaction/", dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE])
 def item_transaction(
-    collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
+    collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: UserType = Depends(get_authenticated_user)
 ):
     return item_bulk_common(data, user, stoken, collection_uid, validate_etag=True)
 
 
 @item_router.post("/item/batch/", dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE])
 def item_batch(
-    collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: User = Depends(get_authenticated_user)
+    collection_uid: str, data: ItemBatchIn, stoken: t.Optional[str] = None, user: UserType = Depends(get_authenticated_user)
 ):
     return item_bulk_common(data, user, stoken, collection_uid, validate_etag=False)
 
