@@ -1,9 +1,10 @@
 import typing as t
-import msgpack
 from fastapi.routing import APIRoute, get_request_handler
 from pydantic import BaseModel
 from starlette.requests import Request
 from starlette.responses import Response
+
+from .utils import msgpack_encode, msgpack_decode
 
 
 class MsgpackRequest(Request):
@@ -12,7 +13,7 @@ class MsgpackRequest(Request):
     async def json(self) -> bytes:
         if not hasattr(self, "_json"):
             body = await super().body()
-            self._json = msgpack.unpackb(body, raw=False)
+            self._json = msgpack_decode(body)
         return self._json
 
 
@@ -25,9 +26,7 @@ class MsgpackResponse(Response):
 
         if isinstance(content, BaseModel):
             content = content.dict()
-        ret = msgpack.packb(content, use_bin_type=True)
-        assert ret is not None
-        return ret
+        return msgpack_encode(content)
 
 
 class MsgpackRoute(APIRoute):

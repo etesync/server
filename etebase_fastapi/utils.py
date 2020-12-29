@@ -47,7 +47,9 @@ def is_collection_admin(collection, user):
 
 
 def msgpack_encode(content):
-    return msgpack.packb(content, use_bin_type=True)
+    ret = msgpack.packb(content, use_bin_type=True)
+    assert ret is not None
+    return ret
 
 
 def msgpack_decode(content):
