@@ -2,3 +2,4 @@ coverage
 pip-tools
 pywatchman
 black
+django-stubs
