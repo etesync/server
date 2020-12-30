@@ -8,7 +8,7 @@ from django.db.models import Q, QuerySet
 from fastapi import APIRouter, Depends, status, Request
 
 from django_etebase import models
-from myauth.models import UserType, get_typed_user_model
+from myauth.models import UserType
 from .authentication import get_authenticated_user
 from ..exceptions import HttpError, transform_validation_error, PermissionDenied, ValidationError
 from ..msgpack import MsgpackRoute
@@ -27,7 +27,6 @@ from ..utils import (
 from ..dependencies import get_collection_queryset, get_item_queryset, get_collection
 from ..sendfile import sendfile
 
-User = get_typed_user_model
 collection_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 item_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 CollectionQuerySet = QuerySet[models.Collection]
