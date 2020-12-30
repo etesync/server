@@ -188,7 +188,6 @@ class ItemBatchIn(BaseModel):
                 )
 
 
-@sync_to_async
 def collection_list_common(
     queryset: CollectionQuerySet,
     user: UserType,
@@ -248,7 +247,7 @@ def has_write_access(
     response_model_exclude_unset=True,
     dependencies=PERMISSIONS_READ,
 )
-async def list_multi(
+def list_multi(
     data: ListMulti,
     stoken: t.Optional[str] = None,
     limit: int = 50,
@@ -261,18 +260,18 @@ async def list_multi(
         Q(members__collectionType__uid__in=data.collectionTypes) | Q(members__collectionType__isnull=True)
     )
 
-    return await collection_list_common(queryset, user, stoken, limit, prefetch)
+    return collection_list_common(queryset, user, stoken, limit, prefetch)
 
 
 @collection_router.get("/", response_model=CollectionListResponse, dependencies=PERMISSIONS_READ)
-async def collection_list(
+def collection_list(
     stoken: t.Optional[str] = None,
     limit: int = 50,
     prefetch: Prefetch = PrefetchQuery,
     user: UserType = Depends(get_authenticated_user),
     queryset: CollectionQuerySet = Depends(get_collection_queryset),
 ):
-    return await collection_list_common(queryset, user, stoken, limit, prefetch)
+    return collection_list_common(queryset, user, stoken, limit, prefetch)
 
 
 def process_revisions_for_item(item: models.CollectionItem, revision_data: CollectionItemRevisionInOut):
@@ -341,8 +340,8 @@ def _create(data: CollectionIn, user: UserType):
 
 
 @collection_router.post("/", status_code=status.HTTP_201_CREATED, dependencies=PERMISSIONS_READWRITE)
-async def create(data: CollectionIn, user: UserType = Depends(get_authenticated_user)):
-    await sync_to_async(_create)(data, user)
+def create(data: CollectionIn, user: UserType = Depends(get_authenticated_user)):
+    _create(data, user)
 
 
 @collection_router.get("/{collection_uid}/", response_model=CollectionOut, dependencies=PERMISSIONS_READ)
@@ -407,7 +406,6 @@ def item_get(
     return CollectionItemOut.from_orm_context(obj, Context(user, prefetch))
 
 
-@sync_to_async
 def item_list_common(
     queryset: CollectionItemQuerySet,
     user: UserType,
@@ -425,7 +423,7 @@ def item_list_common(
 
 
 @item_router.get("/item/", response_model=CollectionItemListResponse, dependencies=PERMISSIONS_READ)
-async def item_list(
+def item_list(
     queryset: CollectionItemQuerySet = Depends(get_item_queryset),
     stoken: t.Optional[str] = None,
     limit: int = 50,
@@ -436,7 +434,7 @@ async def item_list(
     if not withCollection:
         queryset = queryset.filter(parent__isnull=True)
 
-    response = await item_list_common(queryset, user, stoken, limit, prefetch)
+    response = item_list_common(queryset, user, stoken, limit, prefetch)
     return response
 
 

@@ -7,7 +7,6 @@ import nacl.encoding
 import nacl.hash
 import nacl.secret
 import nacl.signing
-from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.contrib.auth import user_logged_out, user_logged_in
 from django.core import exceptions as django_exceptions
@@ -145,7 +144,6 @@ def save_changed_password(data: ChangePassword, user: UserType):
     user_info.save()
 
 
-@sync_to_async
 def validate_login_request(
     validated_data: LoginResponse,
     challenge_sent_to_user: Authentication,
@@ -193,13 +191,13 @@ def login_challenge(user: UserType = Depends(get_login_user)):
 
 
 @authentication_router.post("/login/", response_model=LoginOut)
-async def login(data: Login, request: Request):
-    user = await sync_to_async(get_login_user)(request, LoginChallengeIn(username=data.response_data.username))
+def login(data: Login, request: Request):
+    user = get_login_user(request, LoginChallengeIn(username=data.response_data.username))
     host = request.headers.get("Host")
-    await validate_login_request(data.response_data, data, user, "login", host)
-    data = await sync_to_async(LoginOut.from_orm)(user)
-    await sync_to_async(user_logged_in.send)(sender=user.__class__, request=None, user=user)
-    return data
+    validate_login_request(data.response_data, data, user, "login", host)
+    ret = LoginOut.from_orm(user)
+    user_logged_in.send(sender=user.__class__, request=None, user=user)
+    return ret
 
 
 @authentication_router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT, responses=permission_responses)
@@ -209,10 +207,10 @@ def logout(auth_data: AuthData = Depends(get_auth_data)):
 
 
 @authentication_router.post("/change_password/", status_code=status.HTTP_204_NO_CONTENT, responses=permission_responses)
-async def change_password(data: ChangePassword, request: Request, user: UserType = Depends(get_authenticated_user)):
+def change_password(data: ChangePassword, request: Request, user: UserType = Depends(get_authenticated_user)):
     host = request.headers.get("Host")
-    await validate_login_request(data.response_data, data, user, "changePassword", host)
-    await sync_to_async(save_changed_password)(data, user)
+    validate_login_request(data.response_data, data, user, "changePassword", host)
+    save_changed_password(data, user)
 
 
 @authentication_router.post("/dashboard_url/", responses=permission_responses)
