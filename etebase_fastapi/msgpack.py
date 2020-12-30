@@ -1,10 +1,13 @@
 import typing as t
+
+from fastapi import params
 from fastapi.routing import APIRoute, get_request_handler
 from pydantic import BaseModel
 from starlette.requests import Request
 from starlette.responses import Response
 
 from .utils import msgpack_encode, msgpack_decode
+from .db_hack import django_db_cleanup_decorator
 
 
 class MsgpackRequest(Request):
@@ -34,6 +37,22 @@ class MsgpackRoute(APIRoute):
     REQUESTS_CLASSES = {MsgpackRequest.media_type: MsgpackRequest}
     # keep track of content-type -> response classes
     ROUTES_HANDLERS_CLASSES = {MsgpackResponse.media_type: MsgpackResponse}
+
+    def __init__(
+        self,
+        path: str,
+        endpoint: t.Callable[..., t.Any],
+        *args,
+        dependencies: t.Optional[t.Sequence[params.Depends]] = None,
+        **kwargs
+    ):
+        if dependencies is not None:
+            dependencies = [
+                params.Depends(django_db_cleanup_decorator(dep.dependency), use_cache=dep.use_cache)
+                for dep in dependencies
+            ]
+        endpoint = django_db_cleanup_decorator(endpoint)
+        super().__init__(path, endpoint, *args, dependencies=dependencies, **kwargs)
 
     def _get_media_type_route_handler(self, media_type):
         return get_request_handler(
