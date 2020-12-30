@@ -5,7 +5,6 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
-from .middleware import DjangoDbConnectionCleanupMiddleware
 from .exceptions import CustomHttpException
 from .msgpack import MsgpackResponse
 from .routers.authentication import authentication_router
@@ -43,7 +42,6 @@ def create_application(prefix="", middlewares=[]):
 
         app.include_router(test_reset_view_router, prefix=f"{BASE_PATH}/test/authentication")
 
-    app.add_middleware(DjangoDbConnectionCleanupMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origin_regex="https?://.*",
