@@ -10,6 +10,7 @@ from .authentication import get_authenticated_user
 from ..msgpack import MsgpackRoute
 from ..utils import get_object_or_404, BaseModel, permission_responses, PERMISSIONS_READ, PERMISSIONS_READWRITE
 from ..stoken_handler import filter_by_stoken_and_limit
+from ..db_hack import django_db_cleanup_decorator
 
 from .collection import get_collection, verify_collection_admin
 
@@ -19,10 +20,12 @@ MemberQuerySet = QuerySet[models.CollectionMember]
 default_queryset: MemberQuerySet = models.CollectionMember.objects.all()
 
 
+@django_db_cleanup_decorator
 def get_queryset(collection: models.Collection = Depends(get_collection)) -> MemberQuerySet:
     return default_queryset.filter(collection=collection)
 
 
+@django_db_cleanup_decorator
 def get_member(username: str, queryset: MemberQuerySet = Depends(get_queryset)) -> models.CollectionMember:
     return get_object_or_404(queryset, user__username__iexact=username)
 

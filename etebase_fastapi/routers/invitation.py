@@ -19,6 +19,7 @@ from ..utils import (
     PERMISSIONS_READ,
     PERMISSIONS_READWRITE,
 )
+from ..db_hack import django_db_cleanup_decorator
 
 User = get_typed_user_model()
 invitation_incoming_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
@@ -86,10 +87,12 @@ class InvitationListResponse(BaseModel):
     done: bool
 
 
+@django_db_cleanup_decorator
 def get_incoming_queryset(user: UserType = Depends(get_authenticated_user)):
     return default_queryset.filter(user=user)
 
 
+@django_db_cleanup_decorator
 def get_outgoing_queryset(user: UserType = Depends(get_authenticated_user)):
     return default_queryset.filter(fromMember__user=user)
 

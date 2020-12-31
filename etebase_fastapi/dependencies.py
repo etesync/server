@@ -11,6 +11,7 @@ from django_etebase.token_auth.models import AuthToken, get_default_expiry
 from myauth.models import UserType, get_typed_user_model
 from .exceptions import AuthenticationFailed
 from .utils import get_object_or_404
+from .db_hack import django_db_cleanup_decorator
 
 
 User = get_typed_user_model()
@@ -55,25 +56,30 @@ def __get_authenticated_user(api_token: str):
     return token.user, token
 
 
+@django_db_cleanup_decorator
 def get_auth_data(api_token: str = Depends(token_scheme)) -> AuthData:
     user, token = __get_authenticated_user(api_token)
     return AuthData(user, token)
 
 
+@django_db_cleanup_decorator
 def get_authenticated_user(api_token: str = Depends(token_scheme)) -> UserType:
     user, _ = __get_authenticated_user(api_token)
     return user
 
 
+@django_db_cleanup_decorator
 def get_collection_queryset(user: UserType = Depends(get_authenticated_user)) -> QuerySet:
     default_queryset: QuerySet = models.Collection.objects.all()
     return default_queryset.filter(members__user=user)
 
 
+@django_db_cleanup_decorator
 def get_collection(collection_uid: str, queryset: QuerySet = Depends(get_collection_queryset)) -> models.Collection:
     return get_object_or_404(queryset, uid=collection_uid)
 
 
+@django_db_cleanup_decorator
 def get_item_queryset(collection: models.Collection = Depends(get_collection)) -> QuerySet:
     default_item_queryset: QuerySet = models.CollectionItem.objects.all()
     # XXX Potentially add this for performance: .prefetch_related('revisions__chunks')

@@ -26,6 +26,7 @@ from ..utils import (
 )
 from ..dependencies import get_collection_queryset, get_item_queryset, get_collection
 from ..sendfile import sendfile
+from ..db_hack import django_db_cleanup_decorator
 
 collection_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
 item_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
@@ -222,6 +223,7 @@ def collection_list_common(
 # permissions
 
 
+@django_db_cleanup_decorator
 def verify_collection_admin(
     collection: models.Collection = Depends(get_collection), user: UserType = Depends(get_authenticated_user)
 ):
@@ -229,6 +231,7 @@ def verify_collection_admin(
         raise PermissionDenied("admin_access_required", "Only collection admins can perform this operation.")
 
 
+@django_db_cleanup_decorator
 def has_write_access(
     collection: models.Collection = Depends(get_collection), user: UserType = Depends(get_authenticated_user)
 ):
