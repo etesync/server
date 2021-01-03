@@ -15,7 +15,7 @@ Before installing the Etebase server make sure you install `virtualenv` (for **P
 
 * Arch Linux: `pacman -S python-virtualenv`
 * Debian/Ubuntu: `apt-get install python3-virtualenv`
-* Mac/Windows/Other Linux: install virtualenv or just skip the instructions mentioning virtualenv.
+* Mac/Windows (WSL)/Other Linux: install virtualenv or just skip the instructions mentioning virtualenv.
 
 Then just clone the git repo and set up this app:
 
