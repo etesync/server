@@ -11,6 +11,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+import typing as t
+
 from django.utils.functional import cached_property
 
 
@@ -30,6 +32,10 @@ class AppSettings:
         from django.conf import settings
 
         return getattr(settings, self.prefix + name, dflt)
+
+    @cached_property
+    def REDIS_URI(self) -> t.Optional[str]:  # pylint: disable=invalid-name
+        return self._setting("REDIS_URI", None)
 
     @cached_property
     def API_PERMISSIONS_READ(self):  # pylint: disable=invalid-name

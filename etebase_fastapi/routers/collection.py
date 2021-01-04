@@ -1,6 +1,6 @@
 import typing as t
 
-from asgiref.sync import sync_to_async
+from asgiref.sync import sync_to_async, async_to_sync
 from django.core import exceptions as django_exceptions
 from django.core.files.base import ContentFile
 from django.db import transaction, IntegrityError
@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, status, Request
 from django_etebase import models
 from myauth.models import UserType
 from .authentication import get_authenticated_user
+from .websocket import get_ticket, TicketRequest, TicketOut
 from ..exceptions import HttpError, transform_validation_error, PermissionDenied, ValidationError
 from ..msgpack import MsgpackRoute
 from ..stoken_handler import filter_by_stoken_and_limit, filter_by_stoken, get_stoken_obj, get_queryset_stoken
@@ -19,6 +20,7 @@ from ..utils import (
     Prefetch,
     PrefetchQuery,
     is_collection_admin,
+    msgpack_encode,
     BaseModel,
     permission_responses,
     PERMISSIONS_READ,
@@ -26,6 +28,7 @@ from ..utils import (
 )
 from ..dependencies import get_collection_queryset, get_item_queryset, get_collection
 from ..sendfile import sendfile
+from ..redis import redisw
 from ..db_hack import django_db_cleanup_decorator
 
 collection_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
@@ -186,6 +189,16 @@ class ItemBatchIn(BaseModel):
                     errors=errors,
                     status_code=status.HTTP_409_CONFLICT,
                 )
+
+
+# FIXME: make it a background task
+def report_items_changed(col_uid: str, stoken: str, items: t.List[CollectionItemIn]):
+    if not redisw.is_active:
+        return
+
+    redis = redisw.redis
+    content = msgpack_encode(CollectionItemListResponse(data=items, stoken=stoken, done=True).dict())
+    async_to_sync(redis.publish)(f"col.{col_uid}", content)
 
 
 def collection_list_common(
@@ -440,6 +453,15 @@ def item_list(
     return response
 
 
+@item_router.post("/item/subscription-ticket/", response_model=TicketOut, dependencies=PERMISSIONS_READ)
+async def item_list_subscription_ticket(
+    collection: models.Collection = Depends(get_collection),
+    user: UserType = Depends(get_authenticated_user),
+):
+    """Get an authentication ticket that can be used with the websocket endpoint"""
+    return await get_ticket(TicketRequest(collection=collection.uid), user)
+
+
 def item_bulk_common(data: ItemBatchIn, user: UserType, stoken: t.Optional[str], uid: str, validate_etag: bool):
     queryset = get_collection_queryset(user)
     with transaction.atomic():  # We need this for locking the collection object
@@ -464,6 +486,8 @@ def item_bulk_common(data: ItemBatchIn, user: UserType, stoken: t.Optional[str],
                 errors=errors,
                 status_code=status.HTTP_409_CONFLICT,
             )
+
+    report_items_changed(collection_object.uid, collection_object.stoken, data.items)
 
 
 @item_router.get(

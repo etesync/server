@@ -63,6 +63,16 @@ class PermissionDenied(CustomHttpException):
         super().__init__(code=code, detail=detail, status_code=status_code)
 
 
+class NotSupported(CustomHttpException):
+    def __init__(
+        self,
+        code="not_implemented",
+        detail: str = "This server's configuration does not support this request.",
+        status_code: int = status.HTTP_501_NOT_IMPLEMENTED,
+    ):
+        super().__init__(code=code, detail=detail, status_code=status_code)
+
+
 class HttpError(CustomHttpException):
     def __init__(
         self,

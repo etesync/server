@@ -5,12 +5,15 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
+from django_etebase import app_settings
+
 from .exceptions import CustomHttpException
 from .msgpack import MsgpackResponse
 from .routers.authentication import authentication_router
 from .routers.collection import collection_router, item_router
 from .routers.member import member_router
 from .routers.invitation import invitation_incoming_router, invitation_outgoing_router
+from .routers.websocket import websocket_router
 
 
 def create_application(prefix="", middlewares=[]):
@@ -36,6 +39,7 @@ def create_application(prefix="", middlewares=[]):
     app.include_router(
         invitation_outgoing_router, prefix=f"{BASE_PATH}/invitation/outgoing", tags=["outgoing invitation"]
     )
+    app.include_router(websocket_router, prefix=f"{BASE_PATH}/ws", tags=["websocket"])
 
     if settings.DEBUG:
         from etebase_fastapi.routers.test_reset_view import test_reset_view_router
@@ -53,6 +57,18 @@ def create_application(prefix="", middlewares=[]):
 
     for middleware in middlewares:
         app.add_middleware(middleware)
+
+    @app.on_event("startup")
+    async def on_startup() -> None:
+        from .redis import redisw
+
+        await redisw.setup()
+
+    @app.on_event("shutdown")
+    async def on_shutdown():
+        from .redis import redisw
+
+        await redisw.close()
 
     @app.exception_handler(CustomHttpException)
     async def custom_exception_handler(request: Request, exc: CustomHttpException):
