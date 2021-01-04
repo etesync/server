@@ -50,21 +50,21 @@ def is_collection_admin(collection, user):
     return (member is not None) and (member.accessLevel == AccessLevels.ADMIN)
 
 
-def msgpack_encode(content):
+def msgpack_encode(content) -> bytes:
     ret = msgpack.packb(content, use_bin_type=True)
     assert ret is not None
     return ret
 
 
-def msgpack_decode(content):
+def msgpack_decode(content: bytes):
     return msgpack.unpackb(content, raw=False)
 
 
-def b64encode(value):
+def b64encode(value: bytes):
     return base64.urlsafe_b64encode(value).decode("ascii").strip("=")
 
 
-def b64decode(data):
+def b64decode(data: str):
     data += "=" * ((4 - len(data) % 4) % 4)
     return base64.urlsafe_b64decode(data)
 

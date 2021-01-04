@@ -125,7 +125,7 @@ def get_login_user(request: Request, challenge: LoginChallengeIn) -> UserType:
         raise AuthenticationFailed(code="user_not_found", detail="User not found")
 
 
-def get_encryption_key(salt):
+def get_encryption_key(salt: bytes):
     key = nacl.hash.blake2b(settings.SECRET_KEY.encode(), encoder=nacl.encoding.RawEncoder)
     return nacl.hash.blake2b(
         b"",
