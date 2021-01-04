@@ -2,6 +2,7 @@ from fastapi import status
 import typing as t
 
 from pydantic import BaseModel
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 
 class HttpErrorField(BaseModel):
@@ -92,8 +93,8 @@ class ValidationError(HttpError):
         super().__init__(code=code, detail=detail, errors=errors, status_code=status_code)
 
 
-def flatten_errors(field_name, errors) -> t.List[HttpError]:
-    ret = []
+def flatten_errors(field_name: str, errors) -> t.List[HttpError]:
+    ret: t.List[HttpError] = []
     if isinstance(errors, dict):
         for error_key in errors:
             error = errors[error_key]
@@ -104,11 +105,11 @@ def flatten_errors(field_name, errors) -> t.List[HttpError]:
                 message = error.messages[0]
             else:
                 message = str(error)
-            ret.append(dict(code=error.code, detail=message, field=field_name))
+            ret.append(ValidationError(code=error.code, detail=message, field=field_name))
     return ret
 
 
-def transform_validation_error(prefix, err):
+def transform_validation_error(prefix: str, err: DjangoValidationError):
     if hasattr(err, "error_dict"):
         errors = flatten_errors(prefix, err.error_dict)
     elif not hasattr(err, "message"):
