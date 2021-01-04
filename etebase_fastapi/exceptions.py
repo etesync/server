@@ -115,5 +115,5 @@ def transform_validation_error(prefix: str, err: DjangoValidationError):
     elif not hasattr(err, "message"):
         errors = flatten_errors(prefix, err.error_list)
     else:
-        raise HttpError(err.code, err.message)
+        raise HttpError(err.code or "validation_error", err.message)
     raise HttpError(code="field_errors", detail="Field validations failed.", errors=errors)
