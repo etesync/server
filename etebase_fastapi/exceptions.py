@@ -1,4 +1,4 @@
-from fastapi import status
+from fastapi import status, HTTPException
 import typing as t
 
 from pydantic import BaseModel
@@ -23,11 +23,10 @@ class HttpErrorOut(BaseModel):
         orm_mode = True
 
 
-class CustomHttpException(Exception):
+class CustomHttpException(HTTPException):
     def __init__(self, code: str, detail: str, status_code: int = status.HTTP_400_BAD_REQUEST):
-        self.status_code = status_code
         self.code = code
-        self.detail = detail
+        super().__init__(status_code, detail)
 
     @property
     def as_dict(self) -> dict:
