@@ -72,7 +72,7 @@ class HttpError(CustomHttpException):
         errors: t.Optional[t.List["HttpError"]] = None,
     ):
         self.errors = errors
-        super().__init__(code=code, detail=detail, status_code=status_code)
+        super().__init__(code=code or "generic_error", detail=detail, status_code=status_code)
 
     @property
     def as_dict(self) -> dict:
@@ -104,7 +104,7 @@ def flatten_errors(field_name: str, errors) -> t.List[HttpError]:
                 message = error.messages[0]
             else:
                 message = str(error)
-            ret.append(ValidationError(code=error.code, detail=message, field=field_name))
+            ret.append(ValidationError(code=error.code or "validation_error", detail=message, field=field_name))
     return ret
 
 
