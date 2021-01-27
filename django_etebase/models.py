@@ -36,7 +36,7 @@ def stoken_annotation_builder(stoken_id_fields: t.List[str]):
 
 class CollectionType(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    uid = models.BinaryField(editable=True, blank=False, null=False, db_index=True, unique=True)
+    uid = models.BinaryField(editable=True, blank=False, null=False, db_index=True, unique=True, max_length=1024)
 
     objects: models.manager.BaseManager["CollectionType"]
 
