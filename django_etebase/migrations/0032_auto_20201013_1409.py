@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="collectiontype",
             name="uid",
-            field=models.BinaryField(db_index=True, editable=True, unique=True),
+            field=models.BinaryField(db_index=True, editable=True, max_length=1024, unique=True),
         ),
     ]
