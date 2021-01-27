@@ -69,6 +69,11 @@ def b64decode(data: str):
     return base64.urlsafe_b64decode(data)
 
 
+def get_user_username_email_kwargs(username: str):
+    field_name = User.EMAIL_FIELD if "@" in username else User.USERNAME_FIELD
+    return {field_name + "__iexact": username.lower()}
+
+
 PERMISSIONS_READ = [Depends(x) for x in app_settings.API_PERMISSIONS_READ]
 PERMISSIONS_READWRITE = PERMISSIONS_READ + [Depends(x) for x in app_settings.API_PERMISSIONS_WRITE]
 

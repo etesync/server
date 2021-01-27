@@ -12,6 +12,7 @@ from ..exceptions import HttpError, PermissionDenied
 from ..msgpack import MsgpackRoute
 from ..utils import (
     get_object_or_404,
+    get_user_username_email_kwargs,
     Context,
     is_collection_admin,
     BaseModel,
@@ -191,9 +192,8 @@ def outgoing_create(
     user: UserType = Depends(get_authenticated_user),
 ):
     collection = get_object_or_404(models.Collection.objects, uid=data.collection)
-    to_user = get_object_or_404(
-        get_user_queryset(User.objects.all(), CallbackContext(request.path_params)), username=data.username
-    )
+    kwargs = get_user_username_email_kwargs(data.username)
+    to_user = get_object_or_404(get_user_queryset(User.objects.all(), CallbackContext(request.path_params)), **kwargs)
 
     context = Context(user, None)
     data.validate_db(context)
@@ -238,7 +238,7 @@ def outgoing_fetch_user_profile(
     request: Request,
     user: UserType = Depends(get_authenticated_user),
 ):
-    kwargs = {User.USERNAME_FIELD: username.lower()}
+    kwargs = get_user_username_email_kwargs(username)
     user = get_object_or_404(get_user_queryset(User.objects.all(), CallbackContext(request.path_params)), **kwargs)
     user_info = get_object_or_404(models.UserInfo.objects.all(), owner=user)
     return UserInfoOut.from_orm(user_info)

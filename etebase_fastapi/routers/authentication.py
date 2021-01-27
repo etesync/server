@@ -22,7 +22,7 @@ from django_etebase.utils import create_user, get_user_queryset, CallbackContext
 from myauth.models import UserType, get_typed_user_model
 from ..exceptions import AuthenticationFailed, transform_validation_error, HttpError
 from ..msgpack import MsgpackRoute
-from ..utils import BaseModel, permission_responses, msgpack_encode, msgpack_decode
+from ..utils import BaseModel, permission_responses, msgpack_encode, msgpack_decode, get_user_username_email_kwargs
 from ..dependencies import AuthData, get_auth_data, get_authenticated_user
 
 User = get_typed_user_model()
@@ -114,7 +114,7 @@ class SignupIn(BaseModel):
 def get_login_user(request: Request, challenge: LoginChallengeIn) -> UserType:
     username = challenge.username
 
-    kwargs = {User.USERNAME_FIELD + "__iexact": username.lower()}
+    kwargs = get_user_username_email_kwargs(username)
     try:
         user_queryset = get_user_queryset(User.objects.all(), CallbackContext(request.path_params))
         user = user_queryset.get(**kwargs)
