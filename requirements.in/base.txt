@@ -4,3 +4,5 @@ pynacl
 fastapi
 typing_extensions
 uvicorn[standard]
+aiofiles
+aioredis
