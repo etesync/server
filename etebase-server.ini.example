@@ -8,6 +8,7 @@ debug = false
 ;media_url = /user-media/
 ;language_code = en-us
 ;time_zone = UTC
+;redis_uri = redis://localhost:6379
 
 [allowed_hosts]
 allowed_host1 = example.com

@@ -154,6 +154,9 @@ if any(os.path.isfile(x) for x in config_locations):
     TIME_ZONE = section.get("time_zone", TIME_ZONE)
     DEBUG = section.getboolean("debug", DEBUG)
 
+    if "redis_uri" in section:
+        ETEBASE_REDIS_URI = section.get("redis_uri")
+
     if "allowed_hosts" in config:
         ALLOWED_HOSTS = [y for x, y in config.items("allowed_hosts")]
 
