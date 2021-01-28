@@ -74,7 +74,7 @@ def get_websocket_user(websocket: WebSocket, ticket_model: t.Optional[TicketInne
 @websocket_router.websocket("/{ticket}/")
 async def websocket_endpoint(
     websocket: WebSocket,
-    stoken: t.Optional[str],
+    stoken: t.Optional[str] = None,
     user: t.Optional[UserType] = Depends(get_websocket_user),
     ticket_model: TicketInner = Depends(load_websocket_ticket),
 ):
