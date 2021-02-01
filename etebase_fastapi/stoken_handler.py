@@ -12,7 +12,7 @@ StokenAnnotation = t.Any
 
 
 def get_stoken_obj(stoken: t.Optional[str]) -> t.Optional[Stoken]:
-    if stoken is not None:
+    if stoken:
         try:
             return Stoken.objects.get(uid=stoken)
         except Stoken.DoesNotExist:

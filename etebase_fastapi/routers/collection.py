@@ -473,7 +473,7 @@ def item_bulk_common(
     with transaction.atomic():  # We need this for locking the collection object
         collection_object = queryset.select_for_update().get(uid=uid)
 
-        if stoken is not None and stoken != collection_object.stoken:
+        if stoken and stoken != collection_object.stoken:
             raise HttpError("stale_stoken", "Stoken is too old", status_code=status.HTTP_409_CONFLICT)
 
         data.validate_db()
