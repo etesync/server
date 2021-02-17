@@ -1,10 +1,12 @@
 [global]
 secret_file = secret.txt
 debug = false
+;Set the paths where data will be stored at
+static_root = /path/to/static
+media_root = /path/to/media
+
 ;Advanced options, only uncomment if you know what you're doing:
-;static_root = /path/to/static
 ;static_url = /static/
-;media_root = /path/to/media
 ;media_url = /user-media/
 ;language_code = en-us
 ;time_zone = UTC
