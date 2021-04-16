@@ -138,6 +138,12 @@ Here are the update steps:
 4. Run the migration tool to migrate all of your data.
 5. Add your new EteSync 2.0 accounts to all of your devices.
 
+# Testing
+
+Docker images named `etesync/test-server:<version>` and `:latest` are available for testing etesync clients.
+This docker image starts a server on port 3735 that supports user signup (without email confirmation), is in debug mode (thus supporting the reset endpoint), and stores its data locally.
+It is in no way suitable for production usage, but is able to start up quickly and makes a good component of CI for etesync clients and users of those clients.
+
 # License
 
 Etebase is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License version 3 as published by the Free Software Foundation. See the [LICENSE](./LICENSE) for more information.

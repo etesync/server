@@ -1,0 +1,16 @@
+/db.sqlite3*
+Session.vim
+/local_settings.py
+.venv
+/assets
+/logs
+/.coverage
+/tmp
+/media
+
+__pycache__
+.*.swp
+
+/.*
+
+/sandbox
