@@ -166,8 +166,8 @@ if any(os.path.isfile(x) for x in config_locations):
 ETEBASE_CREATE_USER_FUNC = "django_etebase.utils.create_user_blocked"
 
 # Efficient file streaming (for large files)
-SENDFILE_BACKEND = "django_etebase.sendfile.backends.simple"
-SENDFILE_ROOT = MEDIA_URL
+SENDFILE_BACKEND = "etebase_fastapi.sendfile.backends.simple"
+SENDFILE_ROOT = MEDIA_ROOT
 
 # Make an `etebase_server_settings` module available to override settings.
 try:
