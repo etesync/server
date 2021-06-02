@@ -95,7 +95,7 @@ Create yourself an admin user:
 ```
 
 At this stage you need to create accounts to be used with the EteSync apps. To do that, please go to:
-`www.your-etesync-install.com/admin` and create a new user to be used with the service. No need to set
+`www.your-etesync-install.com/admin` or use CLI `./manage.py createuser <username>` and create a new user to be used with the service. No need to set
 a password, as Etebase uses a zero-knowledge proof for authentication, so the user will just create
 a password when creating the account from the apps.
 
@@ -152,7 +152,7 @@ A quick summary can be found [on tldrlegal](https://tldrlegal.com/license/gnu-af
 
 ## Commercial licensing
 
-For commercial licensing options, contact license@etebase.com 
+For commercial licensing options, contact license@etebase.com
 
 # Financially Supporting Etebase
 
