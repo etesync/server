@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
-from ._utils import argbool, argdate
+from ._utils import argbool
 from myauth.models import User
-from django.contrib.auth.models import Group, Permission
 from django.db.utils import IntegrityError
 
 class Command(BaseCommand):
@@ -55,40 +54,9 @@ class Command(BaseCommand):
                            , const=True
                            , default=False
                            , help="Mark user as superuser. [NO]" )
-        parser.add_argument( '-g'
-                           , '--groups'
-                           , type=str
-                           , nargs='*'
-                           , default=[]
-                           , help="New user's groups." )
-        parser.add_argument( '--user_permissions'
-                           , '--user-permissions'
-                           , '--permissions'
-                           , type=str
-                           , nargs='*'
-                           , default=[]
-                           , help="New user's user permissions." )
-        parser.add_argument( '-j'
-                           , '--date_joined'
-                           , '--date-joined'
-                           , type=str
-                           , default=None
-                           , help="New user's date joined, formated as '%Y-%m-%d %H:%M:%S.%f'." )
-        parser.add_argument( '--last_login'
-                           , '--last-login'
-                           , type=str
-                           , default=None
-                           , help="New user's last login date, formated as '%Y-%m-%d %H:%M:%S.%f'." )
 
     def handle(self, *args, **options):
         try:
-            for index,group in enumerate(options["groups"]):
-                options["groups"][index] = Group.objects.get(name=group)
-            for index,permission in enumerate(options["user_permissions"]):
-                options["user_permissions"][index] = Permission.objects.get(name=permission)
-            options["date_joined"] = argdate(options["date_joined"])
-            options["last_login" ] = argdate(options["last_login" ])
-
             user = User.objects.create_user( username         = options["username"         ]
                                            , password         = options["password"         ]
                                            , email            = options["email"            ]
@@ -96,12 +64,7 @@ class Command(BaseCommand):
                                            , last_name        = options["last_name"        ]
                                            , is_superuser     = options["is_superuser"     ]
                                            , is_staff         = options["is_staff"         ]
-                                           , is_active        = options["is_active"        ]
-                                           , last_login       = options["last_login"       ] )
-            user.groups.set(options["groups"])
-            user.user_permissions.set(options["user_permissions"])
-            if options["date_joined"] != None:
-                user.date_joined = options["date_joined"]
+                                           , is_active        = options["is_active"        ] )
             user.save()
         except (IntegrityError,Group.DoesNotExist,Permission.DoesNotExist) as exception:
             self.stdout.write(self.style.ERROR(f'Unable to create user "{options["username"]}": ' + str(exception)))
