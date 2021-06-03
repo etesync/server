@@ -37,7 +37,7 @@ class Command(BaseCommand):
                            , nargs='?'
                            , type=argbool
                            , const=True
-                           , default=False
+                           , default=True
                            , help="Enable login. [YES]" )
         parser.add_argument( '-s'
                            , '--is_staff'
