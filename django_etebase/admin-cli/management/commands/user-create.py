@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from django_etebase.users.management.commands._utils import argbool, argdate
+from ._utils import argbool, argdate
 from myauth.models import User
 from django.contrib.auth.models import Group, Permission
 from django.db.utils import IntegrityError
