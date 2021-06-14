@@ -6,3 +6,4 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for user in User.objects.all():
             print(user.username)
+        exit(0)

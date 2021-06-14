@@ -9,10 +9,6 @@ class Command(BaseCommand):
         parser.add_argument( 'username'
                            , type=str
                            , help="New user's login username." )
-        parser.add_argument( '-p'
-                           , '--password'
-                           , type=str
-                           , help="New user's plain text login password." )
         parser.add_argument( '-f'
                            , '--first_name'
                            , '--first'
@@ -57,16 +53,14 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            user = User.objects.create_user( username         = options["username"         ]
-                                           , password         = options["password"         ]
-                                           , email            = options["email"            ]
-                                           , first_name       = options["first_name"       ]
-                                           , last_name        = options["last_name"        ]
-                                           , is_superuser     = options["is_superuser"     ]
-                                           , is_staff         = options["is_staff"         ]
-                                           , is_active        = options["is_active"        ] )
-            user.save()
-        except (IntegrityError,Group.DoesNotExist,Permission.DoesNotExist) as exception:
+            User.objects.create_user( username         = options["username"    ]
+                                    , email            = options["email"       ]
+                                    , first_name       = options["first_name"  ]
+                                    , last_name        = options["last_name"   ]
+                                    , is_active        = options["is_active"   ]
+                                    , is_staff         = options["is_staff"    ]
+                                    , is_superuser     = options["is_superuser"] )
+        except IntegrityError as exception:
             self.stdout.write(self.style.ERROR(f'Unable to create user "{options["username"]}": ' + str(exception)))
             exit(1)
 
