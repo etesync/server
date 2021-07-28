@@ -160,6 +160,10 @@ Please consider registering an account even if you self-host in order to support
 
 Become a financial contributor and help us sustain our community!
 
+## Supporters ($20 / month)
+
+[![jzacsh](https://github.com/jzacsh.png?size=80)](https://github.com/jzacsh)
+
 ## Contributors ($10 / month)
 
 [![ilovept](https://github.com/ilovept.png?size=40)](https://github.com/ilovept)
