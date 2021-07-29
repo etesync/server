@@ -109,9 +109,10 @@ The default configuration creates a file “`secret.txt`” in the project’s
 base directory, which is used as the value of the Django `SECRET_KEY`
 setting. You can revoke this key by deleting the `secret.txt` file and the
 next time the app is run, a new one will be generated. Make sure you keep
-the `secret.txt` file secret (don’t accidentally commit it to version
-control, exclude it from your backups, etc.). If you want to change to a
-more secure system for storing secrets, edit `etesync_server/settings.py`
+the `secret.txt` file secret (e.g. don’t accidentally commit it to version
+control). However, backing it up is okay, and it makes it easier to restore
+the database to a new EteSync server, but it's not essential. If you want to
+change to a more secure system for storing secrets, edit `etesync_server/settings.py`
 and implement your own method for setting `SECRET_KEY` (remove the line
 where it uses the `get_secret_from_file` function).  Read the Django docs
 for more information about the `SECRET_KEY` and its uses.
