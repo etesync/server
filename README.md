@@ -145,6 +145,14 @@ Docker images named `etesync/test-server:<version>` and `:latest` are available 
 This docker image starts a server on port 3735 that supports user signup (without email confirmation), is in debug mode (thus supporting the reset endpoint), and stores its data locally.
 It is in no way suitable for production usage, but is able to start up quickly and makes a good component of CI for etesync clients and users of those clients.
 
+# User signup
+
+Instead of having to create Django users manually when signup up Etebase users, it is also possible to allow automatic signup.
+For example, this makes sense when putting an Etebase server in production.
+However, this does come with the added risk that everybody with access to your server will be able to sign up.
+
+In order to set it up, comment out the line `ETEBASE_CREATE_USER_FUNC = "django_etebase.utils.create_user_blocked"` in `server/settings.py` and restart your Etebase server.
+
 # License
 
 Etebase is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License version 3 as published by the Free Software Foundation. See the [LICENSE](./LICENSE) for more information.
