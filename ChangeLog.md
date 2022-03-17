@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.8.0
+* Update django dep.
+* Fix issue with comparing ports in hostname verification with self-hosted servers.
+* Fix sendfile settings to be more correct.
+* Improve easy config (make it clear media_root needs to be set)
+* Handle stoken being the empty string
+* Fix mysql/mariadb support
+* Switch to FastAPI for the server component
+
 ## Version 0.7.0
 * Chunks: improve the chunk download endpoint to use sendfile extensions
 * Chunks: support not passing chunk content if exists
