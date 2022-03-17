@@ -10,7 +10,7 @@ asgiref==3.3.1            # via django
 async-timeout==3.0.1      # via aioredis
 cffi==1.14.4              # via pynacl
 click==7.1.2              # via uvicorn
-django==3.1.4             # via -r requirements.in/base.txt
+django==3.2.12            # via -r requirements.in/base.txt
 fastapi==0.63.0           # via -r requirements.in/base.txt
 h11==0.11.0               # via uvicorn
 hiredis==1.1.0            # via aioredis
