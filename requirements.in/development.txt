@@ -3,3 +3,4 @@ pip-tools
 pywatchman
 black
 django-stubs
+django<4.0
