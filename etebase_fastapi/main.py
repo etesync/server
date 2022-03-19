@@ -4,6 +4,7 @@ from django.conf import settings
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from django_etebase import app_settings
 
@@ -73,5 +74,7 @@ def create_application(prefix="", middlewares=[]):
     @app.exception_handler(CustomHttpException)
     async def custom_exception_handler(request: Request, exc: CustomHttpException):
         return MsgpackResponse(status_code=exc.status_code, content=exc.as_dict)
+
+    app.mount(settings.STATIC_URL, StaticFiles(directory=settings.STATIC_ROOT), name="static")
 
     return app
