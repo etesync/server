@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.8.1
+* Fix Error `404 Not Found` for Static Files
+* Fix Django 3.2 warnings
+* Update dependencies while (keep Django 3.2 LTS)
+
 ## Version 0.8.0
 * Update django dep.
 * Fix issue with comparing ports in hostname verification with self-hosted servers.
