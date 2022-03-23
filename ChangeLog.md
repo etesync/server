@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.8.2
+- Update dependencies again
+
 ## Version 0.8.1
 * Fix Error `404 Not Found` for Static Files
 * Fix Django 3.2 warnings
