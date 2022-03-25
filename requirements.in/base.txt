@@ -1,7 +1,7 @@
 django<4.0
 msgpack
 pynacl
-fastapi
+fastapi==0.65.1
 typing_extensions
 uvicorn[standard]
 aiofiles

@@ -9,9 +9,7 @@ aiofiles==0.8.0
 aioredis==2.0.1
     # via -r requirements.in/base.txt
 anyio==3.5.0
-    # via
-    #   starlette
-    #   watchgod
+    # via watchgod
 asgiref==3.5.0
     # via
     #   django
@@ -24,7 +22,7 @@ click==8.0.4
     # via uvicorn
 django==3.2.12
     # via -r requirements.in/base.txt
-fastapi==0.75.0
+fastapi==0.65.1
     # via -r requirements.in/base.txt
 h11==0.13.0
     # via uvicorn
@@ -40,7 +38,7 @@ pydantic==1.9.0
     # via fastapi
 pynacl==1.5.0
     # via -r requirements.in/base.txt
-python-dotenv==0.19.2
+python-dotenv==0.20.0
     # via uvicorn
 pytz==2022.1
     # via django
@@ -50,7 +48,7 @@ sniffio==1.2.0
     # via anyio
 sqlparse==0.4.2
     # via django
-starlette==0.17.1
+starlette==0.14.2
     # via fastapi
 typing-extensions==4.1.1
     # via
