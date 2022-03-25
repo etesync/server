@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.8.3
+- Fix compatibility with latest fastapi
+
 ## Version 0.8.2
 - Update dependencies again
 
