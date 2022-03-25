@@ -12,7 +12,7 @@ from .db_hack import django_db_cleanup_decorator
 class MsgpackRequest(Request):
     media_type = "application/msgpack"
 
-    async def json(self) -> bytes:
+    async def body(self) -> bytes:
         if not hasattr(self, "_json"):
             body = await super().body()
             self._json = msgpack_decode(body)
