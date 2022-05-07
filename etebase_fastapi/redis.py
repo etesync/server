@@ -15,7 +15,7 @@ class RedisWrapper:
             self.redis = await aioredis.create_redis_pool(self.redis_uri)
 
     async def close(self):
-        if self.redis is not None:
+        if hasattr(self, "redis"):
             self.redis.close()
             await self.redis.wait_closed()
 
