@@ -43,7 +43,7 @@ def create_application(prefix="", middlewares=[]):
     app.include_router(websocket_router, prefix=f"{BASE_PATH}/ws", tags=["websocket"])
 
     if settings.DEBUG:
-        from etebase_fastapi.routers.test_reset_view import test_reset_view_router
+        from .routers.test_reset_view import test_reset_view_router
 
         app.include_router(test_reset_view_router, prefix=f"{BASE_PATH}/test/authentication")
 
