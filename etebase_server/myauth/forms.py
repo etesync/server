@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UsernameField
-from myauth.models import get_typed_user_model
+from etebase_server.myauth.models import get_typed_user_model
 
 User = get_typed_user_model()
 

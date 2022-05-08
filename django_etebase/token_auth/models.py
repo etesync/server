@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.crypto import get_random_string
-from myauth.models import get_typed_user_model
+from etebase_server.myauth.models import get_typed_user_model
 
 User = get_typed_user_model()
 

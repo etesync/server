@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "myauth.apps.MyauthConfig",
+    "etebase_server.myauth.apps.MyauthConfig",
     "django_etebase.apps.DjangoEtebaseConfig",
     "django_etebase.token_auth.apps.TokenAuthConfig",
 ]

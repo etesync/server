@@ -10,7 +10,7 @@ import nacl.utils
 
 from django_etebase import models
 from django_etebase.utils import CallbackContext, get_user_queryset
-from myauth.models import UserType, get_typed_user_model
+from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from ..dependencies import get_collection_queryset, get_item_queryset
 from ..exceptions import NotSupported

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from django.db.models import QuerySet
 from django.core.exceptions import PermissionDenied
-from myauth.models import UserType, get_typed_user_model
+from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from . import app_settings
 

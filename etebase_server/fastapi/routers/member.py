@@ -5,7 +5,7 @@ from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, status
 
 from django_etebase import models
-from myauth.models import UserType, get_typed_user_model
+from etebase_server.myauth.models import UserType, get_typed_user_model
 from .authentication import get_authenticated_user
 from ..msgpack import MsgpackRoute
 from ..utils import get_object_or_404, BaseModel, permission_responses, PERMISSIONS_READ, PERMISSIONS_READWRITE

@@ -12,7 +12,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from django_etebase import app_settings
 from django_etebase.models import AccessLevels
-from myauth.models import UserType, get_typed_user_model
+from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from .exceptions import HttpError, HttpErrorOut
 

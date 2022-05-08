@@ -19,7 +19,7 @@ from django_etebase.token_auth.models import AuthToken
 from django_etebase.models import UserInfo
 from django_etebase.signals import user_signed_up
 from django_etebase.utils import create_user, get_user_queryset, CallbackContext
-from myauth.models import UserType, get_typed_user_model
+from etebase_server.myauth.models import UserType, get_typed_user_model
 from ..exceptions import AuthenticationFailed, transform_validation_error, HttpError
 from ..msgpack import MsgpackRoute
 from ..utils import BaseModel, permission_responses, msgpack_encode, msgpack_decode, get_user_username_email_kwargs

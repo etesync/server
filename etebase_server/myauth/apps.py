@@ -2,4 +2,5 @@ from django.apps import AppConfig
 
 
 class MyauthConfig(AppConfig):
-    name = "myauth"
+    name = "etebase_server.myauth"
+    label = "myauth"

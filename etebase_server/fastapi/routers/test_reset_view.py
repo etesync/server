@@ -7,7 +7,7 @@ from django_etebase.utils import get_user_queryset, CallbackContext
 from .authentication import SignupIn, signup_save
 from ..msgpack import MsgpackRoute
 from ..exceptions import HttpError
-from myauth.models import get_typed_user_model
+from etebase_server.myauth.models import get_typed_user_model
 
 test_reset_view_router = APIRouter(route_class=MsgpackRoute, tags=["test helpers"])
 User = get_typed_user_model()
