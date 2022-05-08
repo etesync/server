@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "myauth.apps.MyauthConfig",
     "django_etebase.apps.DjangoEtebaseConfig",
     "django_etebase.token_auth.apps.TokenAuthConfig",
+    "django_etebase.admin-cli",
 ]
 
 MIDDLEWARE = [
