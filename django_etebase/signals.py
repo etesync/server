@@ -1,3 +1,4 @@
 from django.dispatch import Signal
 
-user_signed_up = Signal(providing_args=["request", "user"])
+# Provides arguments "request" and "user"
+user_signed_up = Signal()
