@@ -2,4 +2,5 @@ from django.apps import AppConfig
 
 
 class DjangoEtebaseConfig(AppConfig):
-    name = "django_etebase"
+    name = "etebase_server.django"
+    label = "django_etebase"

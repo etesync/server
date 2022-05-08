@@ -3,7 +3,7 @@
 import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
-import django_etebase.models
+from etebase_server.django.models import generate_stoken_uid
 
 
 class Migration(migrations.Migration):
@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                     "uid",
                     models.CharField(
                         db_index=True,
-                        default=django_etebase.models.generate_stoken_uid,
+                        default=generate_stoken_uid,
                         max_length=43,
                         unique=True,
                         validators=[

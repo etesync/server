@@ -3,7 +3,7 @@
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
-from django_etebase.token_auth import models as token_auth_models
+from etebase_server.django.token_auth import models as token_auth_models
 
 
 class Migration(migrations.Migration):

@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class TokenAuthConfig(AppConfig):
-    name = "django_etebase.token_auth"
+    name = "etebase_server.django.token_auth"

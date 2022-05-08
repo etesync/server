@@ -10,8 +10,8 @@ from pydantic import BaseModel as PyBaseModel
 from django.db.models import Model, QuerySet
 from django.core.exceptions import ObjectDoesNotExist
 
-from django_etebase import app_settings
-from django_etebase.models import AccessLevels
+from etebase_server.django import app_settings
+from etebase_server.django.models import AccessLevels
 from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from .exceptions import HttpError, HttpErrorOut

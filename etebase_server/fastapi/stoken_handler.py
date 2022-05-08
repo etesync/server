@@ -3,7 +3,7 @@ import typing as t
 from django.db.models import QuerySet
 from fastapi import status
 
-from django_etebase.models import Stoken
+from etebase_server.django.models import Stoken
 
 from .exceptions import HttpError
 

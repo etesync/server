@@ -7,7 +7,7 @@ from django.db import transaction, IntegrityError
 from django.db.models import Q, QuerySet
 from fastapi import APIRouter, Depends, status, Request, BackgroundTasks
 
-from django_etebase import models
+from etebase_server.django import models
 from etebase_server.myauth.models import UserType
 from .authentication import get_authenticated_user
 from .websocket import get_ticket, TicketRequest, TicketOut

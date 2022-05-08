@@ -8,8 +8,8 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
 import nacl.encoding
 import nacl.utils
 
-from django_etebase import models
-from django_etebase.utils import CallbackContext, get_user_queryset
+from etebase_server.django import models
+from etebase_server.django.utils import CallbackContext, get_user_queryset
 from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from ..dependencies import get_collection_queryset, get_item_queryset

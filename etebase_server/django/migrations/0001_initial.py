@@ -4,7 +4,7 @@ from django.conf import settings
 import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
-import django_etebase.models
+from etebase_server.django.models import chunk_directory_path
 
 
 class Migration(migrations.Migration):
@@ -85,7 +85,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "chunkFile",
-                    models.FileField(max_length=150, unique=True, upload_to=django_etebase.models.chunk_directory_path),
+                    models.FileField(max_length=150, unique=True, upload_to=chunk_directory_path),
                 ),
                 (
                     "item",

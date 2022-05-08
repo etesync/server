@@ -14,11 +14,11 @@ from django.db import transaction
 from django.utils.functional import cached_property
 from fastapi import APIRouter, Depends, status, Request
 
-from django_etebase import app_settings, models
-from django_etebase.token_auth.models import AuthToken
-from django_etebase.models import UserInfo
-from django_etebase.signals import user_signed_up
-from django_etebase.utils import create_user, get_user_queryset, CallbackContext
+from etebase_server.django import app_settings, models
+from etebase_server.django.token_auth.models import AuthToken
+from etebase_server.django.models import UserInfo
+from etebase_server.django.signals import user_signed_up
+from etebase_server.django.utils import create_user, get_user_queryset, CallbackContext
 from etebase_server.myauth.models import UserType, get_typed_user_model
 from ..exceptions import AuthenticationFailed, transform_validation_error, HttpError
 from ..msgpack import MsgpackRoute

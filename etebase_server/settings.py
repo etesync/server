@@ -55,8 +55,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "etebase_server.myauth.apps.MyauthConfig",
-    "django_etebase.apps.DjangoEtebaseConfig",
-    "django_etebase.token_auth.apps.TokenAuthConfig",
+    "etebase_server.django.apps.DjangoEtebaseConfig",
+    "etebase_server.django.token_auth.apps.TokenAuthConfig",
 ]
 
 MIDDLEWARE = [
@@ -167,7 +167,7 @@ if any(os.path.isfile(x) for x in config_locations):
     if "database-options" in config:
         DATABASES["default"]["OPTIONS"] = config["database-options"]
 
-ETEBASE_CREATE_USER_FUNC = "django_etebase.utils.create_user_blocked"
+ETEBASE_CREATE_USER_FUNC = "etebase_server.django.utils.create_user_blocked"
 
 # Efficient file streaming (for large files)
 SENDFILE_BACKEND = "etebase_fastapi.sendfile.backends.simple"

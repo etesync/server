@@ -3,7 +3,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from fastapi import APIRouter, Request, status
 
-from django_etebase.utils import get_user_queryset, CallbackContext
+from etebase_server.django.utils import get_user_queryset, CallbackContext
 from .authentication import SignupIn, signup_save
 from ..msgpack import MsgpackRoute
 from ..exceptions import HttpError

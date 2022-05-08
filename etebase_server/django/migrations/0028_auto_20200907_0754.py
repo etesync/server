@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-from django_etebase.models import AccessLevels
+from etebase_server.django.models import AccessLevels
 
 
 def change_access_level_to_int(apps, schema_editor):

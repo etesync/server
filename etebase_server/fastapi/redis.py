@@ -1,7 +1,7 @@
 import typing as t
 import aioredis
 
-from django_etebase import app_settings
+from etebase_server.django import app_settings
 
 
 class RedisWrapper:

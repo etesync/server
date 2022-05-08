@@ -6,8 +6,8 @@ from fastapi.security import APIKeyHeader
 from django.utils import timezone
 from django.db.models import QuerySet
 
-from django_etebase import models
-from django_etebase.token_auth.models import AuthToken, get_default_expiry
+from etebase_server.django import models
+from etebase_server.django.token_auth.models import AuthToken, get_default_expiry
 from etebase_server.myauth.models import UserType, get_typed_user_model
 from .exceptions import AuthenticationFailed
 from .utils import get_object_or_404

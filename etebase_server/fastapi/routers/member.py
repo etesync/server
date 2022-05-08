@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, status
 
-from django_etebase import models
+from etebase_server.django import models
 from etebase_server.myauth.models import UserType, get_typed_user_model
 from .authentication import get_authenticated_user
 from ..msgpack import MsgpackRoute

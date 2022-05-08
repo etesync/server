@@ -151,7 +151,7 @@ Instead of having to create Django users manually when signup up Etebase users, 
 For example, this makes sense when putting an Etebase server in production.
 However, this does come with the added risk that everybody with access to your server will be able to sign up.
 
-In order to set it up, comment out the line `ETEBASE_CREATE_USER_FUNC = "django_etebase.utils.create_user_blocked"` in `server/settings.py` and restart your Etebase server.
+In order to set it up, comment out the line `ETEBASE_CREATE_USER_FUNC = "etebase_server.django.utils.create_user_blocked"` in `server/settings.py` and restart your Etebase server.
 
 # License
 

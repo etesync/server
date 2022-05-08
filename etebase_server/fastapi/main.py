@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from django_etebase import app_settings
+from etebase_server.django import app_settings
 
 from .exceptions import CustomHttpException
 from .msgpack import MsgpackResponse
