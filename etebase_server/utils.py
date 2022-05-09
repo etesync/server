@@ -13,6 +13,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 from django.core.management import utils
+import os
+import stat
 
 
 def get_secret_from_file(path):
@@ -21,6 +23,7 @@ def get_secret_from_file(path):
             return f.read().strip()
     except EnvironmentError:
         with open(path, "w") as f:
+            os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
             secret_key = utils.get_random_secret_key()
             f.write(secret_key)
             return secret_key
