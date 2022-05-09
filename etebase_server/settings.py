@@ -164,6 +164,9 @@ if any(os.path.isfile(x) for x in config_locations):
     if "database" in config:
         DATABASES = {"default": {x.upper(): y for x, y in config.items("database")}}
 
+    if "database-options" in config:
+        DATABASES["default"]["OPTIONS"] = config["database-options"]
+
 ETEBASE_CREATE_USER_FUNC = "django_etebase.utils.create_user_blocked"
 
 # Efficient file streaming (for large files)
