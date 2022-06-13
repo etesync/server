@@ -22,7 +22,7 @@ cffi==1.15.0
     # via pynacl
 click==8.0.4
     # via uvicorn
-django==3.2.12
+django==3.2.13
     # via -r requirements.in/base.txt
 fastapi==0.75.0
     # via -r requirements.in/base.txt
