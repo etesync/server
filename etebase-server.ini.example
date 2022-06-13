@@ -21,3 +21,15 @@ name = db.sqlite3
 
 [database-options]
 ; Add engine-specific options here, such as postgresql parameter key words
+
+;[ldap]
+;server = <The URL to your LDAP server>
+;search_base = <Your search base>
+;filter = <Your LDAP filter query. '%%s' will be substituted for the username>
+; In case a cache TTL of 1 hour is too short for you, set `cache_ttl` to the preferred
+; amount of hours a cache entry should be viewed as valid:
+;cache_ttl = 5
+;bind_dn = <Your LDAP "user" to bind as. Must be a bind user>
+; Either specify the password directly, or provide a password file
+;bind_pw = <The password to authenticate as your bind user>
+;bind_pw_file = /path/to/the/file.txt
