@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.9.1
+- Update pinned Django version (only matters if using `requirements.txt`).
+
 ## Version 0.9.0
 - Add LDAP support for checking the validity of a username
 - Allow specifying engine-specific database options
