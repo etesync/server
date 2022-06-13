@@ -140,6 +140,8 @@ config_locations = [
     "/etc/etebase-server/etebase-server.ini",
 ]
 
+ETEBASE_CREATE_USER_FUNC = "etebase_server.django.utils.create_user_blocked"
+
 # Use config file if present
 if any(os.path.isfile(x) for x in config_locations):
     config = configparser.ConfigParser()
@@ -168,7 +170,24 @@ if any(os.path.isfile(x) for x in config_locations):
     if "database-options" in config:
         DATABASES["default"]["OPTIONS"] = config["database-options"]
 
-ETEBASE_CREATE_USER_FUNC = "etebase_server.django.utils.create_user_blocked"
+    if "ldap" in config:
+        ldap = config["ldap"]
+        LDAP_SERVER = ldap.get("server", "")
+        LDAP_SEARCH_BASE = ldap.get("search_base", "")
+        LDAP_FILTER = ldap.get("filter", "")
+        LDAP_BIND_DN = ldap.get("bind_dn", "")
+        LDAP_BIND_PW = ldap.get("bind_pw", "")
+        LDAP_BIND_PW_FILE = ldap.get("bind_pw_file", "")
+        LDAP_CACHE_TTL = ldap.get("cache_ttl", "")
+
+        if not LDAP_BIND_DN:
+            raise Exception("LDAP enabled but bind_dn is not set!")
+        if not LDAP_BIND_PW and not LDAP_BIND_PW_FILE:
+            raise Exception("LDAP enabled but both bind_pw and bind_pw_file are not set!")
+
+        # Configure EteBase to use LDAP
+        ETEBASE_CREATE_USER_FUNC = "etebase_server.myauth.ldap.create_user"
+        ETEBASE_API_PERMISSIONS_READ = ["etebase_server.myauth.ldap.is_user_in_ldap"]
 
 # Efficient file streaming (for large files)
 SENDFILE_BACKEND = "etebase_server.fastapi.sendfile.backends.simple"
