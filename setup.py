@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='etebase_server',
-    version='0.8.3',
+    version='0.9.0',
     description='An Etebase (EteSync 2.0) server',
     url='https://www.etebase.com/',
     classifiers=[

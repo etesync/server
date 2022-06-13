@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.9.0
+- Add LDAP support for checking the validity of a username
+- Allow specifying engine-specific database options
+- Fix crash on shutdown when redis isn't used
+- Reorganize the code to be a valid Python package
+
 ## Version 0.8.3
 - Fix compatibility with latest fastapi
 
