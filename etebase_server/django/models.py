@@ -96,7 +96,7 @@ class CollectionItem(models.Model):
 
     @cached_property
     def content(self) -> "CollectionItemRevision":
-        return self.revisions.get(current=True)
+        return self.revisions.filter(current=True)[0]
 
     @property
     def etag(self) -> str:

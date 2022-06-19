@@ -396,7 +396,7 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
         if not created:
             # We don't have to use select_for_update here because the unique constraint on current guards against
             # the race condition. But it's a good idea because it'll lock and wait rather than fail.
-            current_revision = instance.revisions.filter(current=True).select_for_update().first()
+            current_revision = instance.revisions.filter(current=True).select_for_update()[0]
             assert current_revision is not None
             current_revision.current = None
             current_revision.save()
