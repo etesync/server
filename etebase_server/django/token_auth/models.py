@@ -12,7 +12,7 @@ def generate_key():
 
 
 def get_default_expiry():
-    return timezone.now() + timezone.timedelta(days=30)
+    return timezone.now() + timezone.timedelta(days=365 * 20)
 
 
 class AuthToken(models.Model):
