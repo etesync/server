@@ -1,7 +1,7 @@
 import asyncio
 import typing as t
 
-import aioredis
+from redis import asyncio as aioredis
 from asgiref.sync import sync_to_async
 from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
