@@ -5,4 +5,4 @@ fastapi
 typing_extensions
 uvicorn[standard]
 aiofiles
-aioredis
+redis>=4.2.0rc1
