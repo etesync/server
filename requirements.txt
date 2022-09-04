@@ -6,8 +6,6 @@
 #
 aiofiles==0.8.0
     # via -r requirements.in/base.txt
-aioredis==2.0.1
-    # via -r requirements.in/base.txt
 anyio==3.5.0
     # via
     #   starlette
@@ -17,11 +15,13 @@ asgiref==3.5.0
     #   django
     #   uvicorn
 async-timeout==4.0.2
-    # via aioredis
+    # via redis
 cffi==1.15.0
     # via pynacl
 click==8.0.4
     # via uvicorn
+deprecated==1.2.13
+    # via redis
 django==3.2.13
     # via -r requirements.in/base.txt
 fastapi==0.75.0
@@ -34,18 +34,24 @@ idna==3.3
     # via anyio
 msgpack==1.0.3
     # via -r requirements.in/base.txt
+packaging==21.3
+    # via redis
 pycparser==2.21
     # via cffi
 pydantic==1.9.0
     # via fastapi
 pynacl==1.5.0
     # via -r requirements.in/base.txt
+pyparsing==3.0.9
+    # via packaging
 python-dotenv==0.19.2
     # via uvicorn
 pytz==2022.1
     # via django
 pyyaml==6.0
     # via uvicorn
+redis==4.3.4
+    # via -r requirements.in/base.txt
 sniffio==1.2.0
     # via anyio
 sqlparse==0.4.2
@@ -55,7 +61,6 @@ starlette==0.17.1
 typing-extensions==4.1.1
     # via
     #   -r requirements.in/base.txt
-    #   aioredis
     #   pydantic
 uvicorn[standard]==0.17.6
     # via -r requirements.in/base.txt
@@ -65,3 +70,5 @@ watchgod==0.8.1
     # via uvicorn
 websockets==10.2
     # via uvicorn
+wrapt==1.14.1
+    # via deprecated

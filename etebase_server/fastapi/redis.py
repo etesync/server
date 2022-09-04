@@ -1,5 +1,5 @@
 import typing as t
-import aioredis
+from redis import asyncio as aioredis
 
 from etebase_server.django import app_settings
 
@@ -12,12 +12,11 @@ class RedisWrapper:
 
     async def setup(self):
         if self.redis_uri is not None:
-            self.redis = await aioredis.create_redis_pool(self.redis_uri)
+            self.redis = await aioredis.from_url(self.redis_uri)
 
     async def close(self):
         if hasattr(self, "redis"):
-            self.redis.close()
-            await self.redis.wait_closed()
+            await self.redis.close()
 
     @property
     def is_active(self):
