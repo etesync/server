@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.10.0
+- Replace the deprecated aioredis with redis-py
+- Optimize how we fetch the current (latest) revision of items
+
 ## Version 0.9.1
 - Update pinned Django version (only matters if using `requirements.txt`).
 
