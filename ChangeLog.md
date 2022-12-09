@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.11.0
+- Update deps for Python 3.11
+
 ## Version 0.10.0
 - Replace the deprecated aioredis with redis-py
 - Optimize how we fetch the current (latest) revision of items
