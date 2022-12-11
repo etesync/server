@@ -178,3 +178,4 @@ Become a financial contributor and help us sustain our community!
 [![ilovept](https://github.com/ilovept.png?size=40)](https://github.com/ilovept)
 [![ryanleesipes](https://github.com/ryanleesipes.png?size=40)](https://github.com/ryanleesipes)
 [![DanielG](https://github.com/DanielG.png?size=40)](https://github.com/DanielG)
+[![Kanaye](https://github.com/Kanaye.png?size=40)](https://github.com/Kanaye)
