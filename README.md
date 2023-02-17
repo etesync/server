@@ -63,6 +63,12 @@ Now you can initialise our django app.
 ./manage.py migrate
 ```
 
+Create static files:
+
+```
+./manage.py collectstatic
+```
+
 And you are done! You can now run the debug server just to see everything works as expected by running:
 
 ```
