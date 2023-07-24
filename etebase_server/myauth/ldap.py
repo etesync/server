@@ -54,7 +54,7 @@ class LDAPConnection:
         try:
             self.__ldap_connection.simple_bind_s(ldap_setting("BIND_DN", ""), password)
         except ldap.LDAPError as err:
-            logging.error(f"LDAP Error occuring during bind: {err.desc}")
+            logging.error(f"LDAP Error occurring during bind: {err.desc}")
 
     def __is_cache_valid(self, username):
         """Returns True if the cache entry is still valid. Returns False otherwise."""
@@ -85,7 +85,7 @@ class LDAPConnection:
             # we may expect ldap.NO_RESULTS_RETURNED, but not any other error
             return False
         except ldap.LDAPError as err:
-            logging.error(f"Error occured while performing an LDAP query: {err.desc}")
+            logging.error(f"Error occurred while performing an LDAP query: {err.desc}")
             return False
 
         if len(result) == 1:
