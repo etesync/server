@@ -136,7 +136,7 @@ async def redis_connector(websocket: WebSocket, ticket_model: TicketInner, user:
                 for task in pending:
                     task.cancel()
                 if receive in done:
-                    # Web socket should never receieve any data
+                    # Web socket should never receive any data
                     await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
                     return
 
