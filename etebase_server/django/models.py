@@ -66,7 +66,7 @@ class Collection(models.Model):
     @cached_property
     def stoken(self) -> str:
         stoken_id = (
-            self.__class__.objects.filter(main_item=self.main_item)
+            self.__class__.objects.filter(main_item=self.main_item, items__revisions__current=True)
             .annotate(max_stoken=self.stoken_annotation)
             .values("max_stoken")
             .first()["max_stoken"]
