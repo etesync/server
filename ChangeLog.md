@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- Bumped pydantic version
+
 ## Version 0.11.0
 - Update deps for Python 3.11
 
