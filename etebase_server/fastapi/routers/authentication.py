@@ -75,7 +75,7 @@ class LoginOut(BaseModel):
 
 class Authentication(BaseModel):
     class Config:
-        keep_untouched = (cached_property,)
+        ignored_types = (cached_property,)
 
     response: bytes
     signature: bytes

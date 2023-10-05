@@ -51,7 +51,7 @@ class CollectionItemRevisionInOut(BaseModel):
     chunks: t.List[ChunkType]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     @classmethod
     def from_orm_context(
@@ -77,7 +77,7 @@ class CollectionItemCommon(BaseModel):
 
 class CollectionItemOut(CollectionItemCommon):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     @classmethod
     def from_orm_context(

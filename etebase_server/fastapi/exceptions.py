@@ -11,7 +11,7 @@ class HttpErrorField(BaseModel):
     detail: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class HttpErrorOut(BaseModel):
@@ -20,7 +20,7 @@ class HttpErrorOut(BaseModel):
     errors: t.Optional[t.List[HttpErrorField]]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class CustomHttpException(HTTPException):
