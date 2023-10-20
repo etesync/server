@@ -40,7 +40,7 @@ python-dotenv==0.21.0
     # via uvicorn
 pytz==2022.6
     # via django
-pyyaml==6.0
+pyyaml==6.0.1
     # via uvicorn
 redis==4.4.0
     # via -r requirements.in/base.txt
