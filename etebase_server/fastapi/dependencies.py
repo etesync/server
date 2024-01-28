@@ -11,7 +11,6 @@ from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from .db_hack import django_db_cleanup_decorator
 from .exceptions import AuthenticationFailed
-from .utils import get_object_or_404
 
 User = get_typed_user_model()
 token_scheme = APIKeyHeader(name="Authorization")
@@ -75,6 +74,8 @@ def get_collection_queryset(user: UserType = Depends(get_authenticated_user)) ->
 
 @django_db_cleanup_decorator
 def get_collection(collection_uid: str, queryset: QuerySet = Depends(get_collection_queryset)) -> models.Collection:
+    from .utils import get_object_or_404
+
     return get_object_or_404(queryset, uid=collection_uid)
 
 
