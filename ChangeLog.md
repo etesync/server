@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.12.0
+- Optimize some database queries fixing performance degradation with large installations.
+- Ensure environment variables always override config
+
 ## Version 0.11.0
 - Update deps for Python 3.11
 
