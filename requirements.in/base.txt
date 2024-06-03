@@ -1,4 +1,4 @@
-django<4.0
+django>=4.0<5.0
 msgpack
 pynacl
 fastapi
