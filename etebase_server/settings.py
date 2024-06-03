@@ -126,12 +126,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 STATIC_URL = "/static/"
-STATIC_ROOT = os.environ.get("DJANGO_STATIC_ROOT", os.path.join(BASE_DIR, "static"))
 
-MEDIA_ROOT = os.environ.get("DJANGO_MEDIA_ROOT", os.path.join(BASE_DIR, "media"))
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/user-media/"
-
 
 # Define where to find configuration files
 config_locations = [
@@ -192,6 +191,12 @@ if any(os.path.isfile(x) for x in config_locations):
 # Efficient file streaming (for large files)
 SENDFILE_BACKEND = "etebase_server.fastapi.sendfile.backends.simple"
 SENDFILE_ROOT = MEDIA_ROOT
+
+if "DJANGO_STATIC_ROOT" in os.environ:
+    STATIC_ROOT = os.environ["DJANGO_STATIC_ROOT"]
+
+if "DJANGO_MEDIA_ROOT" in os.environ:
+    MEDIA_ROOT = os.environ["DJANGO_MEDIA_ROOT"]
 
 # Make an `etebase_server_settings` module available to override settings.
 try:
