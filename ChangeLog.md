@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.13.0
+- Update Django dependency to 4 (LTS)
+
 ## Version 0.12.0
 - Optimize some database queries fixing performance degradation with large installations.
 - Ensure environment variables always override config
