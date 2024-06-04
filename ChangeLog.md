@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.13.1
+- Fix requirements definition for django.
+
 ## Version 0.13.0
 - Update Django dependency to 4 (LTS)
 
