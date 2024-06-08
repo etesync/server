@@ -61,12 +61,13 @@ class MsgpackRoute(APIRoute):
     def get_route_handler(self) -> t.Callable:
         async def custom_route_handler(request: Request) -> Response:
             content_type = request.headers.get("Content-Type")
-            try:
-                request_cls = self.REQUESTS_CLASSES[content_type]
-                request = request_cls(request.scope, request.receive)
-            except KeyError:
-                # nothing registered to handle content_type, process given requests as-is
-                pass
+            if content_type is not None:
+                try:
+                    request_cls = self.REQUESTS_CLASSES[content_type]
+                    request = request_cls(request.scope, request.receive)
+                except KeyError:
+                    # nothing registered to handle content_type, process given requests as-is
+                    pass
 
             accept = request.headers.get("Accept")
             route_handler = self._get_media_type_route_handler(accept)
