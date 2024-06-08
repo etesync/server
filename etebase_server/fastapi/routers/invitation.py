@@ -1,26 +1,27 @@
 import typing as t
 
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import QuerySet
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, Request, status
 
 from etebase_server.django import models
-from etebase_server.django.utils import get_user_queryset, CallbackContext
+from etebase_server.django.utils import CallbackContext, get_user_queryset
 from etebase_server.myauth.models import UserType, get_typed_user_model
-from .authentication import get_authenticated_user
+
+from ..db_hack import django_db_cleanup_decorator
 from ..exceptions import HttpError, PermissionDenied
 from ..msgpack import MsgpackRoute
 from ..utils import (
-    get_object_or_404,
-    get_user_username_email_kwargs,
-    Context,
-    is_collection_admin,
-    BaseModel,
-    permission_responses,
     PERMISSIONS_READ,
     PERMISSIONS_READWRITE,
+    BaseModel,
+    Context,
+    get_object_or_404,
+    get_user_username_email_kwargs,
+    is_collection_admin,
+    permission_responses,
 )
-from ..db_hack import django_db_cleanup_decorator
+from .authentication import get_authenticated_user
 
 User = get_typed_user_model()
 invitation_incoming_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)

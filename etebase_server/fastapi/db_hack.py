@@ -2,6 +2,7 @@
 FIXME: this whole function is a hack around the django db limitations due to how db connections are cached and cleaned.
 Essentially django assumes there's the django request dispatcher to automatically clean up after the ORM.
 """
+
 import typing as t
 from functools import wraps
 

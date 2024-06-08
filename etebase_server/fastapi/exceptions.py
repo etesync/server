@@ -1,8 +1,8 @@
-from fastapi import status, HTTPException
 import typing as t
 
-from pydantic import BaseModel
 from django.core.exceptions import ValidationError as DjangoValidationError
+from fastapi import HTTPException, status
+from pydantic import BaseModel
 
 
 class HttpErrorField(BaseModel):

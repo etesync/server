@@ -6,14 +6,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from etebase_server.django import app_settings
-
 from .exceptions import CustomHttpException
 from .msgpack import MsgpackResponse
 from .routers.authentication import authentication_router
 from .routers.collection import collection_router, item_router
-from .routers.member import member_router
 from .routers.invitation import invitation_incoming_router, invitation_outgoing_router
+from .routers.member import member_router
 from .routers.websocket import websocket_router
 
 
@@ -24,7 +22,7 @@ def create_application(prefix="", middlewares=[]):
         externalDocs={
             "url": "https://docs.etebase.com",
             "description": "Docs about the API specifications and clients.",
-        }
+        },
         # FIXME: version="2.5.0",
     )
     VERSION = "v1"

@@ -1,14 +1,13 @@
+import base64
 import dataclasses
 import typing as t
-from typing_extensions import Literal
+
 import msgpack
-import base64
-
-from fastapi import status, Query, Depends
-from pydantic import BaseModel as PyBaseModel
-
-from django.db.models import Model, QuerySet
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Model, QuerySet
+from fastapi import Depends, Query, status
+from pydantic import BaseModel as PyBaseModel
+from typing_extensions import Literal
 
 from etebase_server.django import app_settings
 from etebase_server.django.models import AccessLevels

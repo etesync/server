@@ -1,14 +1,14 @@
+import logging
 from functools import lru_cache
 from importlib import import_module
 from pathlib import Path, PurePath
 from urllib.parse import quote
-import logging
-
-from fastapi import status
-from ..exceptions import HttpError
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from fastapi import status
+
+from ..exceptions import HttpError
 
 logger = logging.getLogger(__name__)
 

@@ -15,16 +15,15 @@
 import typing as t
 from pathlib import Path
 
-from django.db import models, transaction
 from django.conf import settings
 from django.core.validators import RegexValidator
+from django.db import models, transaction
 from django.db.models import Max, Value as V
 from django.db.models.functions import Coalesce, Greatest
-from django.utils.functional import cached_property
 from django.utils.crypto import get_random_string
+from django.utils.functional import cached_property
 
 from . import app_settings
-
 
 UidValidator = RegexValidator(regex=r"^[a-zA-Z0-9\-_]{20,}$", message="Not a valid UID")
 

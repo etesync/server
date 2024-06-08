@@ -5,8 +5,8 @@ from pydantic import BaseModel
 from starlette.requests import Request
 from starlette.responses import Response
 
-from .utils import msgpack_encode, msgpack_decode
 from .db_hack import django_db_cleanup_decorator
+from .utils import msgpack_decode, msgpack_encode
 
 
 class MsgpackRequest(Request):
@@ -60,7 +60,6 @@ class MsgpackRoute(APIRoute):
 
     def get_route_handler(self) -> t.Callable:
         async def custom_route_handler(request: Request) -> Response:
-
             content_type = request.headers.get("Content-Type")
             try:
                 request_cls = self.REQUESTS_CLASSES[content_type]
