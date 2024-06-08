@@ -34,7 +34,7 @@ class UserInfoOut(BaseModel):
     pubkey: bytes
 
     class Config:
-        orm_mode = True
+        from_attributes= True
 
     @classmethod
     def from_orm(cls: t.Type["UserInfoOut"], obj: models.UserInfo) -> "UserInfoOut":
@@ -67,7 +67,7 @@ class CollectionInvitationOut(CollectionInvitationCommon):
     fromPubkey: bytes
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     @classmethod
     def from_orm(cls: t.Type["CollectionInvitationOut"], obj: models.CollectionInvitation) -> "CollectionInvitationOut":

@@ -39,7 +39,7 @@ class CollectionMemberOut(BaseModel):
     accessLevel: models.AccessLevels
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     @classmethod
     def from_orm(cls: t.Type["CollectionMemberOut"], obj: models.CollectionMember) -> "CollectionMemberOut":
