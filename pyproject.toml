@@ -4,3 +4,25 @@ line-length = 120
 [build-system]
 requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 120
+exclude = [
+    ".git",
+    ".git-rewrite",
+    ".mypy_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".venv",
+    "build",
+    "dist",
+    "node_modules",
+    "migrations", # Alembic migrations
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "T20", "W"]
+ignore = ["E203", "E501", "E711", "E712", "N803", "N818", "T201"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true

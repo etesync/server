@@ -1,6 +1,6 @@
 coverage
 pip-tools
 pywatchman
-black
+ruff
+mypy
 django-stubs
-django<4.0
