@@ -65,7 +65,9 @@ orjson==3.10.3
 pycparser==2.22
     # via cffi
 pydantic==2.7.3
-    # via fastapi
+    # via
+    #   -r requirements.in/base.txt
+    #   fastapi
 pydantic-core==2.18.4
     # via pydantic
 pygments==2.18.0
