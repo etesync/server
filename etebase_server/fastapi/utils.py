@@ -25,10 +25,7 @@ T = t.TypeVar("T", bound=Model, covariant=True)
 
 
 class BaseModel(PyBaseModel):
-    class Config:
-        json_encoders = {
-            bytes: lambda x: x,
-        }
+    pass
 
 
 @dataclasses.dataclass

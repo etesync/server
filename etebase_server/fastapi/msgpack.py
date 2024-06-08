@@ -27,7 +27,7 @@ class MsgpackResponse(Response):
             return b""
 
         if isinstance(content, BaseModel):
-            content = content.dict()
+            content = content.model_dump()
         return msgpack_encode(content)
 
 
