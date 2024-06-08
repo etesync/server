@@ -25,9 +25,9 @@ def create_application(prefix="", middlewares=[]):
         },
         # FIXME: version="2.5.0",
     )
-    VERSION = "v1"
-    BASE_PATH = f"{prefix}/api/{VERSION}"
-    COLLECTION_UID_MARKER = "{collection_uid}"
+    VERSION = "v1"  # noqa: N806
+    BASE_PATH = f"{prefix}/api/{VERSION}"  # noqa: N806
+    COLLECTION_UID_MARKER = "{collection_uid}"  # noqa: N806
     app.include_router(authentication_router, prefix=f"{BASE_PATH}/authentication", tags=["authentication"])
     app.include_router(collection_router, prefix=f"{BASE_PATH}/collection", tags=["collection"])
     app.include_router(item_router, prefix=f"{BASE_PATH}/collection/{COLLECTION_UID_MARKER}", tags=["item"])

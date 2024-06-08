@@ -201,7 +201,7 @@ if "DJANGO_MEDIA_ROOT" in os.environ:
 
 # Make an `etebase_server_settings` module available to override settings.
 try:
-    from etebase_server_settings import *
+    from etebase_server_settings import *  # noqa: F403
 except ImportError:
     pass
 

@@ -22,7 +22,7 @@ exclude = [
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "T20", "W"]
-ignore = ["E203", "E501", "E711", "E712", "N803", "N818", "T201"]
+ignore = ["E203", "E501", "E711", "E712", "N803", "N815", "N818", "T201"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true

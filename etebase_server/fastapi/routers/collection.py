@@ -374,7 +374,7 @@ def item_create(item_model: CollectionItemIn, collection: models.Collection, val
     revision_data = item_model.content
     uid = item_model.uid
 
-    Model = models.CollectionItem
+    Model = models.CollectionItem  # noqa: N806
 
     with transaction.atomic():
         instance, created = Model.objects.get_or_create(

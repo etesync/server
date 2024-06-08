@@ -34,11 +34,11 @@ class AppSettings:
         return getattr(settings, self.prefix + name, dflt)
 
     @cached_property
-    def REDIS_URI(self) -> t.Optional[str]:  # pylint: disable=invalid-name
+    def REDIS_URI(self) -> t.Optional[str]:  # noqa: N802
         return self._setting("REDIS_URI", None)
 
     @cached_property
-    def API_PERMISSIONS_READ(self):  # pylint: disable=invalid-name
+    def API_PERMISSIONS_READ(self):  # noqa: N802
         perms = self._setting("API_PERMISSIONS_READ", tuple())
         ret = []
         for perm in perms:
@@ -46,7 +46,7 @@ class AppSettings:
         return ret
 
     @cached_property
-    def API_PERMISSIONS_WRITE(self):  # pylint: disable=invalid-name
+    def API_PERMISSIONS_WRITE(self):  # noqa: N802
         perms = self._setting("API_PERMISSIONS_WRITE", tuple())
         ret = []
         for perm in perms:
@@ -54,35 +54,35 @@ class AppSettings:
         return ret
 
     @cached_property
-    def GET_USER_QUERYSET_FUNC(self):  # pylint: disable=invalid-name
+    def GET_USER_QUERYSET_FUNC(self):  # noqa: N802
         get_user_queryset = self._setting("GET_USER_QUERYSET_FUNC", None)
         if get_user_queryset is not None:
             return self.import_from_str(get_user_queryset)
         return None
 
     @cached_property
-    def CREATE_USER_FUNC(self):  # pylint: disable=invalid-name
+    def CREATE_USER_FUNC(self):  # noqa: N802
         func = self._setting("CREATE_USER_FUNC", None)
         if func is not None:
             return self.import_from_str(func)
         return None
 
     @cached_property
-    def DASHBOARD_URL_FUNC(self):  # pylint: disable=invalid-name
+    def DASHBOARD_URL_FUNC(self):  # noqa: N802
         func = self._setting("DASHBOARD_URL_FUNC", None)
         if func is not None:
             return self.import_from_str(func)
         return None
 
     @cached_property
-    def CHUNK_PATH_FUNC(self):  # pylint: disable=invalid-name
+    def CHUNK_PATH_FUNC(self):  # noqa: N802
         func = self._setting("CHUNK_PATH_FUNC", None)
         if func is not None:
             return self.import_from_str(func)
         return None
 
     @cached_property
-    def CHALLENGE_VALID_SECONDS(self):  # pylint: disable=invalid-name
+    def CHALLENGE_VALID_SECONDS(self):  # noqa: N802
         return self._setting("CHALLENGE_VALID_SECONDS", 60)
 
 

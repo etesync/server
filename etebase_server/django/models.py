@@ -18,7 +18,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models, transaction
-from django.db.models import Max, Value as V
+from django.db.models import Max, Value as Val
 from django.db.models.functions import Coalesce, Greatest
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
@@ -29,7 +29,7 @@ UidValidator = RegexValidator(regex=r"^[a-zA-Z0-9\-_]{20,}$", message="Not a val
 
 
 def stoken_annotation_builder(stoken_id_fields: t.List[str]):
-    aggr_fields = [Coalesce(Max(field), V(0)) for field in stoken_id_fields]
+    aggr_fields = [Coalesce(Max(field), Val(0)) for field in stoken_id_fields]
     return Greatest(*aggr_fields) if len(aggr_fields) > 1 else aggr_fields[0]
 
 
