@@ -48,7 +48,7 @@ class MsgpackRoute(APIRoute):
             status_code=self.status_code,
             # use custom response class or fallback on default self.response_class
             response_class=self.ROUTES_HANDLERS_CLASSES.get(media_type, self.response_class),
-            response_field=self.secure_cloned_response_field,
+            response_field=self.response_field,
             response_model_include=self.response_model_include,
             response_model_exclude=self.response_model_exclude,
             response_model_by_alias=self.response_model_by_alias,
