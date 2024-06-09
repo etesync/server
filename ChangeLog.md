@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 0.14.0
+- Upgrade to latest FastAPI and Pydantic for compatibility with Python 3.12
+
 ## Version 0.13.1
 - Fix requirements definition for django.
 
