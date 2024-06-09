@@ -23,7 +23,7 @@ from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from ..dependencies import AuthData, get_auth_data, get_authenticated_user
 from ..exceptions import AuthenticationFailed, HttpError, transform_validation_error
-from ..msgpack import MsgpackRoute
+from ..msgpack import MsgpackResponse, MsgpackRoute
 from ..utils import BaseModel, get_user_username_email_kwargs, msgpack_decode, msgpack_encode, permission_responses
 
 User = get_typed_user_model()
@@ -76,7 +76,7 @@ class LoginOut(BaseModel):
 
 class Authentication(BaseModel):
     class Config:
-        ignored_types= (cached_property,)
+        ignored_types = (cached_property,)
 
     response: bytes
     signature: bytes
@@ -188,7 +188,7 @@ def login_challenge(user: UserType = Depends(get_login_user)):
         "userId": user.id,
     }
     challenge = bytes(box.encrypt(msgpack_encode(challenge_data), encoder=nacl.encoding.RawEncoder))
-    return LoginChallengeOut(salt=salt, challenge=challenge, version=user.userinfo.version)
+    return MsgpackResponse(LoginChallengeOut(salt=salt, challenge=challenge, version=user.userinfo.version))
 
 
 @authentication_router.post("/login/", response_model=LoginOut)
@@ -198,7 +198,7 @@ def login(data: Login, request: Request):
     validate_login_request(data.response_data, data, user, "login", host)
     ret = LoginOut.from_orm(user)
     user_logged_in.send(sender=user.__class__, request=None, user=user)
-    return ret
+    return MsgpackResponse(ret)
 
 
 @authentication_router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT, responses=permission_responses)
@@ -223,7 +223,7 @@ def dashboard_url(request: Request, user: UserType = Depends(get_authenticated_u
     ret = {
         "url": get_dashboard_url(CallbackContext(request.path_params, user=user)),
     }
-    return ret
+    return MsgpackResponse(ret)
 
 
 def signup_save(data: SignupIn, request: Request) -> UserType:
@@ -261,4 +261,4 @@ def signup(data: SignupIn, request: Request):
     user = signup_save(data, request)
     ret = LoginOut.from_orm(user)
     user_signed_up.send(sender=user.__class__, request=None, user=user)
-    return ret
+    return MsgpackResponse(ret)

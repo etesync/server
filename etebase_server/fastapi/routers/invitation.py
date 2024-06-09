@@ -10,7 +10,7 @@ from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from ..db_hack import django_db_cleanup_decorator
 from ..exceptions import HttpError, PermissionDenied
-from ..msgpack import MsgpackRoute
+from ..msgpack import MsgpackResponse, MsgpackRoute
 from ..utils import (
     PERMISSIONS_READ,
     PERMISSIONS_READWRITE,
@@ -34,7 +34,7 @@ class UserInfoOut(BaseModel):
     pubkey: bytes
 
     class Config:
-        from_attributes= True
+        from_attributes = True
 
     @classmethod
     def from_orm(cls: t.Type["UserInfoOut"], obj: models.UserInfo) -> "UserInfoOut":
@@ -121,7 +121,7 @@ def list_common(
     iterator = ret_data[-1].uid if len(result) > 0 else None
 
     return InvitationListResponse(
-        data=ret_data,
+        data=[CollectionInvitationOut.from_orm(x) for x in ret_data],
         iterator=iterator,
         done=done,
     )
@@ -133,7 +133,7 @@ def incoming_list(
     limit: int = 50,
     queryset: InvitationQuerySet = Depends(get_incoming_queryset),
 ):
-    return list_common(queryset, iterator, limit)
+    return MsgpackResponse(list_common(queryset, iterator, limit))
 
 
 @invitation_incoming_router.get(
@@ -144,7 +144,7 @@ def incoming_get(
     queryset: InvitationQuerySet = Depends(get_incoming_queryset),
 ):
     obj = get_object_or_404(queryset, uid=invitation_uid)
-    return CollectionInvitationOut.from_orm(obj)
+    return MsgpackResponse(CollectionInvitationOut.from_orm(obj))
 
 
 @invitation_incoming_router.delete(
@@ -219,7 +219,7 @@ def outgoing_list(
     limit: int = 50,
     queryset: InvitationQuerySet = Depends(get_outgoing_queryset),
 ):
-    return list_common(queryset, iterator, limit)
+    return MsgpackResponse(list_common(queryset, iterator, limit))
 
 
 @invitation_outgoing_router.delete(
@@ -242,4 +242,4 @@ def outgoing_fetch_user_profile(
     kwargs = get_user_username_email_kwargs(username)
     user = get_object_or_404(get_user_queryset(User.objects.all(), CallbackContext(request.path_params)), **kwargs)
     user_info = get_object_or_404(models.UserInfo.objects.all(), owner=user)
-    return UserInfoOut.from_orm(user_info)
+    return MsgpackResponse(UserInfoOut.from_orm(user_info))

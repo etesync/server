@@ -8,7 +8,7 @@ from etebase_server.django import models
 from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from ..db_hack import django_db_cleanup_decorator
-from ..msgpack import MsgpackRoute
+from ..msgpack import MsgpackResponse, MsgpackRoute
 from ..stoken_handler import filter_by_stoken_and_limit
 from ..utils import PERMISSIONS_READ, PERMISSIONS_READWRITE, BaseModel, get_object_or_404, permission_responses
 from .authentication import get_authenticated_user
@@ -66,10 +66,12 @@ def member_list(
     )
     new_stoken = new_stoken_obj and new_stoken_obj.uid
 
-    return MemberListResponse(
-        data=[CollectionMemberOut.from_orm(item) for item in result],
-        iterator=new_stoken,
-        done=done,
+    return MsgpackResponse(
+        MemberListResponse(
+            data=[CollectionMemberOut.from_orm(item) for item in result],
+            iterator=new_stoken,
+            done=done,
+        )
     )
 
 

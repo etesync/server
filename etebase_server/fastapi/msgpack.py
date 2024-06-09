@@ -12,9 +12,12 @@ from .utils import msgpack_decode, msgpack_encode
 class MsgpackRequest(Request):
     media_type = "application/msgpack"
 
+    async def raw_body(self) -> bytes:
+        return await super().body()
+
     async def body(self) -> bytes:
         if not hasattr(self, "_json"):
-            body = await super().body()
+            body = await self.raw_body()
             self._json = msgpack_decode(body)
         return self._json
 

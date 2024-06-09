@@ -13,7 +13,7 @@ from etebase_server.myauth.models import UserType
 from ..db_hack import django_db_cleanup_decorator
 from ..dependencies import get_collection, get_collection_queryset, get_item_queryset
 from ..exceptions import HttpError, PermissionDenied, ValidationError, transform_validation_error
-from ..msgpack import MsgpackRoute
+from ..msgpack import MsgpackRequest, MsgpackResponse, MsgpackRoute
 from ..redis import redisw
 from ..sendfile import sendfile
 from ..stoken_handler import filter_by_stoken, filter_by_stoken_and_limit, get_queryset_stoken, get_stoken_obj
@@ -135,7 +135,7 @@ class CollectionListResponse(BaseModel):
     stoken: t.Optional[str]
     done: bool
 
-    removedMemberships: t.Optional[t.List[RemovedMembershipOut]]
+    removedMemberships: t.Optional[t.List[RemovedMembershipOut]] = None
 
 
 class CollectionItemListResponse(BaseModel):
@@ -275,7 +275,7 @@ def list_multi(
         Q(members__collectionType__uid__in=data.collectionTypes) | Q(members__collectionType__isnull=True)
     )
 
-    return collection_list_common(queryset, user, stoken, limit, prefetch)
+    return MsgpackResponse(collection_list_common(queryset, user, stoken, limit, prefetch))
 
 
 @collection_router.get("/", response_model=CollectionListResponse, dependencies=PERMISSIONS_READ)
@@ -286,7 +286,7 @@ def collection_list(
     user: UserType = Depends(get_authenticated_user),
     queryset: CollectionQuerySet = Depends(get_collection_queryset),
 ):
-    return collection_list_common(queryset, user, stoken, limit, prefetch)
+    return MsgpackResponse(collection_list_common(queryset, user, stoken, limit, prefetch))
 
 
 def process_revisions_for_item(item: models.CollectionItem, revision_data: CollectionItemRevisionInOut):
@@ -365,7 +365,7 @@ def collection_get(
     user: UserType = Depends(get_authenticated_user),
     prefetch: Prefetch = PrefetchQuery,
 ):
-    return CollectionOut.from_orm_context(obj, Context(user, prefetch))
+    return MsgpackResponse(CollectionOut.from_orm_context(obj, Context(user, prefetch)))
 
 
 def item_create(item_model: CollectionItemIn, collection: models.Collection, validate_etag: bool):
@@ -418,7 +418,7 @@ def item_get(
     prefetch: Prefetch = PrefetchQuery,
 ):
     obj = queryset.get(uid=item_uid)
-    return CollectionItemOut.from_orm_context(obj, Context(user, prefetch))
+    return MsgpackResponse(CollectionItemOut.from_orm_context(obj, Context(user, prefetch)))
 
 
 def item_list_common(
@@ -450,7 +450,7 @@ def item_list(
         queryset = queryset.filter(parent__isnull=True)
 
     response = item_list_common(queryset, user, stoken, limit, prefetch)
-    return response
+    return MsgpackResponse(response)
 
 
 @item_router.post("/item/subscription-ticket/", response_model=TicketOut, dependencies=PERMISSIONS_READ)
@@ -459,7 +459,7 @@ async def item_list_subscription_ticket(
     user: UserType = Depends(get_authenticated_user),
 ):
     """Get an authentication ticket that can be used with the websocket endpoint"""
-    return await get_ticket(TicketRequest(collection=collection.uid), user)
+    return MsgpackResponse(await get_ticket(TicketRequest(collection=collection.uid), user))
 
 
 def item_bulk_common(
@@ -527,10 +527,12 @@ def item_revisions(
     ret_data = [CollectionItemRevisionInOut.from_orm_context(revision, context) for revision in result]
     iterator = ret_data[-1].uid if len(result) > 0 else None
 
-    return CollectionItemRevisionListResponse(
-        data=ret_data,
-        iterator=iterator,
-        done=done,
+    return MsgpackResponse(
+        CollectionItemRevisionListResponse(
+            data=ret_data,
+            iterator=iterator,
+            done=done,
+        )
     )
 
 
@@ -560,10 +562,12 @@ def fetch_updates(
     new_stoken = new_stoken or stoken_rev_uid
 
     context = Context(user, prefetch)
-    return CollectionItemListResponse(
-        data=[CollectionItemOut.from_orm_context(item, context) for item in queryset],
-        stoken=new_stoken,
-        done=True,  # we always return all the items, so it's always done
+    return MsgpackResponse(
+        CollectionItemListResponse(
+            data=[CollectionItemOut.from_orm_context(item, context) for item in queryset],
+            stoken=new_stoken,
+            done=True,  # we always return all the items, so it's always done
+        )
     )
 
 
@@ -575,7 +579,9 @@ def item_transaction(
     stoken: t.Optional[str] = None,
     user: UserType = Depends(get_authenticated_user),
 ):
-    return item_bulk_common(data, user, stoken, collection_uid, validate_etag=True, background_tasks=background_tasks)
+    return MsgpackResponse(
+        item_bulk_common(data, user, stoken, collection_uid, validate_etag=True, background_tasks=background_tasks)
+    )
 
 
 @item_router.post("/item/batch/", dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE])
@@ -586,7 +592,9 @@ def item_batch(
     stoken: t.Optional[str] = None,
     user: UserType = Depends(get_authenticated_user),
 ):
-    return item_bulk_common(data, user, stoken, collection_uid, validate_etag=False, background_tasks=background_tasks)
+    return MsgpackResponse(
+        item_bulk_common(data, user, stoken, collection_uid, validate_etag=False, background_tasks=background_tasks)
+    )
 
 
 # Chunks
@@ -611,7 +619,12 @@ async def chunk_update(
     collection: models.Collection = Depends(get_collection),
 ):
     # IGNORED FOR NOW: col_it = get_object_or_404(col.items, uid=collection_item_uid)
-    content_file = ContentFile(await request.body())
+    if isinstance(request, MsgpackRequest):
+        body = await request.raw_body()
+    else:
+        body = await request.body()
+
+    content_file = ContentFile(body)
     try:
         await chunk_save(chunk_uid, collection, content_file)
     except IntegrityError:
