@@ -21,6 +21,7 @@ BASE_DIR = os.path.dirname(SOURCE_DIR)
 
 AUTH_USER_MODEL = "myauth.User"
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
