@@ -1,19 +1,19 @@
 from django.conf import settings
 
 # Not at the top of the file because we first need to setup django
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
-
-from etebase_server.django import app_settings
 
 from .exceptions import CustomHttpException
 from .msgpack import MsgpackResponse
 from .routers.authentication import authentication_router
 from .routers.collection import collection_router, item_router
-from .routers.member import member_router
 from .routers.invitation import invitation_incoming_router, invitation_outgoing_router
+from .routers.member import member_router
 from .routers.websocket import websocket_router
 
 
@@ -24,12 +24,12 @@ def create_application(prefix="", middlewares=[]):
         externalDocs={
             "url": "https://docs.etebase.com",
             "description": "Docs about the API specifications and clients.",
-        }
+        },
         # FIXME: version="2.5.0",
     )
-    VERSION = "v1"
-    BASE_PATH = f"{prefix}/api/{VERSION}"
-    COLLECTION_UID_MARKER = "{collection_uid}"
+    VERSION = "v1"  # noqa: N806
+    BASE_PATH = f"{prefix}/api/{VERSION}"  # noqa: N806
+    COLLECTION_UID_MARKER = "{collection_uid}"  # noqa: N806
     app.include_router(authentication_router, prefix=f"{BASE_PATH}/authentication", tags=["authentication"])
     app.include_router(collection_router, prefix=f"{BASE_PATH}/collection", tags=["collection"])
     app.include_router(item_router, prefix=f"{BASE_PATH}/collection/{COLLECTION_UID_MARKER}", tags=["item"])
@@ -74,6 +74,13 @@ def create_application(prefix="", middlewares=[]):
     @app.exception_handler(CustomHttpException)
     async def custom_exception_handler(request: Request, exc: CustomHttpException):
         return MsgpackResponse(status_code=exc.status_code, content=exc.as_dict)
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        return MsgpackResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content=jsonable_encoder({"detail": exc.errors()}),
+        )
 
     app.mount(settings.STATIC_URL, StaticFiles(directory=settings.STATIC_ROOT), name="static")
 

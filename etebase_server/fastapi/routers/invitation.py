@@ -1,26 +1,27 @@
 import typing as t
 
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import QuerySet
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, Request, status
 
 from etebase_server.django import models
-from etebase_server.django.utils import get_user_queryset, CallbackContext
+from etebase_server.django.utils import CallbackContext, get_user_queryset
 from etebase_server.myauth.models import UserType, get_typed_user_model
-from .authentication import get_authenticated_user
+
+from ..db_hack import django_db_cleanup_decorator
 from ..exceptions import HttpError, PermissionDenied
-from ..msgpack import MsgpackRoute
+from ..msgpack import MsgpackResponse, MsgpackRoute
 from ..utils import (
-    get_object_or_404,
-    get_user_username_email_kwargs,
-    Context,
-    is_collection_admin,
-    BaseModel,
-    permission_responses,
     PERMISSIONS_READ,
     PERMISSIONS_READWRITE,
+    BaseModel,
+    Context,
+    get_object_or_404,
+    get_user_username_email_kwargs,
+    is_collection_admin,
+    permission_responses,
 )
-from ..db_hack import django_db_cleanup_decorator
+from .authentication import get_authenticated_user
 
 User = get_typed_user_model()
 invitation_incoming_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
@@ -33,7 +34,7 @@ class UserInfoOut(BaseModel):
     pubkey: bytes
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     @classmethod
     def from_orm(cls: t.Type["UserInfoOut"], obj: models.UserInfo) -> "UserInfoOut":
@@ -66,7 +67,7 @@ class CollectionInvitationOut(CollectionInvitationCommon):
     fromPubkey: bytes
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     @classmethod
     def from_orm(cls: t.Type["CollectionInvitationOut"], obj: models.CollectionInvitation) -> "CollectionInvitationOut":
@@ -120,7 +121,7 @@ def list_common(
     iterator = ret_data[-1].uid if len(result) > 0 else None
 
     return InvitationListResponse(
-        data=ret_data,
+        data=[CollectionInvitationOut.from_orm(x) for x in ret_data],
         iterator=iterator,
         done=done,
     )
@@ -132,7 +133,7 @@ def incoming_list(
     limit: int = 50,
     queryset: InvitationQuerySet = Depends(get_incoming_queryset),
 ):
-    return list_common(queryset, iterator, limit)
+    return MsgpackResponse(list_common(queryset, iterator, limit))
 
 
 @invitation_incoming_router.get(
@@ -143,7 +144,7 @@ def incoming_get(
     queryset: InvitationQuerySet = Depends(get_incoming_queryset),
 ):
     obj = get_object_or_404(queryset, uid=invitation_uid)
-    return CollectionInvitationOut.from_orm(obj)
+    return MsgpackResponse(CollectionInvitationOut.from_orm(obj))
 
 
 @invitation_incoming_router.delete(
@@ -218,7 +219,7 @@ def outgoing_list(
     limit: int = 50,
     queryset: InvitationQuerySet = Depends(get_outgoing_queryset),
 ):
-    return list_common(queryset, iterator, limit)
+    return MsgpackResponse(list_common(queryset, iterator, limit))
 
 
 @invitation_outgoing_router.delete(
@@ -241,4 +242,4 @@ def outgoing_fetch_user_profile(
     kwargs = get_user_username_email_kwargs(username)
     user = get_object_or_404(get_user_queryset(User.objects.all(), CallbackContext(request.path_params)), **kwargs)
     user_info = get_object_or_404(models.UserInfo.objects.all(), owner=user)
-    return UserInfoOut.from_orm(user_info)
+    return MsgpackResponse(UserInfoOut.from_orm(user_info))

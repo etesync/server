@@ -5,16 +5,19 @@ from pydantic import BaseModel
 from starlette.requests import Request
 from starlette.responses import Response
 
-from .utils import msgpack_encode, msgpack_decode
 from .db_hack import django_db_cleanup_decorator
+from .utils import msgpack_decode, msgpack_encode
 
 
 class MsgpackRequest(Request):
     media_type = "application/msgpack"
 
+    async def raw_body(self) -> bytes:
+        return await super().body()
+
     async def body(self) -> bytes:
         if not hasattr(self, "_json"):
-            body = await super().body()
+            body = await self.raw_body()
             self._json = msgpack_decode(body)
         return self._json
 
@@ -27,7 +30,7 @@ class MsgpackResponse(Response):
             return b""
 
         if isinstance(content, BaseModel):
-            content = content.dict()
+            content = content.model_dump()
         return msgpack_encode(content)
 
 
@@ -48,7 +51,7 @@ class MsgpackRoute(APIRoute):
             status_code=self.status_code,
             # use custom response class or fallback on default self.response_class
             response_class=self.ROUTES_HANDLERS_CLASSES.get(media_type, self.response_class),
-            response_field=self.secure_cloned_response_field,
+            response_field=self.response_field,
             response_model_include=self.response_model_include,
             response_model_exclude=self.response_model_exclude,
             response_model_by_alias=self.response_model_by_alias,
@@ -60,14 +63,14 @@ class MsgpackRoute(APIRoute):
 
     def get_route_handler(self) -> t.Callable:
         async def custom_route_handler(request: Request) -> Response:
-
             content_type = request.headers.get("Content-Type")
-            try:
-                request_cls = self.REQUESTS_CLASSES[content_type]
-                request = request_cls(request.scope, request.receive)
-            except KeyError:
-                # nothing registered to handle content_type, process given requests as-is
-                pass
+            if content_type is not None:
+                try:
+                    request_cls = self.REQUESTS_CLASSES[content_type]
+                    request = request_cls(request.scope, request.receive)
+                except KeyError:
+                    # nothing registered to handle content_type, process given requests as-is
+                    pass
 
             accept = request.headers.get("Accept")
             route_handler = self._get_media_type_route_handler(accept)

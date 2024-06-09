@@ -1,12 +1,12 @@
 import typing as t
 from dataclasses import dataclass
 
-from django.db.models import QuerySet
 from django.core.exceptions import PermissionDenied
+from django.db.models import QuerySet
+
 from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from . import app_settings
-
 
 User = get_typed_user_model()
 

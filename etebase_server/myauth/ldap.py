@@ -1,15 +1,15 @@
 import logging
 
-from django.utils import timezone
+import ldap
 from django.conf import settings
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
-from etebase_server.django.utils import CallbackContext
-from etebase_server.myauth.models import get_typed_user_model, UserType
-from etebase_server.fastapi.dependencies import get_authenticated_user
-from etebase_server.fastapi.exceptions import PermissionDenied as FastAPIPermissionDenied
+from django.utils import timezone
 from fastapi import Depends
 
-import ldap
+from etebase_server.django.utils import CallbackContext
+from etebase_server.fastapi.dependencies import get_authenticated_user
+from etebase_server.fastapi.exceptions import PermissionDenied as FastAPIPermissionDenied
+from etebase_server.myauth.models import UserType, get_typed_user_model
 
 User = get_typed_user_model()
 

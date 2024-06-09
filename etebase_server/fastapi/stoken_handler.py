@@ -47,7 +47,6 @@ def get_queryset_stoken(queryset: t.Iterable[t.Any]) -> t.Optional[Stoken]:
 def filter_by_stoken_and_limit(
     stoken: t.Optional[str], limit: int, queryset: QuerySet, stoken_annotation: StokenAnnotation
 ) -> t.Tuple[list, t.Optional[Stoken], bool]:
-
     queryset, stoken_rev = filter_by_stoken(stoken=stoken, queryset=queryset, stoken_annotation=stoken_annotation)
 
     result = list(queryset[: limit + 1])

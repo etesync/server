@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.crypto import get_random_string
+
 from etebase_server.myauth.models import get_typed_user_model
 
 User = get_typed_user_model()
@@ -15,7 +16,6 @@ def get_default_expiry():
 
 
 class AuthToken(models.Model):
-
     key = models.CharField(max_length=40, unique=True, db_index=True, default=generate_key)
     user = models.ForeignKey(User, null=False, blank=False, related_name="auth_token_set", on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)

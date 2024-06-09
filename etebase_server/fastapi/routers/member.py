@@ -6,12 +6,12 @@ from fastapi import APIRouter, Depends, status
 
 from etebase_server.django import models
 from etebase_server.myauth.models import UserType, get_typed_user_model
-from .authentication import get_authenticated_user
-from ..msgpack import MsgpackRoute
-from ..utils import get_object_or_404, BaseModel, permission_responses, PERMISSIONS_READ, PERMISSIONS_READWRITE
-from ..stoken_handler import filter_by_stoken_and_limit
-from ..db_hack import django_db_cleanup_decorator
 
+from ..db_hack import django_db_cleanup_decorator
+from ..msgpack import MsgpackResponse, MsgpackRoute
+from ..stoken_handler import filter_by_stoken_and_limit
+from ..utils import PERMISSIONS_READ, PERMISSIONS_READWRITE, BaseModel, get_object_or_404, permission_responses
+from .authentication import get_authenticated_user
 from .collection import get_collection, verify_collection_admin
 
 User = get_typed_user_model()
@@ -39,7 +39,7 @@ class CollectionMemberOut(BaseModel):
     accessLevel: models.AccessLevels
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     @classmethod
     def from_orm(cls: t.Type["CollectionMemberOut"], obj: models.CollectionMember) -> "CollectionMemberOut":
@@ -66,10 +66,12 @@ def member_list(
     )
     new_stoken = new_stoken_obj and new_stoken_obj.uid
 
-    return MemberListResponse(
-        data=[CollectionMemberOut.from_orm(item) for item in result],
-        iterator=new_stoken,
-        done=done,
+    return MsgpackResponse(
+        MemberListResponse(
+            data=[CollectionMemberOut.from_orm(item) for item in result],
+            iterator=new_stoken,
+            done=done,
+        )
     )
 
 

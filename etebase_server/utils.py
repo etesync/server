@@ -12,9 +12,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from django.core.management import utils
 import os
 import stat
+
+from django.core.management import utils
 
 
 def get_secret_from_file(path):

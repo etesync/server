@@ -1,5 +1,4 @@
 import typing as t
-from typing_extensions import Literal
 from datetime import datetime
 
 import nacl
@@ -8,22 +7,24 @@ import nacl.hash
 import nacl.secret
 import nacl.signing
 from django.conf import settings
-from django.contrib.auth import user_logged_out, user_logged_in
+from django.contrib.auth import user_logged_in, user_logged_out
 from django.core import exceptions as django_exceptions
 from django.db import transaction
 from django.utils.functional import cached_property
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, Request, status
+from typing_extensions import Literal
 
 from etebase_server.django import app_settings, models
-from etebase_server.django.token_auth.models import AuthToken
 from etebase_server.django.models import UserInfo
 from etebase_server.django.signals import user_signed_up
-from etebase_server.django.utils import create_user, get_user_queryset, CallbackContext
+from etebase_server.django.token_auth.models import AuthToken
+from etebase_server.django.utils import CallbackContext, create_user, get_user_queryset
 from etebase_server.myauth.models import UserType, get_typed_user_model
-from ..exceptions import AuthenticationFailed, transform_validation_error, HttpError
-from ..msgpack import MsgpackRoute
-from ..utils import BaseModel, permission_responses, msgpack_encode, msgpack_decode, get_user_username_email_kwargs
+
 from ..dependencies import AuthData, get_auth_data, get_authenticated_user
+from ..exceptions import AuthenticationFailed, HttpError, transform_validation_error
+from ..msgpack import MsgpackResponse, MsgpackRoute
+from ..utils import BaseModel, get_user_username_email_kwargs, msgpack_decode, msgpack_encode, permission_responses
 
 User = get_typed_user_model()
 authentication_router = APIRouter(route_class=MsgpackRoute)
@@ -75,7 +76,7 @@ class LoginOut(BaseModel):
 
 class Authentication(BaseModel):
     class Config:
-        keep_untouched = (cached_property,)
+        ignored_types = (cached_property,)
 
     response: bytes
     signature: bytes
@@ -187,7 +188,7 @@ def login_challenge(user: UserType = Depends(get_login_user)):
         "userId": user.id,
     }
     challenge = bytes(box.encrypt(msgpack_encode(challenge_data), encoder=nacl.encoding.RawEncoder))
-    return LoginChallengeOut(salt=salt, challenge=challenge, version=user.userinfo.version)
+    return MsgpackResponse(LoginChallengeOut(salt=salt, challenge=challenge, version=user.userinfo.version))
 
 
 @authentication_router.post("/login/", response_model=LoginOut)
@@ -197,7 +198,7 @@ def login(data: Login, request: Request):
     validate_login_request(data.response_data, data, user, "login", host)
     ret = LoginOut.from_orm(user)
     user_logged_in.send(sender=user.__class__, request=None, user=user)
-    return ret
+    return MsgpackResponse(ret)
 
 
 @authentication_router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT, responses=permission_responses)
@@ -222,7 +223,7 @@ def dashboard_url(request: Request, user: UserType = Depends(get_authenticated_u
     ret = {
         "url": get_dashboard_url(CallbackContext(request.path_params, user=user)),
     }
-    return ret
+    return MsgpackResponse(ret)
 
 
 def signup_save(data: SignupIn, request: Request) -> UserType:
@@ -260,4 +261,4 @@ def signup(data: SignupIn, request: Request):
     user = signup_save(data, request)
     ret = LoginOut.from_orm(user)
     user_signed_up.send(sender=user.__class__, request=None, user=user)
-    return ret
+    return MsgpackResponse(ret)

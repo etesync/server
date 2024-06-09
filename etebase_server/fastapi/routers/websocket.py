@@ -1,13 +1,13 @@
 import asyncio
 import typing as t
 
-from redis import asyncio as aioredis
-from redis.exceptions import ConnectionError
+import nacl.encoding
+import nacl.utils
 from asgiref.sync import sync_to_async
 from django.db.models import QuerySet
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
-import nacl.encoding
-import nacl.utils
+from redis import asyncio as aioredis
+from redis.exceptions import ConnectionError
 
 from etebase_server.django import models
 from etebase_server.django.utils import CallbackContext, get_user_queryset
@@ -18,7 +18,6 @@ from ..exceptions import NotSupported
 from ..msgpack import MsgpackRoute, msgpack_decode, msgpack_encode
 from ..redis import redisw
 from ..utils import BaseModel, permission_responses
-
 
 User = get_typed_user_model()
 websocket_router = APIRouter(route_class=MsgpackRoute, responses=permission_responses)
