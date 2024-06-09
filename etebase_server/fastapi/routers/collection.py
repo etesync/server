@@ -152,7 +152,7 @@ class CollectionItemRevisionListResponse(BaseModel):
 
 class CollectionItemBulkGetIn(BaseModel):
     uid: str
-    etag: t.Optional[str]
+    etag: t.Optional[str] = None
 
 
 class ItemDepIn(BaseModel):
