@@ -1,8 +1,9 @@
+import typing as t
+
 from django.conf import settings
 
 # Not at the top of the file because we first need to setup django
 from fastapi import FastAPI, Request, status
-from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -77,9 +78,12 @@ def create_application(prefix="", middlewares=[]):
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        from pydantic import TypeAdapter
+
+        errors = TypeAdapter(t.Dict[str, t.Any])
         return MsgpackResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            content=jsonable_encoder({"detail": exc.errors()}),
+            content=errors.dump_python({"detail": exc.errors()}),
         )
 
     app.mount(settings.STATIC_URL, StaticFiles(directory=settings.STATIC_ROOT), name="static")
