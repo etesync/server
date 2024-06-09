@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.14.1
+- Fix issue with serializing non utf8 422 errors
+- Appease django warnings about default auto field
+
 ## Version 0.14.0
 - Upgrade to latest FastAPI and Pydantic for compatibility with Python 3.12
 
