@@ -1,7 +1,9 @@
 from django.conf import settings
 
 # Not at the top of the file because we first need to setup django
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -72,6 +74,13 @@ def create_application(prefix="", middlewares=[]):
     @app.exception_handler(CustomHttpException)
     async def custom_exception_handler(request: Request, exc: CustomHttpException):
         return MsgpackResponse(status_code=exc.status_code, content=exc.as_dict)
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        return MsgpackResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content=jsonable_encoder({"detail": exc.errors()}),
+        )
 
     app.mount(settings.STATIC_URL, StaticFiles(directory=settings.STATIC_ROOT), name="static")
 
