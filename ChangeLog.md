@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.14.2
+- Fix issue with some requests failing in some scenarios with the JS client.
+  - The JS client was omitting optional fields which were accidentally made to be required. It happened because pydantic v2 changed the behavior in a few ways (for the better fwiw) and we missed a few places when upgrading.
+
 ## Version 0.14.1
 - Fix issue with serializing non utf8 422 errors
 - Appease django warnings about default auto field
