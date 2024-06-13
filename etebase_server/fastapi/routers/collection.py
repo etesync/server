@@ -72,7 +72,7 @@ class CollectionItemRevisionInOut(BaseModel):
 class CollectionItemCommon(BaseModel):
     uid: str
     version: int
-    encryptionKey: t.Optional[bytes]
+    encryptionKey: t.Optional[bytes] = None
     content: CollectionItemRevisionInOut
 
 
@@ -93,12 +93,12 @@ class CollectionItemOut(CollectionItemCommon):
 
 
 class CollectionItemIn(CollectionItemCommon):
-    etag: t.Optional[str]
+    etag: t.Optional[str] = None
 
 
 class CollectionCommon(BaseModel):
     # FIXME: remove optional once we finish collection-type-migration
-    collectionType: t.Optional[bytes]
+    collectionType: t.Optional[bytes] = None
     collectionKey: bytes
 
 
@@ -132,7 +132,7 @@ class RemovedMembershipOut(BaseModel):
 
 class CollectionListResponse(BaseModel):
     data: t.List[CollectionOut]
-    stoken: t.Optional[str]
+    stoken: t.Optional[str] = None
     done: bool
 
     removedMemberships: t.Optional[t.List[RemovedMembershipOut]] = None
@@ -140,13 +140,13 @@ class CollectionListResponse(BaseModel):
 
 class CollectionItemListResponse(BaseModel):
     data: t.List[CollectionItemOut]
-    stoken: t.Optional[str]
+    stoken: t.Optional[str] = None
     done: bool
 
 
 class CollectionItemRevisionListResponse(BaseModel):
     data: t.List[CollectionItemRevisionInOut]
-    iterator: t.Optional[str]
+    iterator: t.Optional[str] = None
     done: bool
 
 
@@ -173,7 +173,7 @@ class ItemDepIn(BaseModel):
 
 class ItemBatchIn(BaseModel):
     items: t.List[CollectionItemIn]
-    deps: t.Optional[t.List[ItemDepIn]]
+    deps: t.Optional[t.List[ItemDepIn]] = None
 
     def validate_db(self):
         if self.deps is not None:

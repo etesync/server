@@ -85,7 +85,7 @@ class CollectionInvitationOut(CollectionInvitationCommon):
 
 class InvitationListResponse(BaseModel):
     data: t.List[CollectionInvitationOut]
-    iterator: t.Optional[str]
+    iterator: t.Optional[str] = None
     done: bool
 
 

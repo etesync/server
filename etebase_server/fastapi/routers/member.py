@@ -48,7 +48,7 @@ class CollectionMemberOut(BaseModel):
 
 class MemberListResponse(BaseModel):
     data: t.List[CollectionMemberOut]
-    iterator: t.Optional[str]
+    iterator: t.Optional[str] = None
     done: bool
 
 
