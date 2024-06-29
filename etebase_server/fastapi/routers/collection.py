@@ -342,7 +342,10 @@ def _create(data: CollectionIn, user: UserType):
         # TODO
         process_revisions_for_item(main_item, data.item.content)
 
-        collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=data.collectionType, owner=user)
+        try:
+            collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=data.collectionType, owner=user)
+        except IntegrityError:
+            raise ValidationError("bad_collection_type", "collectionType is null")
 
         models.CollectionMember(
             collection=instance,
