@@ -25,7 +25,7 @@ click==8.1.7
     # via
     #   typer
     #   uvicorn
-django==4.2.13
+django==4.2.14
     # via -r requirements.in/base.txt
 dnspython==2.6.1
     # via email-validator
