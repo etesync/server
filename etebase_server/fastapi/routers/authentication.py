@@ -1,3 +1,4 @@
+import random
 import typing as t
 from datetime import datetime
 
@@ -123,16 +124,36 @@ def get_login_user(request: Request, challenge: LoginChallengeIn) -> UserType:
             raise AuthenticationFailed(code="user_not_init", detail="User not properly init")
         return user
     except User.DoesNotExist:
-        raise AuthenticationFailed(code="user_not_found", detail="User not found")
+        return fake_user(username)
 
 
-def get_encryption_key(salt: bytes):
+FAKE_USER_COUNT = 1000
+
+
+def fake_user(username: str) -> UserType:
+    username_bytes = bytes(username, encoding="utf-8")
+    login_pubkey = get_encryption_key(b"", b"loginPubkey", username_bytes)[:32]
+    salt = get_encryption_key(b"", b"salt", username_bytes)[:16]
+
+    user = User()
+    user.username = username
+    user.id = random.Random(settings.SECRET_KEY + username).randint(0, FAKE_USER_COUNT)
+
+    userinfo = UserInfo()
+    userinfo.loginPubkey = login_pubkey
+    userinfo.salt = salt
+
+    user.userinfo = userinfo
+    return user
+
+
+def get_encryption_key(salt: bytes, person=b"etebase-auth", data: bytes = b""):
     key = nacl.hash.blake2b(settings.SECRET_KEY.encode(), encoder=nacl.encoding.RawEncoder)
     return nacl.hash.blake2b(
-        b"",
+        data=data,
         key=key,
         salt=salt[: nacl.hash.BLAKE2B_SALTBYTES],
-        person=b"etebase-auth",
+        person=person,
         encoder=nacl.encoding.RawEncoder,
     )
 
