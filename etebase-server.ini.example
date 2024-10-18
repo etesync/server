@@ -15,6 +15,10 @@ media_root = /path/to/media
 [allowed_hosts]
 allowed_host1 = example.com
 
+[ports]
+;http_port = 8000
+;https_port = 8043
+
 [database]
 engine = django.db.backends.sqlite3
 name = db.sqlite3
