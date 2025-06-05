@@ -119,17 +119,17 @@ async def redis_connector(websocket: WebSocket, ticket_model: TicketInner, user:
 
         async def handle_message():
             msg = await pubsub.get_message(ignore_subscribe_messages=True, timeout=20)
-            message_raw = t.cast(t.Optional[t.Tuple[str, bytes]], msg)
-            if message_raw:
-                _, message = message_raw
+            if msg and msg['type'] == 'message':
+                message = msg['data']
                 await ws.send_bytes(message)
 
         try:
             while True:
                 # We wait on the websocket so we fail if web sockets fail or get data
                 receive = asyncio.create_task(websocket.receive())
+                handle = asyncio.create_task(handle_message())
                 done, pending = await asyncio.wait(
-                    {receive, handle_message()},
+                    {receive, handle},
                     return_when=asyncio.FIRST_COMPLETED,
                 )
                 for task in pending:
