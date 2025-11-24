@@ -23,7 +23,7 @@ Before installing the Etebase server make sure you install `virtualenv` (for **P
 
 Then just clone the git repo and set up this app:
 
-```
+```shell
 git clone https://github.com/etesync/server.git etebase
 
 cd etebase
