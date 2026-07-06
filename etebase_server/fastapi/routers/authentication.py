@@ -231,7 +231,8 @@ def signup_save(data: SignupIn, request: Request) -> UserType:
     with transaction.atomic():
         try:
             user_queryset = get_user_queryset(User.objects.all(), CallbackContext(request.path_params))
-            instance = user_queryset.get(**{User.USERNAME_FIELD: user_data.username.lower()})
+            user_queryset.get(**{User.USERNAME_FIELD: user_data.username.lower()})
+            raise HttpError("user_exists", "User already exists", status_code=status.HTTP_409_CONFLICT)
         except User.DoesNotExist:
             # Create the user and save the casing the user chose as the first name
             try:
@@ -248,9 +249,6 @@ def signup_save(data: SignupIn, request: Request) -> UserType:
                 transform_validation_error("user", e)
             except Exception as e:
                 raise HttpError("generic", str(e))
-
-        if hasattr(instance, "userinfo"):
-            raise HttpError("user_exists", "User already exists", status_code=status.HTTP_409_CONFLICT)
 
         models.UserInfo.objects.create(**data.dict(exclude={"user"}), owner=instance)
     return instance
