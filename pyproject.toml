@@ -26,3 +26,9 @@ ignore = ["E203", "E501", "E711", "E712", "N803", "N815", "N818", "T201"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+DJANGO_SETTINGS_MODULE = "etebase_server.settings"

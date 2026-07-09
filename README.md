@@ -11,7 +11,7 @@ An [Etebase](https://www.etebase.com) (EteSync 2.0) server so you can run your o
 
 ## Requirements
 
-Etebase requires Python 3.7 or newer and has a few Python dependencies (listed in `requirements.in/base.txt`).
+Etebase requires Python 3.10 or newer and has a few Python dependencies (listed in `requirements.in/base.txt`).
 
 ## From source
 

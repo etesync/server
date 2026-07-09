@@ -2,7 +2,7 @@ import dataclasses
 
 from django.db.models import QuerySet
 from django.utils import timezone
-from fastapi import Depends
+from fastapi import Depends, Path
 from fastapi.security import APIKeyHeader
 
 from etebase_server.django import models
@@ -74,7 +74,7 @@ def get_collection_queryset(user: UserType = Depends(get_authenticated_user)) ->
 
 
 @django_db_cleanup_decorator
-def get_collection(collection_uid: str, queryset: QuerySet = Depends(get_collection_queryset)) -> models.Collection:
+def get_collection(collection_uid: str = Path(...), queryset: QuerySet = Depends(get_collection_queryset)) -> models.Collection:
     return get_object_or_404(queryset, uid=collection_uid)
 
 

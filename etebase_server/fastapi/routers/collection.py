@@ -5,7 +5,7 @@ from django.core import exceptions as django_exceptions
 from django.core.files.base import ContentFile
 from django.db import IntegrityError, transaction
 from django.db.models import Q, QuerySet
-from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Path, Request, status
 
 from etebase_server.django import models
 from etebase_server.myauth.models import UserType
@@ -576,7 +576,7 @@ def fetch_updates(
 
 @item_router.post("/item/transaction/", dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE])
 def item_transaction(
-    collection_uid: str,
+    collection_uid: t.Annotated[str, Path()],
     data: ItemBatchIn,
     background_tasks: BackgroundTasks,
     stoken: t.Optional[str] = None,
@@ -589,7 +589,7 @@ def item_transaction(
 
 @item_router.post("/item/batch/", dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE])
 def item_batch(
-    collection_uid: str,
+    collection_uid: t.Annotated[str, Path()],
     data: ItemBatchIn,
     background_tasks: BackgroundTasks,
     stoken: t.Optional[str] = None,

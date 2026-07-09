@@ -1,7 +1,7 @@
 /journal
 /db.sqlite3*
 Session.vim
-/.venv
+/.venv*
 /assets
 /logs
 /.coverage
@@ -10,6 +10,8 @@ Session.vim
 /.idea
 
 __pycache__
+.pytest_cache/
+.ruff_cache/
 .*.swp
 
 /etebase_server_settings.py
@@ -18,3 +20,4 @@ __pycache__
 /build
 /dist
 /*.egg-info
+.DS_Store
