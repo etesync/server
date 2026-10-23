@@ -9,6 +9,7 @@ from etebase_server.django.utils import CallbackContext, get_user_queryset
 from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from ..db_hack import django_db_cleanup_decorator
+from ..dependencies import get_collection_queryset
 from ..exceptions import HttpError, PermissionDenied
 from ..msgpack import MsgpackResponse, MsgpackRoute
 from ..utils import (
@@ -192,7 +193,7 @@ def outgoing_create(
     request: Request,
     user: UserType = Depends(get_authenticated_user),
 ):
-    collection = get_object_or_404(models.Collection.objects, uid=data.collection)
+    collection = get_object_or_404(get_collection_queryset(user), uid=data.collection)
     kwargs = get_user_username_email_kwargs(data.username)
     to_user = get_object_or_404(get_user_queryset(User.objects.all(), CallbackContext(request.path_params)), **kwargs)
 

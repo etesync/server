@@ -5,7 +5,7 @@ from django.core import exceptions as django_exceptions
 from django.core.files.base import ContentFile
 from django.db import IntegrityError, transaction
 from django.db.models import Q, QuerySet
-from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Path, Request, status
 
 from etebase_server.django import models
 from etebase_server.myauth.models import UserType
@@ -159,13 +159,14 @@ class ItemDepIn(BaseModel):
     uid: str
     etag: str
 
-    def validate_db(self):
-        item = models.CollectionItem.objects.get(uid=self.uid)
+    def validate_db(self, collection: models.Collection):
+        item = collection.items.filter(uid=self.uid).first()
+        cur_etag = item.etag if item is not None else None
         etag = self.etag
-        if item.etag != etag:
+        if cur_etag != etag:
             raise ValidationError(
                 "wrong_etag",
-                "Wrong etag. Expected {} got {}".format(item.etag, etag),
+                "Wrong etag. Expected {} got {}".format(cur_etag, etag),
                 status_code=status.HTTP_409_CONFLICT,
                 field=self.uid,
             )
@@ -175,12 +176,12 @@ class ItemBatchIn(BaseModel):
     items: t.List[CollectionItemIn]
     deps: t.Optional[t.List[ItemDepIn]] = None
 
-    def validate_db(self):
+    def validate_db(self, collection: models.Collection):
         if self.deps is not None:
             errors: t.List[HttpError] = []
             for dep in self.deps:
                 try:
-                    dep.validate_db()
+                    dep.validate_db(collection)
                 except ValidationError as e:
                     errors.append(e)
             if len(errors) > 0:
@@ -297,7 +298,7 @@ def process_revisions_for_item(item: models.CollectionItem, revision_data: Colle
 
     for chunk in revision_data.chunks:
         uid = chunk[0]
-        chunk_obj = models.CollectionItemChunk.objects.filter(uid=uid).first()
+        chunk_obj = item.collection.chunks.filter(uid=uid).first()
         content = chunk[1] if len(chunk) > 1 else None
         # If the chunk already exists we assume it's fine. Otherwise, we upload it.
         if chunk_obj is None:
@@ -480,7 +481,7 @@ def item_bulk_common(
         if stoken and stoken != collection_object.stoken:
             raise HttpError("stale_stoken", "Stoken is too old", status_code=status.HTTP_409_CONFLICT)
 
-        data.validate_db()
+        data.validate_db(collection_object)
 
         errors: t.List[HttpError] = []
         for item in data.items:
@@ -576,7 +577,7 @@ def fetch_updates(
 
 @item_router.post("/item/transaction/", dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE])
 def item_transaction(
-    collection_uid: str,
+    collection_uid: t.Annotated[str, Path()],
     data: ItemBatchIn,
     background_tasks: BackgroundTasks,
     stoken: t.Optional[str] = None,
@@ -589,7 +590,7 @@ def item_transaction(
 
 @item_router.post("/item/batch/", dependencies=[Depends(has_write_access), *PERMISSIONS_READWRITE])
 def item_batch(
-    collection_uid: str,
+    collection_uid: t.Annotated[str, Path()],
     data: ItemBatchIn,
     background_tasks: BackgroundTasks,
     stoken: t.Optional[str] = None,

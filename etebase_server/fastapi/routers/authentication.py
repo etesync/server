@@ -249,6 +249,7 @@ def signup_save(data: SignupIn, request: Request) -> UserType:
             except Exception as e:
                 raise HttpError("generic", str(e))
 
+        # A user created by an admin has no UserInfo until its first signup, which sets the keys.
         if hasattr(instance, "userinfo"):
             raise HttpError("user_exists", "User already exists", status_code=status.HTTP_409_CONFLICT)
 

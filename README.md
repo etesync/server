@@ -5,13 +5,25 @@
 
 An [Etebase](https://www.etebase.com) (EteSync 2.0) server so you can run your own.
 
-[![Chat with us](https://img.shields.io/badge/chat-IRC%20|%20Matrix%20|%20Web-blue.svg)](https://www.etebase.com/community-chat/)
+> [!NOTE]
+> **This is a maintenance fork of [etesync/server](https://github.com/etesync/server)**, which has received no commits since July 2024.
+>
+> EteSync is one of the few open-source products that can encrypt both contacts and calendars E2E and sync them between devices. I use it myself, so I keep this fork going for **security fixes, bug fixes and dependency updates only**. New features are out of scope. Fixes are also submitted as pull requests upstream, though they remain unmerged. I'm not affiliated with the original authors.
+>
+> It's a drop-in replacement: same protocol, same database schema, works with the official EteSync apps. To switch an existing installation:
+>
+> ```bash
+> git remote set-url origin https://github.com/PrivateBasicsApp/EteSyncServer.git
+> git pull --rebase
+> ```
+>
+> Then follow the [Updating](#updating) steps.
 
 # Installation
 
 ## Requirements
 
-Etebase requires Python 3.7 or newer and has a few Python dependencies (listed in `requirements.in/base.txt`).
+Etebase requires Python 3.10 or newer and has a few Python dependencies (listed in `requirements.in/base.txt`).
 
 ## From source
 
@@ -83,6 +95,8 @@ There are more details about a proper production setup using uvicorn and Nginx i
 
 The webserver should also be configured to serve Etebase using TLS.
 A guide for doing so can be found in the [wiki](https://github.com/etesync/server/wiki/Setup-HTTPS-for-Etebase) as well.
+
+For an end-to-end walkthrough on Ubuntu 24.04 with Apache (including TLS), see [Self-hosting EteSync on Ubuntu 24.04 with Apache](https://medium.com/@privatebasicsapp/self-hosting-etesync-on-ubuntu-24-04-with-apache-448b7cf3b22c). It was written against the upstream repository; the steps are the same for this fork, just clone this repository instead.
 
 The Etebase server needs to be aware of the URL it's been served as, so make sure to forward the `Host` header to the server if using a reverse proxy. For example, you would need to use the following directive in nginx: `proxy_set_header Host $host;`.
 
@@ -168,20 +182,3 @@ A quick summary can be found [on tldrlegal](https://tldrlegal.com/license/gnu-af
 ## Commercial licensing
 
 For commercial licensing options, contact license@etebase.com 
-
-# Financially Supporting Etebase
-
-Please consider registering an account even if you self-host in order to support the development of Etebase, or visit the [contribution](https://www.etesync.com/contribute/) for more information on how to support the service.
-
-Become a financial contributor and help us sustain our community!
-
-## Supporters ($20 / month)
-
-[![jzacsh](https://github.com/jzacsh.png?size=80)](https://github.com/jzacsh)
-
-## Contributors ($10 / month)
-
-[![ilovept](https://github.com/ilovept.png?size=40)](https://github.com/ilovept)
-[![ryanleesipes](https://github.com/ryanleesipes.png?size=40)](https://github.com/ryanleesipes)
-[![DanielG](https://github.com/DanielG.png?size=40)](https://github.com/DanielG)
-[![Kanaye](https://github.com/Kanaye.png?size=40)](https://github.com/Kanaye)
