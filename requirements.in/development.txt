@@ -1,5 +1,10 @@
+# Keep dev-only deps aligned with the runtime pins in requirements.txt.
+--constraint ../requirements.txt
+
 coverage
 pip-tools
+pytest
+pytest-django
 pywatchman
 ruff
 mypy

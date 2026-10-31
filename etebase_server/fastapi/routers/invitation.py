@@ -9,13 +9,15 @@ from etebase_server.django.utils import CallbackContext, get_user_queryset
 from etebase_server.myauth.models import UserType, get_typed_user_model
 
 from ..db_hack import django_db_cleanup_decorator
-from ..exceptions import HttpError, PermissionDenied
+from ..dependencies import get_collection_queryset
+from ..exceptions import HttpError, PermissionDenied, ValidationError
 from ..msgpack import MsgpackResponse, MsgpackRoute
 from ..utils import (
     PERMISSIONS_READ,
     PERMISSIONS_READWRITE,
     BaseModel,
     Context,
+    Limit,
     get_object_or_404,
     get_user_username_email_kwargs,
     is_collection_admin,
@@ -91,7 +93,10 @@ class InvitationListResponse(BaseModel):
 
 @django_db_cleanup_decorator
 def get_incoming_queryset(user: UserType = Depends(get_authenticated_user)):
-    return default_queryset.filter(user=user)
+    # An invitation is valid only while its sender is still an active admin of the collection.
+    return default_queryset.filter(
+        user=user, fromMember__accessLevel=models.AccessLevels.ADMIN, fromMember__user__is_active=True
+    )
 
 
 @django_db_cleanup_decorator
@@ -130,7 +135,7 @@ def list_common(
 @invitation_incoming_router.get("/", response_model=InvitationListResponse, dependencies=PERMISSIONS_READ)
 def incoming_list(
     iterator: t.Optional[str] = None,
-    limit: int = 50,
+    limit: Limit = 50,
     queryset: InvitationQuerySet = Depends(get_incoming_queryset),
 ):
     return MsgpackResponse(list_common(queryset, iterator, limit))
@@ -170,16 +175,24 @@ def incoming_accept(
 
     with transaction.atomic():
         user = invitation.user
-        collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=data.collectionType, owner=user)
+        try:
+            collection_type_obj, _ = models.CollectionType.objects.get_or_create(uid=data.collectionType, owner=user)
+        except IntegrityError:
+            raise ValidationError("bad_collection_type", "collectionType is already in use")
 
-        models.CollectionMember.objects.create(
-            collection=invitation.collection,
-            stoken=models.Stoken.objects.create(),
-            user=user,
-            accessLevel=invitation.accessLevel,
-            encryptionKey=data.encryptionKey,
-            collectionType=collection_type_obj,
-        )
+        try:
+            models.CollectionMember.objects.create(
+                collection=invitation.collection,
+                stoken=models.Stoken.objects.create(),
+                user=user,
+                accessLevel=invitation.accessLevel,
+                encryptionKey=data.encryptionKey,
+                collectionType=collection_type_obj,
+            )
+        except IntegrityError:
+            raise HttpError(
+                "member_exists", "User is already a member of this collection", status_code=status.HTTP_409_CONFLICT
+            )
 
         models.CollectionMemberRemoved.objects.filter(user=invitation.user, collection=invitation.collection).delete()
 
@@ -192,7 +205,7 @@ def outgoing_create(
     request: Request,
     user: UserType = Depends(get_authenticated_user),
 ):
-    collection = get_object_or_404(models.Collection.objects, uid=data.collection)
+    collection = get_object_or_404(get_collection_queryset(user), uid=data.collection)
     kwargs = get_user_username_email_kwargs(data.username)
     to_user = get_object_or_404(get_user_queryset(User.objects.all(), CallbackContext(request.path_params)), **kwargs)
 
@@ -216,7 +229,7 @@ def outgoing_create(
 @invitation_outgoing_router.get("/", response_model=InvitationListResponse, dependencies=PERMISSIONS_READ)
 def outgoing_list(
     iterator: t.Optional[str] = None,
-    limit: int = 50,
+    limit: Limit = 50,
     queryset: InvitationQuerySet = Depends(get_outgoing_queryset),
 ):
     return MsgpackResponse(list_common(queryset, iterator, limit))
