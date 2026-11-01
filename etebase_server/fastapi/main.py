@@ -22,7 +22,7 @@ def create_application(prefix="", middlewares=[]):
     app = FastAPI(
         title="Etebase",
         description="The Etebase server API documentation",
-        externalDocs={
+        openapi_external_docs={
             "url": "https://docs.etebase.com",
             "description": "Docs about the API specifications and clients.",
         },
