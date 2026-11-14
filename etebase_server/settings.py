@@ -162,6 +162,9 @@ if any(os.path.isfile(x) for x in config_locations):
     if "redis_uri" in section:
         ETEBASE_REDIS_URI = section.get("redis_uri")
 
+    if "max_request_size" in section:
+        ETEBASE_MAX_REQUEST_SIZE = section.getint("max_request_size")
+
     if "allowed_hosts" in config:
         ALLOWED_HOSTS = [y for x, y in config.items("allowed_hosts")]
         CSRF_TRUSTED_ORIGINS = ["https://" + y for x, y in config.items("allowed_hosts")] + \

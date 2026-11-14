@@ -10,7 +10,7 @@ from etebase_server.myauth.models import UserType, get_typed_user_model
 from ..db_hack import django_db_cleanup_decorator
 from ..msgpack import MsgpackResponse, MsgpackRoute
 from ..stoken_handler import filter_by_stoken_and_limit
-from ..utils import PERMISSIONS_READ, PERMISSIONS_READWRITE, BaseModel, get_object_or_404, permission_responses
+from ..utils import PERMISSIONS_READ, PERMISSIONS_READWRITE, BaseModel, Limit, get_object_or_404, permission_responses
 from .authentication import get_authenticated_user
 from .collection import get_collection, verify_collection_admin
 
@@ -57,7 +57,7 @@ class MemberListResponse(BaseModel):
 )
 def member_list(
     iterator: t.Optional[str] = None,
-    limit: int = 50,
+    limit: Limit = 50,
     queryset: MemberQuerySet = Depends(get_queryset),
 ):
     queryset = queryset.order_by("id")

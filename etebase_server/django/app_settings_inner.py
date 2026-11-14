@@ -85,5 +85,9 @@ class AppSettings:
     def CHALLENGE_VALID_SECONDS(self):  # noqa: N802
         return self._setting("CHALLENGE_VALID_SECONDS", 60)
 
+    @cached_property
+    def MAX_REQUEST_SIZE(self) -> int:  # noqa: N802
+        return self._setting("MAX_REQUEST_SIZE", 100 * 1024 * 1024)
+
 
 app_settings = AppSettings("ETEBASE_")

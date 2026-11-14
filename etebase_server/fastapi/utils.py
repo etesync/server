@@ -3,10 +3,10 @@ import dataclasses
 import typing as t
 
 import msgpack
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db.models import Model, QuerySet
 from fastapi import Depends, Query, status
-from pydantic import BaseModel as PyBaseModel
+from pydantic import AfterValidator, BaseModel as PyBaseModel
 from typing_extensions import Literal
 
 from etebase_server.django import app_settings
@@ -19,6 +19,10 @@ User = get_typed_user_model()
 
 Prefetch = Literal["auto", "medium"]
 PrefetchQuery = Query(default="auto")
+
+MAX_LIMIT = 500
+# Page size of the list endpoints. A larger request gets pages of MAX_LIMIT, which clients follow through `done`.
+Limit = t.Annotated[int, Query(ge=1), AfterValidator(lambda limit: min(limit, MAX_LIMIT))]
 
 
 T = t.TypeVar("T", bound=Model, covariant=True)
@@ -39,6 +43,10 @@ def get_object_or_404(queryset: QuerySet[T], **kwargs) -> T:
         return queryset.get(**kwargs)
     except ObjectDoesNotExist as e:
         raise HttpError("does_not_exist", str(e), status_code=status.HTTP_404_NOT_FOUND)
+    except MultipleObjectsReturned:
+        # Reported like a missing object: a lookup by email can match several users.
+        detail = f"{queryset.model._meta.object_name} matching query does not exist."
+        raise HttpError("does_not_exist", detail, status_code=status.HTTP_404_NOT_FOUND)
 
 
 def is_collection_admin(collection, user):

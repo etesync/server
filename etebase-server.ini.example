@@ -11,6 +11,8 @@ media_root = /path/to/media
 ;language_code = en-us
 ;time_zone = UTC
 ;redis_uri = redis://localhost:6379
+;Largest request body accepted, in bytes (default 100 MiB)
+;max_request_size = 104857600
 
 [allowed_hosts]
 allowed_host1 = example.com

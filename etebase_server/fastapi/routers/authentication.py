@@ -122,7 +122,8 @@ def get_login_user(request: Request, challenge: LoginChallengeIn) -> UserType:
         if not hasattr(user, "userinfo"):
             raise AuthenticationFailed(code="user_not_init", detail="User not properly init")
         return user
-    except User.DoesNotExist:
+    except (User.DoesNotExist, User.MultipleObjectsReturned):
+        # An email shared by several users identifies none of them.
         raise AuthenticationFailed(code="user_not_found", detail="User not found")
 
 
@@ -208,10 +209,13 @@ def logout(auth_data: AuthData = Depends(get_auth_data)):
 
 
 @authentication_router.post("/change_password/", status_code=status.HTTP_204_NO_CONTENT, responses=permission_responses)
-def change_password(data: ChangePassword, request: Request, user: UserType = Depends(get_authenticated_user)):
+def change_password(data: ChangePassword, request: Request, auth_data: AuthData = Depends(get_auth_data)):
     host = request.headers.get("Host")
-    validate_login_request(data.response_data, data, user, "changePassword", host)
-    save_changed_password(data, user)
+    validate_login_request(data.response_data, data, auth_data.user, "changePassword", host)
+    with transaction.atomic():
+        save_changed_password(data, auth_data.user)
+        # The other sessions end; the caller keeps its token, since this endpoint cannot return a new one.
+        AuthToken.objects.filter(user=auth_data.user).exclude(pk=auth_data.token.pk).delete()
 
 
 @authentication_router.post("/dashboard_url/", responses=permission_responses)
@@ -249,6 +253,7 @@ def signup_save(data: SignupIn, request: Request) -> UserType:
             except Exception as e:
                 raise HttpError("generic", str(e))
 
+        # A user created by an admin has no UserInfo until its first signup, which sets the keys.
         if hasattr(instance, "userinfo"):
             raise HttpError("user_exists", "User already exists", status_code=status.HTTP_409_CONFLICT)
 

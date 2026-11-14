@@ -9,8 +9,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from etebase_server.django import app_settings
+
 from .exceptions import CustomHttpException
 from .msgpack import MsgpackResponse
+from .request_size import RequestSizeLimitMiddleware
 from .routers.authentication import authentication_router
 from .routers.collection import collection_router, item_router
 from .routers.invitation import invitation_incoming_router, invitation_outgoing_router
@@ -56,6 +59,7 @@ def create_application(prefix="", middlewares=[]):
         allow_headers=["*"],
     )
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOSTS)
+    app.add_middleware(RequestSizeLimitMiddleware, max_size=app_settings.MAX_REQUEST_SIZE)
 
     for middleware in middlewares:
         app.add_middleware(middleware)
