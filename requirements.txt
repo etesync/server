@@ -494,9 +494,9 @@ redis==8.0.1 \
     --hash=sha256:47daa35a058c23468d6437f17a8c76882cb316b838ef763036af99b96cedd743 \
     --hash=sha256:afc5a7a2f5a084f5b1880dec548dd45be17db7e43c82a30d84f952aefb05cfb0
     # via -r requirements.in/base.txt
-sqlparse==0.5.5 \
-    --hash=sha256:12a08b3bf3eec877c519589833aed092e2444e68240a3577e8e26148acc7b1ba \
-    --hash=sha256:e20d4a9b0b8585fdf63b10d30066c7c94c5d7a7ec47c889a2d83a3caa93ff28e
+sqlparse==0.6.1 \
+    --hash=sha256:3be5a72d04c873d690d7c6dedd33d6fae2ef82759881ceec02fc2efd0cba564f \
+    --hash=sha256:ca722573f848ff2d30e40ea30f53a104b7dea7635ea9285891263eb2c58fb6e7
     # via django
 starlette==1.3.1 \
     --hash=sha256:05d0213193f2fbaae60e2ecb593b4add4262ad4e46536b54abe36f11a71724e0 \
